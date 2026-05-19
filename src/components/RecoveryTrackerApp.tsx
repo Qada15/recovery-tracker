@@ -216,7 +216,7 @@ export function RecoveryTrackerApp() {
     newResets.sort((a, b) => a.getTime() - b.getTime())
 
     // حذف أي رغبات في نفس اليوم عند حدوث انتكاسة
-    const newUrges = activeHabit.urgeDates.filter(ud => !isSameDay(parseISO(ud), startOfDate))
+    const newUrges = (activeHabit.urgeDates || []).filter(ud => !isSameDay(parseISO(ud), startOfDate))
 
     const latestReset = newResets[newResets.length - 1]
     
@@ -251,9 +251,9 @@ export function RecoveryTrackerApp() {
     
     if (isRelapse) return
 
-    const currentUrges = activeHabit.urgeDates.map(d => parseISO(d))
+    const currentUrges = (activeHabit.urgeDates || []).map(d => parseISO(d))
     if (!currentUrges.some(ud => isSameDay(startOfDay(ud), startOfDate))) {
-      const newUrges = [...activeHabit.urgeDates, dateToUrge.toISOString()]
+      const newUrges = [...(activeHabit.urgeDates || []), dateToUrge.toISOString()]
       handleUpdateActiveHabit({ urgeDates: newUrges })
       toast({ title: isAr ? "تم تسجيل رغبة" : "Urge Recorded" })
     }
@@ -261,7 +261,7 @@ export function RecoveryTrackerApp() {
 
   const handleRemoveUrgeAction = (dateToRemove: Date) => {
     if (!activeHabit) return
-    const newUrges = activeHabit.urgeDates.filter(ud => !isSameDay(startOfDay(parseISO(ud)), startOfDay(dateToRemove)))
+    const newUrges = (activeHabit.urgeDates || []).filter(ud => !isSameDay(startOfDay(parseISO(ud)), startOfDay(dateToRemove)))
     handleUpdateActiveHabit({ urgeDates: newUrges })
   }
 
