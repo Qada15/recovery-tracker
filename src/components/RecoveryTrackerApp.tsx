@@ -190,6 +190,7 @@ export function RecoveryTrackerApp() {
     
     const filteredResets = currentResets.filter(rd => isBefore(startOfDay(rd), startOfNewDate))
     const finalResets = [...filteredResets, newDate]
+    finalResets.sort((a, b) => a.getTime() - b.getTime())
 
     handleUpdateActiveHabit({
       startDate: newDate.toISOString(),

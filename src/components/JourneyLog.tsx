@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ArrowLeft, ArrowRight, Calendar as CalendarIcon, Flame, Trash2, Settings2, X } from "lucide-react"
+import { ArrowLeft, ArrowRight, Calendar as CalendarIcon, Flame, Trash2, Settings2, X, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { format, isAfter, isBefore, isSameDay, startOfDay, setHours, setMinutes } from "date-fns"
@@ -39,8 +39,6 @@ export function JourneyLog({
   const [tempHour, setTempHour] = React.useState(12)
   const [tempMinute, setTempMinute] = React.useState(0)
   
-  if (!isOpen) return null
-
   const isAr = language === 'ar'
   const today = startOfDay(new Date())
   const start = startOfDay(startDate)
@@ -64,7 +62,8 @@ export function JourneyLog({
     setSelectedDay(date)
   }
 
-  const handleAdjustTime = () => {
+  const handleAdjustTime = (e: React.MouseEvent) => {
+    e.stopPropagation()
     if (!selectedDay) return
     const existingReset = getResetForDay(selectedDay) || selectedDay
     setTempHour(existingReset.getHours())
@@ -78,9 +77,12 @@ export function JourneyLog({
     const newDateTime = setMinutes(setHours(startOfDay(selectedDay), tempHour), tempMinute)
     onReset(newDateTime)
     setShowTimePicker(false)
+    setSelectedDay(undefined) // Reset selection after save
   }
 
   const existingReset = selectedDay ? getResetForDay(selectedDay) : null
+
+  if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-[100] bg-background flex flex-col animate-in fade-in slide-in-from-bottom-5 duration-300 overflow-hidden" dir={isAr ? 'rtl' : 'ltr'}>
@@ -136,7 +138,7 @@ export function JourneyLog({
                   variant="outline" 
                   className="flex-1 h-12 rounded-2xl font-black border-2 border-red-500 text-red-500 animate-in zoom-in-95"
                 >
-                  <X className="ml-2 h-4 w-4" /> {isAr ? "حذف الحدث" : "Delete Event"}
+                  <Trash2 className="ml-2 h-4 w-4" /> {isAr ? "حذف" : "Delete"}
                 </Button>
                 <Button 
                   onClick={handleAdjustTime} 
@@ -166,7 +168,7 @@ export function JourneyLog({
       </div>
 
       <Dialog open={showTimePicker} onOpenChange={setShowTimePicker}>
-        <DialogContent className="rounded-[2.5rem] p-6 max-w-[420px]">
+        <DialogContent className="rounded-[2.5rem] p-6 max-w-[420px] z-[200]">
           <DialogHeader>
             <DialogTitle className="text-center font-black">
               {pickerMode === 'hours' ? (isAr ? "ضبط الساعة" : "Set Hour") : (isAr ? "ضبط الدقيقة" : "Set Minute")}
@@ -179,9 +181,17 @@ export function JourneyLog({
               onChange={pickerMode === 'hours' ? setTempHour : setTempMinute} 
               onComplete={() => {
                 if (pickerMode === 'hours') setPickerMode('minutes')
-                else saveAdjustedTime()
+                // No auto-complete for minutes to allow checking value
               }} 
             />
+            {pickerMode === 'minutes' && (
+              <Button onClick={saveAdjustedTime} className="w-full mt-4 h-12 rounded-xl font-black gap-2">
+                <Check className="h-4 w-4" /> {isAr ? "تأكيد الوقت" : "Confirm Time"}
+              </Button>
+            )}
+            <Button variant="ghost" onClick={() => setPickerMode(pickerMode === 'hours' ? 'hours' : 'hours')} className="mt-2 font-black opacity-40">
+              {pickerMode === 'minutes' && (isAr ? "العودة للساعة" : "Back to Hour")}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
