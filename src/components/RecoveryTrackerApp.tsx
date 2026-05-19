@@ -22,7 +22,6 @@ export function RecoveryTrackerApp() {
   const [startDate, setStartDate] = React.useState<Date>(new Date())
   const [resetDates, setResetDates] = React.useState<Date[]>([])
 
-  // Load from Storage
   React.useEffect(() => {
     const savedDate = getFromStorage(STORAGE_KEYS.START_DATE)
     const savedName = getFromStorage(STORAGE_KEYS.HABIT_NAME)
@@ -33,10 +32,8 @@ export function RecoveryTrackerApp() {
       const parsed = new Date(savedDate)
       if (isValid(parsed)) setStartDate(parsed)
     }
-
     if (savedName) setHabitName(savedName)
     if (savedColor) setAccentColor(savedColor)
-    
     if (savedResets) {
       try {
         const parsedResets = JSON.parse(savedResets).map((d: string) => parseISO(d))
@@ -45,7 +42,6 @@ export function RecoveryTrackerApp() {
         console.error("Error parsing reset dates")
       }
     }
-    
     document.body.style.overflow = 'hidden'
     document.body.style.position = 'fixed'
     document.body.style.width = '100%'
@@ -53,55 +49,52 @@ export function RecoveryTrackerApp() {
   }, [])
 
   const handleUpdateStartDate = (newDate: Date) => {
-    const now = new Date();
     const startOfNewDate = startOfDay(newDate);
-    const startOfToday = startOfDay(now);
+    const startOfToday = startOfDay(new Date());
     
-    // منطق التطهير الصارم:
-    // 1. نحذف فقط الانتكاسات التي تقع بـعـد تاريخ البداية الجديد وحتى اليوم
-    // 2. نستثني (نحمي) يوم البداية الجديد والايام التي تسبقه
+    // تطهير الأيام التي تلي تاريخ البداية الجديد
     const filteredResets = resetDates.filter(rd => {
       const rdDate = startOfDay(rd);
       const isStrictlyAfterNewStart = isAfter(rdDate, startOfNewDate);
       const isBeforeOrEqualToday = isBefore(rdDate, startOfToday) || isSameDay(rdDate, startOfToday);
-      
-      const shouldPurge = isStrictlyAfterNewStart && isBeforeOrEqualToday;
-      return !shouldPurge;
+      return !(isStrictlyAfterNewStart && isBeforeOrEqualToday);
     });
 
-    // نضمن أن يوم البداية الجديد مسجل كـ "تصفير" ليبقى أحمر دائماً
-    const isNewStartAlreadyRecorded = filteredResets.some(rd => isSameDay(startOfDay(rd), startOfNewDate));
-    const finalResets = isNewStartAlreadyRecorded ? filteredResets : [...filteredResets, newDate];
-
     setStartDate(newDate);
-    setResetDates(finalResets);
-    
+    setResetDates(filteredResets);
     saveToStorage(STORAGE_KEYS.START_DATE, newDate.toISOString());
-    saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(finalResets.map(d => d.toISOString())));
+    saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(filteredResets.map(d => d.toISOString())));
   }
 
-  const handleResetAction = () => {
-    const now = new Date()
-    setStartDate(now)
-    saveToStorage(STORAGE_KEYS.START_DATE, now.toISOString())
+  const handleResetAction = (targetDate?: Date) => {
+    const dateToReset = targetDate || new Date()
+    const startOfDate = startOfDay(dateToReset)
     
-    const isAlreadyRecorded = resetDates.some(rd => isSameDay(startOfDay(rd), startOfDay(now)))
-    const newResets = isAlreadyRecorded ? resetDates : [...resetDates, now]
+    // إذا كان التاريخ المختار هو اليوم الحالي أو لم يتم تمرير تاريخ، نقوم بتحديث العداد الرئيسي
+    if (!targetDate || isSameDay(startOfDate, startOfDay(new Date()))) {
+      setStartDate(new Date())
+      saveToStorage(STORAGE_KEYS.START_DATE, new Date().toISOString())
+    }
     
-    setResetDates(newResets)
-    saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(newResets.map(d => d.toISOString())))
+    const isAlreadyRecorded = resetDates.some(rd => isSameDay(startOfDay(rd), startOfDate))
+    if (!isAlreadyRecorded) {
+      const newResets = [...resetDates, dateToReset]
+      setResetDates(newResets)
+      saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(newResets.map(d => d.toISOString())))
+    }
     
     toast({ 
       variant: "destructive", 
-      title: "إعادة تعيين", 
-      description: "تم تسجيل انتكاسة لليوم والبدء من جديد." 
+      title: "تم تسجيل انتكاسة", 
+      description: `تم تلوين يوم ${startOfDate.toLocaleDateString()} باللون الأحمر.` 
     })
   }
 
-  const handleUrgeAction = () => {
+  const handleUrgeAction = (targetDate?: Date) => {
+    const dateText = targetDate ? `ليوم ${startOfDay(targetDate).toLocaleDateString()}` : ""
     toast({ 
       title: "تنبيه رغبة", 
-      description: "تذكر لماذا بدأت، استمر في الصمود!",
+      description: `تم تسجيل رغبة ${dateText}. استمر في الصمود!`,
       className: "bg-orange-500 text-white border-none"
     })
   }
@@ -143,8 +136,8 @@ export function RecoveryTrackerApp() {
             onUpdateDate={handleUpdateStartDate}
             onUpdateName={handleUpdateName}
             onUpdateColor={handleUpdateColor}
-            onReset={handleResetAction}
-            onUrge={handleUrgeAction}
+            onReset={() => handleResetAction()}
+            onUrge={() => handleUrgeAction()}
           />
         </div>
       </main>
