@@ -1,10 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { Calendar as CalendarIcon, Flame, Trash2, Settings2, X, Check, ChevronLeft } from "lucide-react"
+import { Calendar as CalendarIcon, Flame, Trash2, Settings2, X, Check, ChevronLeft, Award, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
-import { format, isAfter, isBefore, isSameDay, startOfDay, setHours, setMinutes } from "date-fns"
+import { format, isAfter, isBefore, isSameDay, startOfDay, setHours, setMinutes, isSameMonth, eachDayOfInterval, startOfMonth, endOfMonth } from "date-fns"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { CircularTimePicker } from "./CircularTimePicker"
 
@@ -38,6 +38,7 @@ export function JourneyLog({
   language
 }: JourneyLogProps) {
   const [selectedDay, setSelectedDay] = React.useState<Date | undefined>(undefined)
+  const [currentMonth, setCurrentMonth] = React.useState<Date>(new Date())
   const [showTimePicker, setShowTimePicker] = React.useState(false)
   const [pickerMode, setPickerMode] = React.useState<'hours' | 'minutes'>('hours')
   const [tempHour, setTempHour] = React.useState(12)
@@ -46,6 +47,41 @@ export function JourneyLog({
   const isAr = language === 'ar'
   const today = startOfDay(new Date())
   const start = startOfDay(startDate)
+
+  // حساب الإحصائيات للشهر المعروض
+  const monthStats = React.useMemo(() => {
+    const monthStart = startOfMonth(currentMonth)
+    const monthEnd = endOfMonth(currentMonth)
+    
+    const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd })
+    
+    let clean = 0
+    let relapses = 0
+    let urges = 0
+
+    daysInMonth.forEach(day => {
+      const d = startOfDay(day)
+      
+      // حساب الانتكاسات في هذا الشهر
+      const isRelapseDay = resetDates.some(rd => isSameDay(startOfDay(rd), d)) || isSameDay(d, start)
+      if (isRelapseDay && (isBefore(d, today) || isSameDay(d, today))) {
+        relapses++
+      }
+
+      // حساب الرغبات في هذا الشهر
+      if (urgeDates.some(ud => isSameDay(startOfDay(ud), d))) {
+        urges++
+      }
+
+      // حساب الأيام النظيفة
+      const isWithinJourney = (isAfter(d, start) || isSameDay(d, start)) && (isBefore(d, today) || isSameDay(d, today))
+      if (isWithinJourney && !isRelapseDay) {
+        clean++
+      }
+    })
+
+    return { clean, relapses, urges }
+  }, [currentMonth, resetDates, urgeDates, start, today])
 
   const getResetForDay = (date: Date) => {
     return resetDates.find(rd => isSameDay(startOfDay(rd), startOfDay(date)))
@@ -56,9 +92,7 @@ export function JourneyLog({
   }
 
   const isRelapse = (date: Date) => !!getResetForDay(date) || isSameDay(startOfDay(date), start)
-
   const isHasUrge = (date: Date) => !!getUrgeForDay(date)
-
   const isClean = (date: Date) => {
     const d = startOfDay(date)
     return isAfter(d, start) && (isBefore(d, today) || isSameDay(d, today)) && !isRelapse(d)
@@ -100,8 +134,8 @@ export function JourneyLog({
         <div className="w-10" />
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden">
-        <div className="text-center mb-2 shrink-0">
+      <main className="flex-1 flex flex-col items-center p-4 overflow-y-auto custom-scrollbar">
+        <div className="text-center mb-4 shrink-0">
           <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-1">{habitName}</p>
           <div className="flex items-center justify-center gap-2">
             <CalendarIcon className="h-3 w-3" style={{ color: accentColor }} />
@@ -111,11 +145,32 @@ export function JourneyLog({
           </div>
         </div>
 
+        {/* كرت الإحصائيات الشهرية */}
+        <div className="w-full max-w-[340px] grid grid-cols-3 gap-2 mb-4 shrink-0">
+          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
+            <Award className="h-4 w-4 text-emerald-500 mb-1" />
+            <span className="text-lg font-black text-emerald-600">{monthStats.clean}</span>
+            <span className="text-[8px] font-black uppercase opacity-60">{isAr ? "أيام نظيفة" : "Clean Days"}</span>
+          </div>
+          <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
+            <AlertCircle className="h-4 w-4 text-red-500 mb-1" />
+            <span className="text-lg font-black text-red-600">{monthStats.relapses}</span>
+            <span className="text-[8px] font-black uppercase opacity-60">{isAr ? "انتكاسات" : "Relapses"}</span>
+          </div>
+          <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
+            <Flame className="h-4 w-4 text-orange-500 mb-1" />
+            <span className="text-lg font-black text-orange-600">{monthStats.urges}</span>
+            <span className="text-[8px] font-black uppercase opacity-60">{isAr ? "رغبات" : "Urges"}</span>
+          </div>
+        </div>
+
         <div className="w-full max-w-[340px] bg-white dark:bg-slate-900 rounded-[2rem] border shadow-2xl p-2 flex items-center justify-center shrink-0">
           <Calendar 
             mode="single" 
             selected={selectedDay}
             onSelect={handleSelect}
+            month={currentMonth}
+            onMonthChange={setCurrentMonth}
             disabled={[{ after: today }]} 
             modifiers={{ relapse: isRelapse, clean: isClean, urge: isHasUrge }}
             modifiersClassNames={{
@@ -125,23 +180,8 @@ export function JourneyLog({
             }}
           />
         </div>
-        
-        <div className="mt-4 flex flex-wrap justify-center gap-4 shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-emerald-500 rounded-full" />
-            <span className="text-[9px] font-black uppercase opacity-60">{isAr ? "أيام نظيفة" : "Clean Days"}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-red-500 rounded-full" />
-            <span className="text-[9px] font-black uppercase opacity-60">{isAr ? "انتكاسة" : "Relapse"}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-orange-500 rounded-full" />
-            <span className="text-[9px] font-black uppercase opacity-60">{isAr ? "رغبة مسجلة" : "Urge Recorded"}</span>
-          </div>
-        </div>
 
-        <div className="mt-6 flex gap-3 w-full max-w-[320px] shrink-0 h-14">
+        <div className="mt-6 flex gap-3 w-full max-w-[320px] shrink-0 h-14 pb-10">
           {selectedDay && (
             existingReset ? (
               <>
