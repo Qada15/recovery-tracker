@@ -158,7 +158,7 @@ export function TimerDisplay() {
                 onSelect={(e) => {
                   e.preventDefault()
                   setTempHabitName(habitName)
-                  setShowNameDialog(true)
+                  setTimeout(() => setShowNameDialog(true), 100)
                 }}
                 className="rounded-xl py-2.5 cursor-pointer"
               >
@@ -167,7 +167,7 @@ export function TimerDisplay() {
               <DropdownMenuItem 
                 onSelect={(e) => {
                   e.preventDefault()
-                  setShowDateDialog(true)
+                  setTimeout(() => setShowDateDialog(true), 100)
                 }}
                 className="rounded-xl py-2.5 cursor-pointer"
               >
