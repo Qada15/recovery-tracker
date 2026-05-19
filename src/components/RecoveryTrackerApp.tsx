@@ -204,20 +204,41 @@ export function RecoveryTrackerApp() {
     
     const currentResets = activeHabit.resetDates.map(d => parseISO(d))
     
-    if (!targetDate || isSameDay(startOfDate, startOfDay(new Date()))) {
-      const now = new Date()
-      handleUpdateActiveHabit({
-        startDate: now.toISOString(),
-        resetDates: [...currentResets, now].map(d => d.toISOString())
-      })
+    // Check if there is already a reset on this day to update it, or add new
+    const existingIndex = currentResets.findIndex(rd => isSameDay(startOfDay(rd), startOfDate))
+    
+    let newResets = [...currentResets]
+    if (existingIndex >= 0) {
+      newResets[existingIndex] = dateToReset
     } else {
-      const isAlreadyRecorded = currentResets.some(rd => isSameDay(startOfDay(rd), startOfDate))
-      if (!isAlreadyRecorded) {
-        handleUpdateActiveHabit({
-          resetDates: [...currentResets, dateToReset].map(d => d.toISOString())
-        })
-      }
+      newResets.push(dateToReset)
     }
+
+    // Sort resets by time
+    newResets.sort((a, b) => a.getTime() - b.getTime())
+
+    // Update startDate if the reset is today or the latest
+    const now = new Date()
+    const latestReset = newResets[newResets.length - 1]
+    
+    handleUpdateActiveHabit({
+      startDate: latestReset.toISOString(),
+      resetDates: newResets.map(d => d.toISOString())
+    })
+  }
+
+  const handleRemoveResetAction = (dateToRemove: Date) => {
+    if (!activeHabit) return
+    const currentResets = activeHabit.resetDates.map(d => parseISO(d))
+    const newResets = currentResets.filter(rd => !isSameDay(startOfDay(rd), startOfDay(dateToRemove)))
+    
+    // Ensure startDate is always the latest reset
+    const latestReset = newResets.length > 0 ? newResets[newResets.length - 1] : parseISO(activeHabit.startDate)
+
+    handleUpdateActiveHabit({
+      startDate: latestReset.toISOString(),
+      resetDates: newResets.map(d => d.toISOString())
+    })
   }
 
   const handleDeleteActiveHabit = () => {
@@ -340,7 +361,8 @@ export function RecoveryTrackerApp() {
           habitName={activeHabit.name}
           accentColor={activeHabit.color}
           onReset={handleResetAction}
-          onUrge={(date) => toast({ title: "Urge Recorded" })}
+          onRemoveReset={handleRemoveResetAction}
+          onUrge={(date) => toast({ title: isAr ? "تم تسجيل رغبة" : "Urge Recorded" })}
           language={language}
         />
       )}
@@ -373,7 +395,6 @@ export function RecoveryTrackerApp() {
         </DialogContent>
       </Dialog>
 
-      {/* Habit Deletion Confirmation */}
       <AlertDialog open={isHabitDeleteDialogOpen} onOpenChange={setIsHabitDeleteDialogOpen}>
         <AlertDialogContent className="rounded-[2.5rem]">
           <AlertDialogHeader>
@@ -387,7 +408,6 @@ export function RecoveryTrackerApp() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Global Deletion Confirmation */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent className="rounded-[2.5rem]">
           <AlertDialogHeader>
