@@ -1,7 +1,8 @@
+
 "use client"
 
 import * as React from "react"
-import { MoreVertical, Trash2, History, Flame, Clock } from "lucide-react"
+import { MoreVertical, Trash2, History, Flame, Clock, Trophy, RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -19,7 +20,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
 import { useToast } from "@/hooks/use-toast"
-import { isAfter, isBefore, isSameDay, startOfDay, setHours, setMinutes } from "date-fns"
+import { isAfter, isBefore, isSameDay, startOfDay, setHours, setMinutes, differenceInDays } from "date-fns"
 import { CircularTimePicker } from "./CircularTimePicker"
 
 const COLORS = [
@@ -91,6 +92,25 @@ export function TimerDisplay({
   const [selectedMinute, setSelectedMinute] = React.useState(externalStartDate.getMinutes())
 
   const isAr = language === 'ar'
+
+  // حساب الإحصائيات (الأرقام القياسية)
+  const stats = React.useMemo(() => {
+    if (resetDates.length < 2) return { highest: null, previous: null }
+
+    const streaks: number[] = []
+    // ترتيب التواريخ لضمان الحساب الصحيح
+    const sortedResets = [...resetDates].sort((a, b) => a.getTime() - b.getTime())
+
+    for (let i = 0; i < sortedResets.length - 1; i++) {
+      const diff = differenceInDays(sortedResets[i + 1], sortedResets[i])
+      streaks.push(diff)
+    }
+
+    const highest = streaks.length > 0 ? Math.max(...streaks) : null
+    const previous = streaks.length > 0 ? streaks[streaks.length - 1] : null
+
+    return { highest, previous }
+  }, [resetDates])
 
   React.useEffect(() => {
     const updateTimer = () => {
@@ -184,7 +204,7 @@ export function TimerDisplay({
           </DropdownMenu>
         </div>
 
-        <div className="text-center mb-6">
+        <div className="text-center mb-4">
           <h2 className="text-lg font-black text-muted-foreground/60 tracking-widest uppercase mb-1">{externalHabitName}</h2>
           <div className="flex items-center justify-center gap-2">
             <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: externalAccentColor }} />
@@ -193,7 +213,7 @@ export function TimerDisplay({
         </div>
 
         {/* Hero Unit: Days */}
-        <div className="flex flex-col items-center justify-center mb-8">
+        <div className="flex flex-col items-center justify-center mb-6">
           <span 
             className="text-[10rem] leading-none font-black tabular-nums tracking-tighter transition-all duration-700 select-none"
             style={{ 
@@ -209,10 +229,32 @@ export function TimerDisplay({
         </div>
         
         {/* Completion Units: H, M, S */}
-        <div className="flex items-center justify-center divide-x divide-border rtl:divide-x-reverse mb-8">
+        <div className="flex items-center justify-center divide-x divide-border rtl:divide-x-reverse mb-6">
           <MiniTimeBox value={elapsed.hours} label={isAr ? "ساعة" : "Hour"} color={externalAccentColor} />
           <MiniTimeBox value={elapsed.minutes} label={isAr ? "دقيقة" : "Min"} color={externalAccentColor} />
           <MiniTimeBox value={elapsed.seconds} label={isAr ? "ثانية" : "Sec"} color={externalAccentColor} />
+        </div>
+
+        {/* Statistics Section */}
+        <div className="w-full max-w-[280px] grid grid-cols-2 gap-3 mb-8">
+          <div className="bg-secondary/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-white/10">
+            <Trophy className="h-4 w-4 text-amber-500 mb-1 opacity-80" />
+            <span className="text-lg font-black tabular-nums leading-none">
+              {stats.highest !== null ? stats.highest : "—"}
+            </span>
+            <span className="text-[7px] font-black uppercase tracking-widest opacity-40 mt-1">
+              {isAr ? "الرقم القياسي" : "Best Record"}
+            </span>
+          </div>
+          <div className="bg-secondary/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-white/10">
+            <RotateCcw className="h-4 w-4 text-slate-400 mb-1 opacity-80" />
+            <span className="text-lg font-black tabular-nums leading-none">
+              {stats.previous !== null ? stats.previous : "—"}
+            </span>
+            <span className="text-[7px] font-black uppercase tracking-widest opacity-40 mt-1">
+              {isAr ? "الرقم السابق" : "Prev Record"}
+            </span>
+          </div>
         </div>
         
         <div className="flex gap-3 w-full max-w-[320px] shrink-0">
