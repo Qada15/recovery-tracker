@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -98,7 +97,6 @@ export function TimerDisplay({
     if (resetDates.length < 2) return { highest: null, previous: null }
 
     const streaks: number[] = []
-    // ترتيب التواريخ لضمان الحساب الصحيح
     const sortedResets = [...resetDates].sort((a, b) => a.getTime() - b.getTime())
 
     for (let i = 0; i < sortedResets.length - 1; i++) {
@@ -204,7 +202,7 @@ export function TimerDisplay({
           </DropdownMenu>
         </div>
 
-        <div className="text-center mb-4">
+        <div className="text-center mb-6">
           <h2 className="text-lg font-black text-muted-foreground/60 tracking-widest uppercase mb-1">{externalHabitName}</h2>
           <div className="flex items-center justify-center gap-2">
             <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: externalAccentColor }} />
@@ -212,49 +210,49 @@ export function TimerDisplay({
           </div>
         </div>
 
+        {/* Statistics Section - Moved to Top and Enlarged */}
+        <div className="w-full max-w-[340px] grid grid-cols-2 gap-4 mb-8">
+          <div className="bg-secondary/10 rounded-3xl p-4 flex flex-col items-center justify-center text-center border border-white/20 shadow-sm">
+            <Trophy className="h-6 w-6 text-amber-500 mb-2 opacity-90" />
+            <span className="text-2xl font-black tabular-nums leading-none" style={{ color: externalAccentColor }}>
+              {stats.highest !== null ? stats.highest : "—"}
+            </span>
+            <span className="text-[9px] font-black uppercase tracking-widest opacity-60 mt-2">
+              {isAr ? "أعلى رقم قياسي" : "Best Record"}
+            </span>
+          </div>
+          <div className="bg-secondary/10 rounded-3xl p-4 flex flex-col items-center justify-center text-center border border-white/20 shadow-sm">
+            <RotateCcw className="h-6 w-6 text-slate-400 mb-2 opacity-90" />
+            <span className="text-2xl font-black tabular-nums leading-none text-slate-700 dark:text-slate-300">
+              {stats.previous !== null ? stats.previous : "—"}
+            </span>
+            <span className="text-[9px] font-black uppercase tracking-widest opacity-60 mt-2">
+              {isAr ? "الرقم السابق" : "Prev Record"}
+            </span>
+          </div>
+        </div>
+
         {/* Hero Unit: Days */}
-        <div className="flex flex-col items-center justify-center mb-6">
+        <div className="flex flex-col items-center justify-center mb-4">
           <span 
-            className="text-[10rem] leading-none font-black tabular-nums tracking-tighter transition-all duration-700 select-none"
+            className="text-[9rem] leading-none font-black tabular-nums tracking-tighter transition-all duration-700 select-none"
             style={{ 
               color: externalAccentColor,
-              textShadow: '0 20px 40px rgba(0,0,0,0.05)'
+              textShadow: '0 15px 30px rgba(0,0,0,0.05)'
             }}
           >
             {elapsed.days}
           </span>
-          <span className="text-sm font-black uppercase tracking-[0.4em] text-muted-foreground -mt-2 opacity-50">
+          <span className="text-sm font-black uppercase tracking-[0.4em] text-muted-foreground -mt-1 opacity-50">
             {isAr ? "يوم" : "Days"}
           </span>
         </div>
         
         {/* Completion Units: H, M, S */}
-        <div className="flex items-center justify-center divide-x divide-border rtl:divide-x-reverse mb-6">
+        <div className="flex items-center justify-center divide-x divide-border rtl:divide-x-reverse mb-8">
           <MiniTimeBox value={elapsed.hours} label={isAr ? "ساعة" : "Hour"} color={externalAccentColor} />
           <MiniTimeBox value={elapsed.minutes} label={isAr ? "دقيقة" : "Min"} color={externalAccentColor} />
           <MiniTimeBox value={elapsed.seconds} label={isAr ? "ثانية" : "Sec"} color={externalAccentColor} />
-        </div>
-
-        {/* Statistics Section */}
-        <div className="w-full max-w-[280px] grid grid-cols-2 gap-3 mb-8">
-          <div className="bg-secondary/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-white/10">
-            <Trophy className="h-4 w-4 text-amber-500 mb-1 opacity-80" />
-            <span className="text-lg font-black tabular-nums leading-none">
-              {stats.highest !== null ? stats.highest : "—"}
-            </span>
-            <span className="text-[7px] font-black uppercase tracking-widest opacity-40 mt-1">
-              {isAr ? "الرقم القياسي" : "Best Record"}
-            </span>
-          </div>
-          <div className="bg-secondary/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center border border-white/10">
-            <RotateCcw className="h-4 w-4 text-slate-400 mb-1 opacity-80" />
-            <span className="text-lg font-black tabular-nums leading-none">
-              {stats.previous !== null ? stats.previous : "—"}
-            </span>
-            <span className="text-[7px] font-black uppercase tracking-widest opacity-40 mt-1">
-              {isAr ? "الرقم السابق" : "Prev Record"}
-            </span>
-          </div>
         </div>
         
         <div className="flex gap-3 w-full max-w-[320px] shrink-0">
