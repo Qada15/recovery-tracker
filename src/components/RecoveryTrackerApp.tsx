@@ -20,6 +20,7 @@ export function RecoveryTrackerApp() {
   const [startDate, setStartDate] = React.useState<Date>(new Date())
   const [resetDates, setResetDates] = React.useState<Date[]>([])
 
+  // Load from Storage
   React.useEffect(() => {
     const savedDate = getFromStorage(STORAGE_KEYS.START_DATE)
     const savedName = getFromStorage(STORAGE_KEYS.HABIT_NAME)
@@ -43,6 +44,7 @@ export function RecoveryTrackerApp() {
       }
     }
     
+    // Prevent body bounce/scroll for native app feel
     document.body.style.overflow = 'hidden'
     document.body.style.position = 'fixed'
     document.body.style.width = '100%'
@@ -58,6 +60,7 @@ export function RecoveryTrackerApp() {
     const now = new Date()
     handleUpdateStartDate(now)
     
+    // Record the relapse date
     const newResetDates = [...resetDates, now]
     setResetDates(newResetDates)
     saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(newResetDates.map(d => d.toISOString())))
@@ -75,6 +78,7 @@ export function RecoveryTrackerApp() {
 
   return (
     <div className="flex-1 flex flex-col items-center bg-background relative h-full overflow-hidden select-none touch-none">
+      {/* Top Header */}
       <header className="w-full h-14 md:h-16 bg-white border-b flex items-center justify-between px-6 shadow-sm z-40 shrink-0">
         <Button variant="ghost" size="icon" onClick={() => setIsAccountOpen(true)} className="rounded-full">
           <User className="h-5 w-5" />
@@ -85,6 +89,7 @@ export function RecoveryTrackerApp() {
         </Button>
       </header>
 
+      {/* Content Area - No Scroll */}
       <main className="flex-1 w-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
         <div className="text-center space-y-1 mb-2 shrink-0">
           <p className="text-muted-foreground font-black text-[8px] uppercase tracking-[0.3em]">Your Journey</p>
@@ -105,6 +110,7 @@ export function RecoveryTrackerApp() {
         </div>
       </main>
 
+      {/* Full Screen History Log */}
       <JourneyLog 
         isOpen={isHistoryOpen} 
         onClose={() => setIsHistoryOpen(false)} 
@@ -114,6 +120,7 @@ export function RecoveryTrackerApp() {
         accentColor={accentColor}
       />
 
+      {/* Side Panels */}
       <SidePanel isOpen={isAccountOpen} onClose={() => setIsAccountOpen(false)} side="left" title="Account">
         <div className="flex flex-col items-center space-y-6 pt-4">
           <div className="w-20 h-20 bg-accent/10 rounded-full flex items-center justify-center">
