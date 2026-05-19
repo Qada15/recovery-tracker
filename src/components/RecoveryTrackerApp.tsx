@@ -164,6 +164,7 @@ export function RecoveryTrackerApp() {
       name: tempName,
       startDate: finalDate.toISOString(),
       resetDates: [finalDate.toISOString()],
+      urgeDates: [],
       color: 'hsl(var(--accent))'
     }
     
@@ -204,7 +205,6 @@ export function RecoveryTrackerApp() {
     const startOfDate = startOfDay(dateToReset)
     
     const currentResets = activeHabit.resetDates.map(d => parseISO(d))
-    
     const existingIndex = currentResets.findIndex(rd => isSameDay(startOfDay(rd), startOfDate))
     
     let newResets = [...currentResets]
@@ -213,14 +213,17 @@ export function RecoveryTrackerApp() {
     } else {
       newResets.push(dateToReset)
     }
-
     newResets.sort((a, b) => a.getTime() - b.getTime())
+
+    // حذف أي رغبات في نفس اليوم عند حدوث انتكاسة
+    const newUrges = activeHabit.urgeDates.filter(ud => !isSameDay(parseISO(ud), startOfDate))
 
     const latestReset = newResets[newResets.length - 1]
     
     handleUpdateActiveHabit({
       startDate: latestReset.toISOString(),
-      resetDates: newResets.map(d => d.toISOString())
+      resetDates: newResets.map(d => d.toISOString()),
+      urgeDates: newUrges
     })
   }
 
@@ -235,6 +238,31 @@ export function RecoveryTrackerApp() {
       startDate: latestReset.toISOString(),
       resetDates: newResets.map(d => d.toISOString())
     })
+  }
+
+  const handleUrgeAction = (targetDate?: Date) => {
+    if (!activeHabit) return
+    const dateToUrge = targetDate || new Date()
+    const startOfDate = startOfDay(dateToUrge)
+
+    // التأكد من أن اليوم ليس انتكاسة
+    const isRelapse = activeHabit.resetDates.some(rd => isSameDay(startOfDay(parseISO(rd)), startOfDate)) || 
+                     isSameDay(startOfDay(parseISO(activeHabit.startDate)), startOfDate)
+    
+    if (isRelapse) return
+
+    const currentUrges = activeHabit.urgeDates.map(d => parseISO(d))
+    if (!currentUrges.some(ud => isSameDay(startOfDay(ud), startOfDate))) {
+      const newUrges = [...activeHabit.urgeDates, dateToUrge.toISOString()]
+      handleUpdateActiveHabit({ urgeDates: newUrges })
+      toast({ title: isAr ? "تم تسجيل رغبة" : "Urge Recorded" })
+    }
+  }
+
+  const handleRemoveUrgeAction = (dateToRemove: Date) => {
+    if (!activeHabit) return
+    const newUrges = activeHabit.urgeDates.filter(ud => !isSameDay(startOfDay(parseISO(ud)), startOfDay(dateToRemove)))
+    handleUpdateActiveHabit({ urgeDates: newUrges })
   }
 
   const handleDeleteActiveHabit = () => {
@@ -294,7 +322,7 @@ export function RecoveryTrackerApp() {
                 onUpdateName={(name) => handleUpdateActiveHabit({ name })}
                 onUpdateColor={(color) => handleUpdateActiveHabit({ color })}
                 onReset={() => handleResetAction()}
-                onUrge={() => toast({ title: isAr ? "تنبيه رغبة" : "Urge Recorded", className: "bg-orange-500 text-white" })}
+                onUrge={() => handleUrgeAction()}
                 onDelete={() => setIsHabitDeleteDialogOpen(true)}
                 language={language}
               />
@@ -354,11 +382,13 @@ export function RecoveryTrackerApp() {
           onClose={() => setIsHistoryOpen(false)} 
           startDate={parseISO(activeHabit.startDate)}
           resetDates={activeHabit.resetDates.map(d => parseISO(d))}
+          urgeDates={(activeHabit.urgeDates || []).map(d => parseISO(d))}
           habitName={activeHabit.name}
           accentColor={activeHabit.color}
           onReset={handleResetAction}
           onRemoveReset={handleRemoveResetAction}
-          onUrge={(date) => toast({ title: isAr ? "تم تسجيل رغبة" : "Urge Recorded" })}
+          onUrge={handleUrgeAction}
+          onRemoveUrge={handleRemoveUrgeAction}
           language={language}
         />
       )}

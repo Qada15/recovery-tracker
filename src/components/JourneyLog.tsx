@@ -13,11 +13,13 @@ interface JourneyLogProps {
   onClose: () => void
   startDate: Date
   resetDates: Date[]
+  urgeDates: Date[]
   habitName: string
   accentColor: string
   onReset: (date: Date) => void
   onRemoveReset: (date: Date) => void
   onUrge: (date: Date) => void
+  onRemoveUrge: (date: Date) => void
   language: 'ar' | 'en'
 }
 
@@ -26,11 +28,13 @@ export function JourneyLog({
   onClose, 
   startDate, 
   resetDates, 
+  urgeDates,
   habitName, 
   accentColor,
   onReset,
   onRemoveReset,
   onUrge,
+  onRemoveUrge,
   language
 }: JourneyLogProps) {
   const [selectedDay, setSelectedDay] = React.useState<Date | undefined>(undefined)
@@ -47,7 +51,13 @@ export function JourneyLog({
     return resetDates.find(rd => isSameDay(startOfDay(rd), startOfDay(date)))
   }
 
+  const getUrgeForDay = (date: Date) => {
+    return urgeDates.find(ud => isSameDay(startOfDay(ud), startOfDay(date)))
+  }
+
   const isRelapse = (date: Date) => !!getResetForDay(date) || isSameDay(startOfDay(date), start)
+
+  const isHasUrge = (date: Date) => !!getUrgeForDay(date)
 
   const isClean = (date: Date) => {
     const d = startOfDay(date)
@@ -55,10 +65,6 @@ export function JourneyLog({
   }
 
   const handleSelect = (date: Date | undefined) => {
-    if (!date || isClean(date)) {
-      setSelectedDay(undefined)
-      return
-    }
     setSelectedDay(date)
   }
 
@@ -77,10 +83,10 @@ export function JourneyLog({
     const newDateTime = setMinutes(setHours(startOfDay(selectedDay), tempHour), tempMinute)
     onReset(newDateTime)
     setShowTimePicker(false)
-    // لا نحذف الاختيار هنا لنسمح للمستخدم برؤية التعديل
   }
 
   const existingReset = selectedDay ? getResetForDay(selectedDay) : null
+  const existingUrge = selectedDay ? getUrgeForDay(selectedDay) : null
 
   if (!isOpen) return null
 
@@ -109,16 +115,17 @@ export function JourneyLog({
             mode="single" 
             selected={selectedDay}
             onSelect={handleSelect}
-            disabled={[{ after: today }, (date) => isClean(date)]} 
-            modifiers={{ relapse: isRelapse, clean: isClean }}
+            disabled={[{ after: today }]} 
+            modifiers={{ relapse: isRelapse, clean: isClean, urge: isHasUrge }}
             modifiersClassNames={{
               relapse: "bg-red-500 text-white rounded-full font-black scale-110",
-              clean: "bg-emerald-500 text-white rounded-full font-black opacity-90"
+              clean: "bg-emerald-500 text-white rounded-full font-black opacity-90",
+              urge: "urge-dot"
             }}
           />
         </div>
         
-        <div className="mt-4 flex gap-4 shrink-0">
+        <div className="mt-4 flex flex-wrap justify-center gap-4 shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-emerald-500 rounded-full" />
             <span className="text-[9px] font-black uppercase opacity-60">{isAr ? "أيام نظيفة" : "Clean Days"}</span>
@@ -126,6 +133,10 @@ export function JourneyLog({
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-red-500 rounded-full" />
             <span className="text-[9px] font-black uppercase opacity-60">{isAr ? "انتكاسة" : "Relapse"}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-orange-500 rounded-full" />
+            <span className="text-[9px] font-black uppercase opacity-60">{isAr ? "رغبة مسجلة" : "Urge Recorded"}</span>
           </div>
         </div>
 
@@ -149,10 +160,20 @@ export function JourneyLog({
               </>
             ) : (
               <>
-                <Button onClick={() => { onUrge(selectedDay); }} className="flex-1 h-12 rounded-2xl font-black bg-orange-500 hover:bg-orange-600 text-white shadow-lg animate-in zoom-in-95">
-                  <Flame className="ml-2 h-4 w-4" /> {isAr ? "رغبة" : "Urge"}
-                </Button>
-                <Button onClick={() => { onReset(selectedDay); }} variant="destructive" className="flex-1 h-12 rounded-2xl font-black shadow-lg animate-in zoom-in-95">
+                {existingUrge ? (
+                  <Button onClick={() => onRemoveUrge(selectedDay)} variant="outline" className="flex-1 h-12 rounded-2xl font-black border-2 border-orange-500 text-orange-500 animate-in zoom-in-95">
+                    <X className="ml-2 h-4 w-4" /> {isAr ? "حذف الرغبة" : "Clear Urge"}
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={() => onUrge(selectedDay)} 
+                    disabled={isRelapse(selectedDay)}
+                    className="flex-1 h-12 rounded-2xl font-black bg-orange-500 hover:bg-orange-600 text-white shadow-lg animate-in zoom-in-95 disabled:opacity-30"
+                  >
+                    <Flame className="ml-2 h-4 w-4" /> {isAr ? "رغبة" : "Urge"}
+                  </Button>
+                )}
+                <Button onClick={() => onReset(selectedDay)} variant="destructive" className="flex-1 h-12 rounded-2xl font-black shadow-lg animate-in zoom-in-95">
                   <Trash2 className="ml-2 h-4 w-4" /> {isAr ? "انتكاسة" : "Relapse"}
                 </Button>
               </>
@@ -188,7 +209,7 @@ export function JourneyLog({
                 <Check className="h-4 w-4" /> {isAr ? "تأكيد الوقت" : "Confirm Time"}
               </Button>
             )}
-            <Button variant="ghost" onClick={() => setPickerMode(pickerMode === 'hours' ? 'hours' : 'hours')} className="mt-2 font-black opacity-40">
+            <Button variant="ghost" onClick={() => setPickerMode('hours')} className="mt-2 font-black opacity-40">
               {pickerMode === 'minutes' && (isAr ? "العودة للساعة" : "Back to Hour")}
             </Button>
           </div>

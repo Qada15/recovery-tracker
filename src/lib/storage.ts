@@ -10,6 +10,7 @@ export interface Habit {
   name: string;
   startDate: string;
   resetDates: string[];
+  urgeDates: string[]; // إضافة مصفوفة تواريخ الرغبات
   color: string;
 }
 

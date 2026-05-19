@@ -59,3 +59,17 @@
     -webkit-tap-highlight-color: transparent;
   }
 }
+
+/* النقطة البرتقالية للرغبة */
+.urge-dot::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background-color: #f97316; /* orange-500 */
+  border-radius: 9999px;
+  z-index: 10;
+}
