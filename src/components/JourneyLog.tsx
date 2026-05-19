@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -19,7 +20,7 @@ export function JourneyLog({ isOpen, onClose, startDate, habitName, accentColor 
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[100] bg-background flex flex-col animate-in fade-in slide-in-from-bottom-5 duration-300">
+    <div className="fixed inset-0 z-[100] bg-background flex flex-col animate-in fade-in slide-in-from-bottom-5 duration-300 overflow-hidden">
       {/* Header */}
       <header className="w-full h-16 border-b flex items-center px-6 bg-white/50 backdrop-blur-md shrink-0">
         <Button variant="ghost" size="icon" onClick={onClose} className="mr-4 rounded-full">
@@ -78,7 +79,7 @@ export function JourneyLog({ isOpen, onClose, startDate, habitName, accentColor 
           </div>
         </div>
 
-        <div className="h-10" /> {/* Extra space for bottom padding */}
+        <div className="h-10" />
       </main>
 
       {/* Bottom Action */}
