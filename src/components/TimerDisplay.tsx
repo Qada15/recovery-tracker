@@ -253,7 +253,7 @@ export function TimerDisplay() {
               mode="single" 
               selected={startDate} 
               onSelect={handleUpdateDate} 
-              className="rounded-3xl bg-white border shadow-sm" 
+              className="rounded-3xl bg-white border shadow-sm w-full max-w-[320px]" 
             />
           </div>
         </DialogContent>
@@ -272,7 +272,7 @@ export function TimerDisplay() {
             <Calendar 
               mode="single" 
               selected={startDate} 
-              className="rounded-3xl pointer-events-none bg-white border shadow-sm" 
+              className="rounded-3xl pointer-events-none bg-white border shadow-sm w-full max-w-[320px]" 
             />
           </div>
           <Button 
