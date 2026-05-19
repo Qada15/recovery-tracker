@@ -57,7 +57,6 @@ interface TimerDisplayProps {
   onUpdateName: (name: string) => void
   onUpdateColor: (color: string) => void
   onReset: () => void
-  onDeleteHistory: () => void
 }
 
 export function TimerDisplay({ 
@@ -68,8 +67,7 @@ export function TimerDisplay({
   onUpdateDate,
   onUpdateName,
   onUpdateColor,
-  onReset,
-  onDeleteHistory
+  onReset
 }: TimerDisplayProps) {
   const { toast } = useToast()
   const [elapsed, setElapsed] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
@@ -112,17 +110,12 @@ export function TimerDisplay({
     if (!date) return
     onUpdateDate(date)
     setShowDateDialog(false)
-    toast({ title: "تم التعديل", description: "تم تغيير تاريخ البداية." })
+    toast({ title: "تم التعديل", description: "تم تغيير تاريخ البداية وتحديث السجل." })
   }
 
   const handleResetClick = () => {
     onReset()
     toast({ variant: "destructive", title: "إعادة تعيين", description: "بدأ العداد من جديد وتم تسجيل اليوم في السجل." })
-  }
-
-  const handleDeleteClick = () => {
-    onDeleteHistory()
-    toast({ variant: "destructive", title: "تم الحذف", description: "تم تصفير العداد ومسح سجل الانتكاسات بالكامل." })
   }
 
   const handleUrge = () => {
@@ -158,10 +151,6 @@ export function TimerDisplay({
                   <button key={c.value} onClick={() => handleUpdateColor(c.value)} className="w-6 h-6 rounded-full border" style={{ backgroundColor: c.value }} />
                 ))}
               </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={handleDeleteClick} className="text-destructive font-bold">
-                حذف سجل العداد
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
