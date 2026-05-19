@@ -29,13 +29,16 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
       const start = startOfDay(startDate)
       const now = startOfDay(today)
       
-      // A day is clean if it's between current startDate and today
-      const isWithinStreak = (isAfter(d, start) || isSameDay(d, start)) && (isBefore(d, now) || isSameDay(d, now))
+      // القاعدة: اليوم النظيف يبدأ بـعـد يوم البداية (isAfter) وحتى اليوم الحالي
+      const isAfterStart = isAfter(d, start)
+      const isBeforeOrEqualToday = isBefore(d, now) || isSameDay(d, now)
       
-      // If it's recorded as a relapse, Red takes priority
+      const isWithinCleanRange = isAfterStart && isBeforeOrEqualToday
+      
+      // إذا كان مسجلاً كانتكاسة، الأحمر له الأولوية
       const isRelapse = resetDates.some(rd => isSameDay(startOfDay(rd), d))
       
-      return isWithinStreak && !isRelapse
+      return isWithinCleanRange && !isRelapse
     }
   }
 
