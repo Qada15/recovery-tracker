@@ -21,7 +21,7 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
 
   const today = new Date()
 
-  // Logic to identify "Clean Days": From startDate until Today
+  // Logic to identify modifiers: Relapse (Red) and Clean (Green)
   const modifiers = {
     relapse: resetDates,
     clean: (date: Date) => {
@@ -32,7 +32,7 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
       // A day is clean if it's between startDate and today
       const isWithinStreak = (isAfter(d, start) || isSameDay(d, start)) && (isBefore(d, now) || isSameDay(d, now))
       
-      // If it's a relapse day, we don't mark it as clean to let Red take priority or show the conflict
+      // If it's a relapse day, we don't mark it as clean to let Red take priority
       const isRelapse = resetDates.some(rd => isSameDay(startOfDay(rd), d))
       
       return isWithinStreak && !isRelapse
@@ -70,6 +70,7 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
             mode="single" 
             className="w-full"
             numberOfMonths={1}
+            disabled={{ after: today }} // Strictly disable future interaction
             modifiers={modifiers}
             modifiersClassNames={modifiersClassNames}
           />

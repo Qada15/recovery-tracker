@@ -21,6 +21,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
 import { useToast } from "@/hooks/use-toast"
+import { isAfter, startOfDay } from "date-fns"
 
 const COLORS = [
   { name: 'Default', value: 'hsl(var(--accent))' },
@@ -108,6 +109,11 @@ export function TimerDisplay({
 
   const handleUpdateDate = (date: Date | undefined) => {
     if (!date) return
+    // Prevent setting future dates programmatically just in case
+    if (isAfter(startOfDay(date), startOfDay(new Date()))) {
+      toast({ variant: "destructive", title: "خطأ", description: "لا يمكن اختيار تاريخ مستقبلي." })
+      return
+    }
     onUpdateDate(date)
     setShowDateDialog(false)
     toast({ title: "تم التعديل", description: "تم تغيير تاريخ البداية وتحديث السجل." })
@@ -202,7 +208,13 @@ export function TimerDisplay({
         <DialogContent className="rounded-[2.5rem] p-6 max-w-[400px]">
           <DialogHeader><DialogTitle className="text-center font-black">تحديد تاريخ البداية</DialogTitle></DialogHeader>
           <div className="flex justify-center bg-secondary/20 p-4 rounded-3xl">
-            <Calendar mode="single" selected={externalStartDate} onSelect={handleUpdateDate} className="rounded-3xl bg-white border shadow-sm" />
+            <Calendar 
+              mode="single" 
+              selected={externalStartDate} 
+              onSelect={handleUpdateDate} 
+              disabled={{ after: new Date() }} // Disable future dates
+              className="rounded-3xl bg-white border shadow-sm" 
+            />
           </div>
         </DialogContent>
       </Dialog>
