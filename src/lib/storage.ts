@@ -2,6 +2,7 @@
 export const STORAGE_KEYS = {
   HABIT_NAME: 'recovery_tracker_habit_name',
   START_DATE: 'recovery_tracker_start_date',
+  HABIT_COLOR: 'recovery_tracker_habit_color',
 };
 
 export function saveToStorage(key: string, value: string) {
