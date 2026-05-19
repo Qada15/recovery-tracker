@@ -1,13 +1,14 @@
+
 "use client"
 
 import * as React from "react"
-import { Settings, User, Languages, Moon, Sun, Trash2 } from "lucide-react"
+import { Settings, User, Languages, Moon, Sun, Trash2, Plus, Flame, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SidePanel } from "@/components/SidePanel"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
 import { saveToStorage, getFromStorage, STORAGE_KEYS, clearAllStorage } from "@/lib/storage"
-import { isValid, parseISO, startOfDay, isBefore, isSameDay } from "date-fns"
+import { isValid, parseISO, startOfDay, isBefore, isSameDay, setHours, setMinutes } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
@@ -18,6 +19,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Calendar } from "@/components/ui/calendar"
+import { CircularTimePicker } from "./CircularTimePicker"
 
 const TRANSLATIONS = {
   ar: {
@@ -34,6 +44,13 @@ const TRANSLATIONS = {
     habitDefault: "الامتناع",
     profile: "ملف المستخدم",
     localActive: "التخزين المحلي نشط",
+    addHabit: "إضافة عداد جديد",
+    setupTitle: "إعداد العداد",
+    enterName: "أدخل اسم العادة أو الهدف",
+    save: "حفظ",
+    stepDate: "1. اختر التاريخ",
+    stepHour: "2. اختر الساعة",
+    stepMinute: "3. اختر الدقيقة",
   },
   en: {
     title: "Recovery Tracker",
@@ -49,6 +66,13 @@ const TRANSLATIONS = {
     habitDefault: "Abstinence",
     profile: "User Profile",
     localActive: "Local Storage Active",
+    addHabit: "Add New Tracker",
+    setupTitle: "Setup Tracker",
+    enterName: "Enter habit or goal name",
+    save: "Save",
+    stepDate: "1. Select Date",
+    stepHour: "2. Select Hour",
+    stepMinute: "3. Select Minute",
   }
 }
 
@@ -57,15 +81,23 @@ export function RecoveryTrackerApp() {
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false)
   const [isAccountOpen, setIsAccountOpen] = React.useState(false)
   const [isHistoryOpen, setIsHistoryOpen] = React.useState(false)
+  const [isSetupOpen, setIsSetupOpen] = React.useState(false)
+  const [setupStep, setSetupStep] = React.useState<'name' | 'date' | 'hour' | 'minute'>('name')
 
   const [language, setLanguage] = React.useState<'ar' | 'en'>('ar')
   const [theme, setTheme] = React.useState<'light' | 'dark'>('light')
-  const [habitName, setHabitName] = React.useState("Abstinence")
+  const [habitName, setHabitName] = React.useState("")
   const [accentColor, setAccentColor] = React.useState('hsl(var(--accent))')
-  const [startDate, setStartDate] = React.useState<Date>(new Date())
+  const [startDate, setStartDate] = React.useState<Date | null>(null)
   const [resetDates, setResetDates] = React.useState<Date[]>([])
 
+  const [tempName, setTempName] = React.useState("")
+  const [tempDate, setTempDate] = React.useState<Date>(new Date())
+  const [tempHour, setTempHour] = React.useState(new Date().getHours())
+  const [tempMinute, setTempMinute] = React.useState(new Date().getMinutes())
+
   const t = TRANSLATIONS[language]
+  const isAr = language === 'ar'
 
   React.useEffect(() => {
     const savedLang = getFromStorage(STORAGE_KEYS.LANGUAGE) as 'ar' | 'en'
@@ -96,17 +128,26 @@ export function RecoveryTrackerApp() {
     }
   }, [])
 
+  const handleFinishSetup = () => {
+    const finalDate = setMinutes(setHours(tempDate, tempHour), tempMinute)
+    setHabitName(tempName)
+    setStartDate(finalDate)
+    
+    // عند إنشاء عداد جديد، يوم البداية هو يوم تصفير
+    const initialResets = [finalDate]
+    setResetDates(initialResets)
+
+    saveToStorage(STORAGE_KEYS.HABIT_NAME, tempName)
+    saveToStorage(STORAGE_KEYS.START_DATE, finalDate.toISOString())
+    saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(initialResets.map(d => d.toISOString())))
+    
+    setIsSetupOpen(false)
+    setSetupStep('name')
+  }
+
   const handleUpdateStartDate = (newDate: Date) => {
     const startOfNewDate = startOfDay(newDate);
-    
-    // منطق التطهير الصارم والمحمي:
-    // 1. نحافظ على أي انتكاسة حدثت قبل تاريخ البداية الجديد.
-    // 2. نحذف أي انتكاسات مسجلة بين التاريخ الجديد والوقت الحالي (تطهير).
-    // 3. نعتبر يوم البداية الجديد هو "يوم صفر" ويجب أن يظهر بالأحمر.
-    
     const filteredResets = resetDates.filter(rd => isBefore(startOfDay(rd), startOfNewDate));
-    
-    // إضافة تاريخ البداية الجديد للمجموعة لضمان ظهوره بالأحمر
     const finalResets = [...filteredResets, newDate];
 
     setStartDate(newDate);
@@ -119,10 +160,10 @@ export function RecoveryTrackerApp() {
     const dateToReset = targetDate || new Date()
     const startOfDate = startOfDay(dateToReset)
     
-    // إذا كان التصفير لليوم الحالي، نقوم بتحديث تاريخ البداية الكلي
     if (!targetDate || isSameDay(startOfDate, startOfDay(new Date()))) {
-      setStartDate(new Date())
-      saveToStorage(STORAGE_KEYS.START_DATE, new Date().toISOString())
+      const now = new Date()
+      setStartDate(now)
+      saveToStorage(STORAGE_KEYS.START_DATE, now.toISOString())
     }
     
     const isAlreadyRecorded = resetDates.some(rd => isSameDay(startOfDay(rd), startOfDate))
@@ -133,7 +174,7 @@ export function RecoveryTrackerApp() {
     }
   }
 
-  const handleUrgeAction = (targetDate?: Date) => {
+  const handleUrgeAction = () => {
     toast({ 
       title: language === 'ar' ? "تنبيه رغبة" : "Urge Recorded", 
       description: language === 'ar' ? "استمر في الصمود!" : "Keep fighting!",
@@ -155,7 +196,6 @@ export function RecoveryTrackerApp() {
   }
 
   const handleDeleteData = () => {
-    // التأكد من عمل زر الحذف بشكل مباشر وصحيح
     if (typeof window !== 'undefined') {
       const confirmed = window.confirm(t.confirmDelete);
       if (confirmed) {
@@ -163,6 +203,8 @@ export function RecoveryTrackerApp() {
       }
     }
   }
+
+  const hasHabit = habitName && startDate
 
   return (
     <div className="flex-1 flex flex-col items-center bg-background relative h-full overflow-hidden select-none touch-none" dir={language === 'ar' ? 'rtl' : 'ltr'}>
@@ -177,39 +219,123 @@ export function RecoveryTrackerApp() {
       </header>
 
       <main className="flex-1 w-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
-        <div className="text-center space-y-1 mb-2 shrink-0">
-          <p className="text-muted-foreground font-black text-[8px] uppercase tracking-[0.3em]">{t.journey}</p>
-          <h2 className="text-lg font-black tracking-tight">{t.stayStrong}</h2>
-        </div>
+        {hasHabit ? (
+          <>
+            <div className="text-center space-y-1 mb-2 shrink-0">
+              <p className="text-muted-foreground font-black text-[8px] uppercase tracking-[0.3em]">{t.journey}</p>
+              <h2 className="text-lg font-black tracking-tight">{t.stayStrong}</h2>
+            </div>
 
-        <div className="w-full flex-1 flex items-center justify-center min-h-0 overflow-hidden">
-          <TimerDisplay 
-            externalStartDate={startDate} 
-            externalHabitName={habitName}
-            externalAccentColor={accentColor}
-            resetDates={resetDates}
-            onOpenHistory={() => setIsHistoryOpen(true)}
-            onUpdateDate={handleUpdateStartDate}
-            onUpdateName={(name) => { setHabitName(name); saveToStorage(STORAGE_KEYS.HABIT_NAME, name); }}
-            onUpdateColor={(color) => { setAccentColor(color); saveToStorage(STORAGE_KEYS.HABIT_COLOR, color); }}
-            onReset={() => handleResetAction()}
-            onUrge={() => handleUrgeAction()}
-            language={language}
-          />
-        </div>
+            <div className="w-full flex-1 flex items-center justify-center min-h-0 overflow-hidden">
+              <TimerDisplay 
+                externalStartDate={startDate} 
+                externalHabitName={habitName}
+                externalAccentColor={accentColor}
+                resetDates={resetDates}
+                onOpenHistory={() => setIsHistoryOpen(true)}
+                onUpdateDate={handleUpdateStartDate}
+                onUpdateName={(name) => { setHabitName(name); saveToStorage(STORAGE_KEYS.HABIT_NAME, name); }}
+                onUpdateColor={(color) => { setAccentColor(color); saveToStorage(STORAGE_KEYS.HABIT_COLOR, color); }}
+                onReset={() => handleResetAction()}
+                onUrge={handleUrgeAction}
+                language={language}
+              />
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center space-y-4 animate-in fade-in zoom-in-95 duration-500">
+            <Button 
+              onClick={() => setIsSetupOpen(true)}
+              className="w-24 h-24 rounded-full bg-primary text-white shadow-2xl hover:scale-110 transition-transform flex items-center justify-center"
+            >
+              <Plus className="w-12 h-12" />
+            </Button>
+            <p className="text-sm font-black uppercase tracking-widest opacity-40">{t.addHabit}</p>
+          </div>
+        )}
       </main>
 
-      <JourneyLog 
-        isOpen={isHistoryOpen} 
-        onClose={() => setIsHistoryOpen(false)} 
-        startDate={startDate}
-        resetDates={resetDates}
-        habitName={habitName}
-        accentColor={accentColor}
-        onReset={handleResetAction}
-        onUrge={handleUrgeAction}
-        language={language}
-      />
+      {hasHabit && (
+        <JourneyLog 
+          isOpen={isHistoryOpen} 
+          onClose={() => setIsHistoryOpen(false)} 
+          startDate={startDate}
+          resetDates={resetDates}
+          habitName={habitName}
+          accentColor={accentColor}
+          onReset={handleResetAction}
+          onUrge={(date) => handleUrgeAction()}
+          language={language}
+        />
+      )}
+
+      {/* Setup Wizard Dialog */}
+      <Dialog open={isSetupOpen} onOpenChange={(open) => { setIsSetupOpen(open); if(!open) setSetupStep('name'); }}>
+        <DialogContent className="rounded-[2.5rem] p-6 max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle className="text-center font-black">
+              {setupStep === 'name' && t.setupTitle}
+              {setupStep === 'date' && t.stepDate}
+              {setupStep === 'hour' && t.stepHour}
+              {setupStep === 'minute' && t.stepMinute}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex flex-col items-center min-h-[350px] justify-center">
+            {setupStep === 'name' && (
+              <div className="w-full space-y-6">
+                <p className="text-center text-xs font-black uppercase opacity-40 tracking-widest">{t.enterName}</p>
+                <Input 
+                  value={tempName} 
+                  onChange={(e) => setTempName(e.target.value)}
+                  placeholder={isAr ? "مثال: الامتناع عن التدخين" : "e.g. Quitting Smoking"}
+                  className="h-14 rounded-2xl text-center font-bold text-lg shadow-inner"
+                />
+                <Button 
+                  disabled={!tempName.trim()}
+                  onClick={() => setSetupStep('date')}
+                  className="w-full h-14 rounded-2xl font-black shadow-lg"
+                >
+                  {t.save}
+                </Button>
+              </div>
+            )}
+            {setupStep === 'date' && (
+              <div className="w-full flex flex-col items-center">
+                <Calendar 
+                  mode="single" 
+                  selected={tempDate} 
+                  onSelect={(date) => { if(date) { setTempDate(date); setSetupStep('hour'); } }} 
+                  disabled={{ after: new Date() }}
+                  className="rounded-3xl border p-2" 
+                />
+                <Button variant="ghost" onClick={() => setSetupStep('name')} className="mt-4 font-black opacity-40 uppercase text-[10px] tracking-widest">
+                  {isAr ? "العودة للاسم" : "Back to Name"}
+                </Button>
+              </div>
+            )}
+            {setupStep === 'hour' && (
+              <div className="w-full">
+                <CircularTimePicker mode="hours" value={tempHour} onChange={setTempHour} onComplete={() => setSetupStep('minute')} />
+                <Button variant="ghost" onClick={() => setSetupStep('date')} className="w-full mt-2 font-black opacity-40 uppercase text-[10px] tracking-widest">
+                  {isAr ? "العودة للتقويم" : "Back to Calendar"}
+                </Button>
+              </div>
+            )}
+            {setupStep === 'minute' && (
+              <div className="w-full">
+                <CircularTimePicker mode="minutes" value={tempMinute} onChange={setTempMinute} onComplete={handleFinishSetup} />
+                <Button variant="ghost" onClick={() => setSetupStep('hour')} className="w-full mt-2 font-black opacity-40 uppercase text-[10px] tracking-widest">
+                  {isAr ? "العودة للساعة" : "Back to Hour"}
+                </Button>
+                <Button onClick={handleFinishSetup} className="w-full h-14 mt-4 rounded-2xl font-black shadow-lg">
+                  {isAr ? "بدء الالتزام" : "Start Journey"}
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <SidePanel isOpen={isAccountOpen} onClose={() => setIsAccountOpen(false)} side={language === 'ar' ? 'right' : 'left'} title={t.account}>
         <div className="flex flex-col items-center space-y-6 pt-4">
