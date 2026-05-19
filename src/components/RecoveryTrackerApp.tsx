@@ -54,7 +54,6 @@ export function RecoveryTrackerApp() {
   const handleUpdateStartDate = (date: Date) => {
     setStartDate(date)
     saveToStorage(STORAGE_KEYS.START_DATE, date.toISOString())
-    // Note: Manual update doesn't add to resetDates (it's a correction)
   }
 
   const handleResetAction = () => {
@@ -62,10 +61,17 @@ export function RecoveryTrackerApp() {
     setStartDate(now)
     saveToStorage(STORAGE_KEYS.START_DATE, now.toISOString())
     
-    // Mark this as a relapse/reset date in red
     const newResets = [...resetDates, now]
     setResetDates(newResets)
     saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(newResets.map(d => d.toISOString())))
+  }
+
+  const handleDeleteHistory = () => {
+    const now = new Date()
+    setStartDate(now)
+    setResetDates([])
+    saveToStorage(STORAGE_KEYS.START_DATE, now.toISOString())
+    saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify([]))
   }
 
   const handleUpdateName = (name: string) => {
@@ -108,6 +114,7 @@ export function RecoveryTrackerApp() {
             onUpdateName={handleUpdateName}
             onUpdateColor={handleUpdateColor}
             onReset={handleResetAction}
+            onDeleteHistory={handleDeleteHistory}
           />
         </div>
       </main>

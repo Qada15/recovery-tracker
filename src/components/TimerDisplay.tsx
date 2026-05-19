@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { MoreVertical, Edit2, Calendar as CalendarIcon, Trash2, Check, History, Flame } from "lucide-react"
+import { MoreVertical, Trash2, History, Flame } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -10,7 +10,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu"
 import {
   Dialog,
@@ -20,7 +19,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Calendar } from "@/components/ui/calendar"
 import { useToast } from "@/hooks/use-toast"
 
@@ -59,6 +57,7 @@ interface TimerDisplayProps {
   onUpdateName: (name: string) => void
   onUpdateColor: (color: string) => void
   onReset: () => void
+  onDeleteHistory: () => void
 }
 
 export function TimerDisplay({ 
@@ -69,7 +68,8 @@ export function TimerDisplay({
   onUpdateDate,
   onUpdateName,
   onUpdateColor,
-  onReset
+  onReset,
+  onDeleteHistory
 }: TimerDisplayProps) {
   const { toast } = useToast()
   const [elapsed, setElapsed] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
@@ -120,6 +120,11 @@ export function TimerDisplay({
     toast({ variant: "destructive", title: "إعادة تعيين", description: "بدأ العداد من جديد وتم تسجيل اليوم في السجل." })
   }
 
+  const handleDeleteClick = () => {
+    onDeleteHistory()
+    toast({ variant: "destructive", title: "تم الحذف", description: "تم تصفير العداد ومسح سجل الانتكاسات بالكامل." })
+  }
+
   const handleUrge = () => {
     toast({ 
       title: "تنبيه رغبة", 
@@ -153,6 +158,10 @@ export function TimerDisplay({
                   <button key={c.value} onClick={() => handleUpdateColor(c.value)} className="w-6 h-6 rounded-full border" style={{ backgroundColor: c.value }} />
                 ))}
               </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={handleDeleteClick} className="text-destructive font-bold">
+                حذف سجل العداد
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
