@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import { MoreVertical, Edit2, Calendar as CalendarIcon, Trash2, Check, History } from "lucide-react"
-import { getFromStorage, saveToStorage, STORAGE_KEYS } from "@/lib/storage"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -22,7 +21,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Calendar } from "@/components/ui/calendar"
-import { isValid, format } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 
 const COLORS = [
@@ -51,38 +49,35 @@ const TimeBox = React.memo(({ value, label, color }: { value: number; label: str
 })
 TimeBox.displayName = "TimeBox"
 
-export function TimerDisplay() {
+interface TimerDisplayProps {
+  externalStartDate: Date
+  externalHabitName: string
+  externalAccentColor: string
+  onOpenHistory: () => void
+  onUpdateDate: (date: Date) => void
+  onUpdateName: (name: string) => void
+  onUpdateColor: (color: string) => void
+}
+
+export function TimerDisplay({ 
+  externalStartDate, 
+  externalHabitName, 
+  externalAccentColor, 
+  onOpenHistory,
+  onUpdateDate,
+  onUpdateName,
+  onUpdateColor
+}: TimerDisplayProps) {
   const { toast } = useToast()
   
-  const [habitName, setHabitName] = React.useState("Abstinence")
-  const [accentColor, setAccentColor] = React.useState('hsl(var(--accent))')
-  const [startDate, setStartDate] = React.useState<Date>(new Date())
   const [elapsed, setElapsed] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
-
   const [showNameDialog, setShowNameDialog] = React.useState(false)
   const [showDateDialog, setShowDateDialog] = React.useState(false)
-  const [showHistoryDialog, setShowHistoryDialog] = React.useState(false)
-  const [tempHabitName, setTempHabitName] = React.useState("")
-
-  React.useEffect(() => {
-    const storedName = getFromStorage(STORAGE_KEYS.HABIT_NAME)
-    const storedColor = getFromStorage(STORAGE_KEYS.HABIT_COLOR)
-    const storedDate = getFromStorage(STORAGE_KEYS.START_DATE)
-
-    if (storedName) {
-      setHabitName(storedName)
-      setTempHabitName(storedName)
-    }
-    if (storedColor) setAccentColor(storedColor)
-    if (storedDate) {
-      const parsedDate = new Date(storedDate)
-      if (isValid(parsedDate)) setStartDate(parsedDate)
-    }
-  }, [])
+  const [tempHabitName, setTempHabitName] = React.useState(externalHabitName)
 
   React.useEffect(() => {
     const updateTimer = () => {
-      const start = startDate.getTime()
+      const start = externalStartDate.getTime()
       const now = new Date().getTime()
       const diff = now - start
       const d = Math.max(0, diff)
@@ -97,34 +92,30 @@ export function TimerDisplay() {
     updateTimer()
     const interval = setInterval(updateTimer, 1000)
     return () => clearInterval(interval)
-  }, [startDate])
+  }, [externalStartDate])
 
   const handleUpdateName = () => {
     if (!tempHabitName.trim()) return
-    saveToStorage(STORAGE_KEYS.HABIT_NAME, tempHabitName)
-    setHabitName(tempHabitName)
+    onUpdateName(tempHabitName)
     setTimeout(() => setShowNameDialog(false), 100)
     toast({ title: "تم التحديث", description: "تم تغيير اسم العادة بنجاح." })
   }
 
   const handleUpdateColor = (color: string) => {
-    saveToStorage(STORAGE_KEYS.HABIT_COLOR, color)
-    setAccentColor(color)
+    onUpdateColor(color)
     toast({ title: "تم التغيير", description: "تم تحديث لون العداد." })
   }
 
   const handleUpdateDate = (date: Date | undefined) => {
     if (!date) return
-    saveToStorage(STORAGE_KEYS.START_DATE, date.toISOString())
-    setStartDate(date)
+    onUpdateDate(date)
     setTimeout(() => setShowDateDialog(false), 100)
     toast({ title: "تم التعديل", description: "تم تغيير تاريخ البداية." })
   }
 
   const handleReset = () => {
     const now = new Date()
-    saveToStorage(STORAGE_KEYS.START_DATE, now.toISOString())
-    setStartDate(now)
+    onUpdateDate(now)
     toast({ title: "إعادة تعيين", description: "بدأ العداد من جديد الآن." })
   }
 
@@ -141,30 +132,30 @@ export function TimerDisplay() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64 p-3 shadow-2xl border-border/50 rounded-2xl z-[60]">
-              <DropdownMenuLabel className="text-[10px] font-black uppercase opacity-40 px-3 pb-2">لوحة التحكم</DropdownMenuLabel>
+              <DropdownMenuLabel className="text-[10px] font-black uppercase opacity-40 px-3 pb-2 text-right">لوحة التحكم</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
-                className="cursor-pointer py-4 rounded-xl"
+                className="cursor-pointer py-4 rounded-xl flex-row-reverse text-right"
                 onSelect={(e) => {
                   e.preventDefault();
-                  setTempHabitName(habitName);
+                  setTempHabitName(externalHabitName);
                   setTimeout(() => setShowNameDialog(true), 100);
                 }}
               >
-                <Edit2 className="mr-3 h-5 w-5" /> تعديل الاسم
+                <Edit2 className="ml-3 h-5 w-5" /> تعديل الاسم
               </DropdownMenuItem>
               <DropdownMenuItem 
-                className="cursor-pointer py-4 rounded-xl"
+                className="cursor-pointer py-4 rounded-xl flex-row-reverse text-right"
                 onSelect={(e) => {
                   e.preventDefault();
                   setTimeout(() => setShowDateDialog(true), 100);
                 }}
               >
-                <CalendarIcon className="mr-3 h-5 w-5" /> تاريخ البداية
+                <CalendarIcon className="ml-3 h-5 w-5" /> تاريخ البداية
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <div className="px-3 py-3">
-                <p className="text-[10px] font-black uppercase opacity-30 mb-3">لون المظهر</p>
+                <p className="text-[10px] font-black uppercase opacity-30 mb-3 text-right">لون المظهر</p>
                 <div className="grid grid-cols-6 gap-3">
                   {COLORS.map((c) => (
                     <button 
@@ -173,20 +164,20 @@ export function TimerDisplay() {
                       className="w-7 h-7 rounded-full border border-black/5 flex items-center justify-center transition-transform hover:scale-110 active:scale-95" 
                       style={{ backgroundColor: c.value }}
                     >
-                      {accentColor === c.value && <Check className="h-4 w-4 text-white" />}
+                      {externalAccentColor === c.value && <Check className="h-4 w-4 text-white" />}
                     </button>
                   ))}
                 </div>
               </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
-                className="text-destructive focus:bg-destructive/10 cursor-pointer py-4 rounded-xl" 
+                className="text-destructive focus:bg-destructive/10 cursor-pointer py-4 rounded-xl flex-row-reverse text-right" 
                 onSelect={(e) => {
                   e.preventDefault();
                   handleReset();
                 }}
               >
-                <Trash2 className="mr-3 h-5 w-5" /> إعادة ضبط (الآن)
+                <Trash2 className="ml-3 h-5 w-5" /> إعادة ضبط (الآن)
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -194,30 +185,30 @@ export function TimerDisplay() {
 
         {/* Display Title */}
         <div className="text-center mb-6 md:mb-10">
-          <h2 className="text-2xl md:text-4xl font-black text-foreground mb-2 tracking-tight">{habitName}</h2>
+          <h2 className="text-2xl md:text-4xl font-black text-foreground mb-2 tracking-tight">{externalHabitName}</h2>
           <div className="flex items-center justify-center space-x-3">
-            <span className="h-2.5 w-2.5 rounded-full animate-pulse" style={{ backgroundColor: accentColor }} />
+            <span className="h-2.5 w-2.5 rounded-full animate-pulse" style={{ backgroundColor: externalAccentColor }} />
             <span className="text-[10px] font-black uppercase tracking-[0.5em] opacity-30">عداد نشط</span>
           </div>
         </div>
         
         {/* Big Numbers Grid */}
         <div className="grid grid-cols-2 gap-x-8 gap-y-4 md:gap-y-6 w-full max-w-sm">
-          <TimeBox value={elapsed.days} label="أيام" color={accentColor} />
-          <TimeBox value={elapsed.hours} label="ساعات" color={accentColor} />
-          <TimeBox value={elapsed.minutes} label="دقائق" color={accentColor} />
-          <TimeBox value={elapsed.seconds} label="ثواني" color={accentColor} />
+          <TimeBox value={elapsed.days} label="أيام" color={externalAccentColor} />
+          <TimeBox value={elapsed.hours} label="ساعات" color={externalAccentColor} />
+          <TimeBox value={elapsed.minutes} label="دقائق" color={externalAccentColor} />
+          <TimeBox value={elapsed.seconds} label="ثواني" color={externalAccentColor} />
         </div>
         
         {/* Progress Visualizer */}
         <div className="mt-8 md:mt-12 w-32 h-2 bg-secondary rounded-full overflow-hidden shrink-0">
-          <div className="h-full transition-all duration-1000 ease-out" style={{ width: '100%', backgroundColor: accentColor }} />
+          <div className="h-full transition-all duration-1000 ease-out" style={{ width: '100%', backgroundColor: externalAccentColor }} />
         </div>
 
-        {/* History Button */}
+        {/* History Button - Now opens full page */}
         <Button 
           variant="ghost" 
-          onClick={() => setShowHistoryDialog(true)}
+          onClick={onOpenHistory}
           className="mt-6 rounded-full font-black text-[10px] uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity"
         >
           <History className="mr-2 h-4 w-4" /> سجل الرحلة
@@ -226,10 +217,10 @@ export function TimerDisplay() {
 
       {/* Global Dialogs */}
       <Dialog open={showNameDialog} onOpenChange={setShowNameDialog}>
-        <DialogContent className="rounded-[2.5rem] p-10 max-w-md border-none shadow-2xl z-[100]">
+        <DialogContent className="rounded-[2.5rem] p-10 max-w-md border-none shadow-2xl z-[110]">
           <DialogHeader><DialogTitle className="text-3xl font-black tracking-tight text-center">تعديل الاسم</DialogTitle></DialogHeader>
           <div className="py-8 space-y-4">
-            <Label className="text-xs font-black uppercase opacity-40 tracking-widest">اسم العادة الجديد</Label>
+            <Label className="text-xs font-black uppercase opacity-40 tracking-widest block text-center">اسم العادة الجديد</Label>
             <Input 
               autoFocus
               value={tempHabitName} 
@@ -246,42 +237,16 @@ export function TimerDisplay() {
       </Dialog>
 
       <Dialog open={showDateDialog} onOpenChange={setShowDateDialog}>
-        <DialogContent className="rounded-[2.5rem] p-6 flex flex-col items-center max-w-[400px] border-none shadow-2xl z-[100]">
-          <DialogHeader className="mb-4 text-center w-full"><DialogTitle className="text-2xl font-black">تحديد تاريخ البداية</DialogTitle></DialogHeader>
+        <DialogContent className="rounded-[2.5rem] p-6 flex flex-col items-center max-w-[400px] border-none shadow-2xl z-[110]">
+          <DialogHeader className="mb-4 text-center w-full"><DialogTitle className="text-2xl font-black text-center">تحديد تاريخ البداية</DialogTitle></DialogHeader>
           <div className="bg-secondary/20 p-4 rounded-3xl w-full flex justify-center">
             <Calendar 
               mode="single" 
-              selected={startDate} 
+              selected={externalStartDate} 
               onSelect={handleUpdateDate} 
-              className="rounded-3xl bg-white border shadow-sm w-full max-w-[320px]" 
+              className="rounded-3xl bg-white border shadow-sm" 
             />
           </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* History Dialog */}
-      <Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
-        <DialogContent className="rounded-[2.5rem] p-8 flex flex-col items-center max-w-[400px] border-none shadow-2xl z-[100]">
-          <DialogHeader className="mb-4 text-center w-full">
-            <DialogTitle className="text-2xl font-black">سجل الرحلة</DialogTitle>
-            <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest mt-2">
-              تاريخ البدء: {format(startDate, 'yyyy/MM/dd')}
-            </p>
-          </DialogHeader>
-          <div className="bg-secondary/10 p-4 rounded-[2rem] border border-primary/5 w-full flex justify-center">
-            <Calendar 
-              mode="single" 
-              selected={startDate} 
-              className="rounded-3xl pointer-events-none bg-white border shadow-sm w-full max-w-[320px]" 
-            />
-          </div>
-          <Button 
-            variant="secondary" 
-            onClick={() => setShowHistoryDialog(false)}
-            className="w-full mt-6 h-14 rounded-2xl font-black"
-          >
-            إغلاق
-          </Button>
         </DialogContent>
       </Dialog>
     </div>
