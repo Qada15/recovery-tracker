@@ -8,7 +8,7 @@ import { SidePanel } from "@/components/SidePanel"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
 import { saveToStorage, getFromStorage, STORAGE_KEYS } from "@/lib/storage"
-import { isValid, parseISO, startOfDay } from "date-fns"
+import { isValid, parseISO, startOfDay, isAfter, isBefore, isSameDay } from "date-fns"
 
 export function RecoveryTrackerApp() {
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false)
@@ -51,18 +51,25 @@ export function RecoveryTrackerApp() {
     document.body.style.height = '100%'
   }, [])
 
+  /**
+   * Logic: Data Purging and Rule Enforcement
+   * 1. Remove relapses between newStartDate and Today (Cleanse range)
+   * 2. Relapses before newStartDate remain unchanged (Exception Rule)
+   */
   const handleUpdateStartDate = (newDate: Date) => {
     const now = new Date();
+    const startTime = startOfDay(newDate).getTime();
+    const todayTime = startOfDay(now).getTime();
     
-    // Logic: Delete and remove any relapse (red color) recorded between the new start date and the current day
-    // This makes those days "clean" (green) automatically in the JourneyLog
+    // Filter reset dates based on the strict rule
     const filteredResets = resetDates.filter(rd => {
-      const time = rd.getTime();
-      const startTime = newDate.getTime();
-      const endTime = now.getTime();
+      const rdTime = startOfDay(rd).getTime();
       
-      // Keep reset dates that are OUTSIDE the range [newDate, now]
-      return time < startTime || time > endTime;
+      // Rule 1: Purge relapses in the range [newStartDate, today]
+      const isInCleanseRange = rdTime >= startTime && rdTime <= todayTime;
+      
+      // Keep it if it's outside the cleanse range (mostly if it's BEFORE the new start date)
+      return !isInCleanseRange;
     });
 
     setStartDate(newDate);
@@ -77,9 +84,13 @@ export function RecoveryTrackerApp() {
     setStartDate(now)
     saveToStorage(STORAGE_KEYS.START_DATE, now.toISOString())
     
-    const newResets = [...resetDates, now]
-    setResetDates(newResets)
-    saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(newResets.map(d => d.toISOString())))
+    // Check if this date is already recorded to avoid duplicates
+    const isAlreadyRecorded = resetDates.some(rd => isSameDay(startOfDay(rd), startOfDay(now)))
+    if (!isAlreadyRecorded) {
+      const newResets = [...resetDates, now]
+      setResetDates(newResets)
+      saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(newResets.map(d => d.toISOString())))
+    }
   }
 
   const handleUpdateName = (name: string) => {
@@ -105,7 +116,7 @@ export function RecoveryTrackerApp() {
         </Button>
       </header>
 
-      {/* Content Area - No Scroll */}
+      {/* Content Area - Strictly No Scroll */}
       <main className="flex-1 w-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
         <div className="text-center space-y-1 mb-2 shrink-0">
           <p className="text-muted-foreground font-black text-[8px] uppercase tracking-[0.3em]">Your Journey</p>

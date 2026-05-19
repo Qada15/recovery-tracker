@@ -29,10 +29,10 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
       const start = startOfDay(startDate)
       const now = startOfDay(today)
       
-      // A day is clean if it's between startDate and today
+      // A day is clean if it's between current startDate and today
       const isWithinStreak = (isAfter(d, start) || isSameDay(d, start)) && (isBefore(d, now) || isSameDay(d, now))
       
-      // If it's a relapse day, we don't mark it as clean to let Red take priority
+      // If it's recorded as a relapse, Red takes priority
       const isRelapse = resetDates.some(rd => isSameDay(startOfDay(rd), d))
       
       return isWithinStreak && !isRelapse
@@ -54,7 +54,7 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
         <h2 className="text-sm font-black uppercase tracking-tighter">سجل الالتزام</h2>
       </header>
 
-      {/* Main Content - No Scroll */}
+      {/* Main Content - No Scroll, Focused */}
       <main className="flex-1 flex flex-col items-center justify-center p-6 overflow-hidden">
         <div className="text-center mb-6 shrink-0">
           <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-1">{habitName}</p>
@@ -64,13 +64,13 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
           </div>
         </div>
 
-        {/* Calendar Box */}
+        {/* Calendar Box - Strictly Horizontal 7 cols */}
         <div className="w-full max-w-[360px] bg-white rounded-[2.5rem] border shadow-2xl p-4 flex items-center justify-center overflow-hidden">
           <Calendar 
             mode="single" 
             className="w-full"
             numberOfMonths={1}
-            disabled={{ after: today }} // Strictly disable future interaction
+            disabled={{ after: today }} 
             modifiers={modifiers}
             modifiersClassNames={modifiersClassNames}
           />
