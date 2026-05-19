@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -215,7 +214,7 @@ export function TimerDisplay() {
           <div className="h-full transition-all duration-1000 ease-out" style={{ width: '100%', backgroundColor: accentColor }} />
         </div>
 
-        {/* History Button - New */}
+        {/* History Button */}
         <Button 
           variant="ghost" 
           onClick={() => setShowHistoryDialog(true)}
@@ -228,14 +227,14 @@ export function TimerDisplay() {
       {/* Global Dialogs */}
       <Dialog open={showNameDialog} onOpenChange={setShowNameDialog}>
         <DialogContent className="rounded-[2.5rem] p-10 max-w-md border-none shadow-2xl z-[100]">
-          <DialogHeader><DialogTitle className="text-3xl font-black tracking-tight">تعديل الاسم</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="text-3xl font-black tracking-tight text-center">تعديل الاسم</DialogTitle></DialogHeader>
           <div className="py-8 space-y-4">
             <Label className="text-xs font-black uppercase opacity-40 tracking-widest">اسم العادة الجديد</Label>
             <Input 
               autoFocus
               value={tempHabitName} 
               onChange={(e) => setTempHabitName(e.target.value)} 
-              className="h-16 rounded-2xl font-bold text-xl border-secondary bg-secondary/20 focus:bg-white transition-all" 
+              className="h-16 rounded-2xl font-bold text-xl border-secondary bg-secondary/20 focus:bg-white transition-all text-center" 
             />
           </div>
           <DialogFooter>
@@ -247,33 +246,33 @@ export function TimerDisplay() {
       </Dialog>
 
       <Dialog open={showDateDialog} onOpenChange={setShowDateDialog}>
-        <DialogContent className="rounded-[2.5rem] p-6 flex flex-col items-center max-w-sm border-none shadow-2xl z-[100]">
-          <DialogHeader className="mb-4"><DialogTitle className="text-2xl font-black">تحديد تاريخ البداية</DialogTitle></DialogHeader>
-          <div className="bg-secondary/20 p-4 rounded-3xl">
+        <DialogContent className="rounded-[2.5rem] p-6 flex flex-col items-center max-w-[400px] border-none shadow-2xl z-[100]">
+          <DialogHeader className="mb-4 text-center w-full"><DialogTitle className="text-2xl font-black">تحديد تاريخ البداية</DialogTitle></DialogHeader>
+          <div className="bg-secondary/20 p-4 rounded-3xl w-full flex justify-center">
             <Calendar 
               mode="single" 
               selected={startDate} 
               onSelect={handleUpdateDate} 
-              className="rounded-3xl" 
+              className="rounded-3xl bg-white border shadow-sm" 
             />
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* History Dialog - New */}
+      {/* History Dialog */}
       <Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
-        <DialogContent className="rounded-[2.5rem] p-8 flex flex-col items-center max-w-sm border-none shadow-2xl z-[100]">
-          <DialogHeader className="mb-4 text-center">
+        <DialogContent className="rounded-[2.5rem] p-8 flex flex-col items-center max-w-[400px] border-none shadow-2xl z-[100]">
+          <DialogHeader className="mb-4 text-center w-full">
             <DialogTitle className="text-2xl font-black">سجل الرحلة</DialogTitle>
             <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest mt-2">
               تاريخ البدء: {format(startDate, 'yyyy/MM/dd')}
             </p>
           </DialogHeader>
-          <div className="bg-secondary/10 p-4 rounded-[2rem] border border-primary/5">
+          <div className="bg-secondary/10 p-4 rounded-[2rem] border border-primary/5 w-full flex justify-center">
             <Calendar 
               mode="single" 
               selected={startDate} 
-              className="rounded-3xl pointer-events-none" 
+              className="rounded-3xl pointer-events-none bg-white border shadow-sm" 
             />
           </div>
           <Button 
