@@ -35,14 +35,14 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
       const start = startOfDay(startDate)
       const now = startOfDay(today)
       
-      // الأيام النظيفة تبدأ من اليوم التالي ليوم البداية وحتى اليوم الحالي
-      const isAfterStart = isAfter(d, start)
+      // الأيام النظيفة تبدأ حصراً من اليوم التالي ليوم البداية وحتى اليوم الحالي
+      const isStrictlyAfterStart = isAfter(d, start)
       const isBeforeOrEqualToday = isBefore(d, now) || isSameDay(d, now)
       
-      // لا يلون بالأخضر إذا كان يوماً مسجلاً كزلة (الأحمر يطغى)
+      // لا يلون بالأخضر إذا كان يوماً مسجلاً كزلة أو هو يوم البداية
       const isRelapseDate = isSameDay(d, start) || resetDates.some(rd => isSameDay(startOfDay(rd), d))
       
-      return isAfterStart && isBeforeOrEqualToday && !isRelapseDate
+      return isStrictlyAfterStart && isBeforeOrEqualToday && !isRelapseDate
     }
   }
 

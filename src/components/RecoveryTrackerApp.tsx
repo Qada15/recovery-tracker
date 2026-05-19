@@ -56,22 +56,27 @@ export function RecoveryTrackerApp() {
     const startOfToday = startOfDay(now);
     
     // منطق التطهير الصارم:
-    // نحذف فقط الانتكاسات التي تقع بـعـد تاريخ البداية الجديد وحتى اليوم
-    // أي تاريخ يسبق تاريخ البداية الجديد أو يساويه يظل كما هو (محمي)
+    // 1. نحذف فقط الانتكاسات التي تقع بـعـد تاريخ البداية الجديد وحتى اليوم
+    // 2. نستثني (نحمي) يوم البداية الجديد والايام التي تسبقه
     const filteredResets = resetDates.filter(rd => {
       const rdDate = startOfDay(rd);
-      const isAfterNewStart = isAfter(rdDate, startOfNewDate);
+      // الشرط: هل يقع التاريخ في نطاق الحذف؟ (بعد البداية الجديدة وقبل أو في اليوم الحالي)
+      const isStrictlyAfterNewStart = isAfter(rdDate, startOfNewDate);
       const isBeforeOrEqualToday = isBefore(rdDate, startOfToday) || isSameDay(rdDate, startOfToday);
       
-      const shouldPurge = isAfterNewStart && isBeforeOrEqualToday;
-      return !shouldPurge;
+      const shouldPurge = isStrictlyAfterNewStart && isBeforeOrEqualToday;
+      return !shouldPurge; // نحتفظ به إذا لم يكن ضمن نطاق التطهير
     });
 
+    // نضمن أن يوم البداية الجديد مسجل كـ "تصفير" ليبقى أحمر دائماً
+    const isNewStartAlreadyRecorded = filteredResets.some(rd => isSameDay(startOfDay(rd), startOfNewDate));
+    const finalResets = isNewStartAlreadyRecorded ? filteredResets : [...filteredResets, newDate];
+
     setStartDate(newDate);
-    setResetDates(filteredResets);
+    setResetDates(finalResets);
     
     saveToStorage(STORAGE_KEYS.START_DATE, newDate.toISOString());
-    saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(filteredResets.map(d => d.toISOString())));
+    saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(finalResets.map(d => d.toISOString())));
   }
 
   const handleResetAction = () => {
