@@ -52,25 +52,32 @@ export function RecoveryTrackerApp() {
     const startOfNewDate = startOfDay(newDate);
     const startOfToday = startOfDay(new Date());
     
-    // تطهير الأيام التي تلي تاريخ البداية الجديد
+    // منطق التطهير الصارم: حذف الانتكاسات التي تقع بين التاريخ الجديد واليوم فقط
     const filteredResets = resetDates.filter(rd => {
       const rdDate = startOfDay(rd);
-      const isStrictlyAfterNewStart = isAfter(rdDate, startOfNewDate);
-      const isBeforeOrEqualToday = isBefore(rdDate, startOfToday) || isSameDay(rdDate, startOfToday);
-      return !(isStrictlyAfterNewStart && isBeforeOrEqualToday);
+      // حماية الماضي: إذا كان التاريخ يسبق أو يساوي تاريخ البداية الجديد، نحتفظ به
+      if (isBefore(rdDate, startOfNewDate) || isSameDay(rdDate, startOfNewDate)) {
+        return true;
+      }
+      // إذا كان التاريخ بعد تاريخ البداية الجديد وقبل اليوم، نحذفه (تطهير)
+      return false;
     });
 
+    // إضافة يوم البداية الجديد كـ "تصفير" (أحمر) دائماً
+    const finalResets = filteredResets.some(rd => isSameDay(rd, startOfNewDate))
+      ? filteredResets 
+      : [...filteredResets, startOfNewDate];
+
     setStartDate(newDate);
-    setResetDates(filteredResets);
+    setResetDates(finalResets);
     saveToStorage(STORAGE_KEYS.START_DATE, newDate.toISOString());
-    saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(filteredResets.map(d => d.toISOString())));
+    saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(finalResets.map(d => d.toISOString())));
   }
 
   const handleResetAction = (targetDate?: Date) => {
     const dateToReset = targetDate || new Date()
     const startOfDate = startOfDay(dateToReset)
     
-    // إذا كان التاريخ المختار هو اليوم الحالي أو لم يتم تمرير تاريخ، نقوم بتحديث العداد الرئيسي
     if (!targetDate || isSameDay(startOfDate, startOfDay(new Date()))) {
       setStartDate(new Date())
       saveToStorage(STORAGE_KEYS.START_DATE, new Date().toISOString())
@@ -132,6 +139,7 @@ export function RecoveryTrackerApp() {
             externalStartDate={startDate} 
             externalHabitName={habitName}
             externalAccentColor={accentColor}
+            resetDates={resetDates}
             onOpenHistory={() => setIsHistoryOpen(true)}
             onUpdateDate={handleUpdateStartDate}
             onUpdateName={handleUpdateName}

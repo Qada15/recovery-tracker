@@ -21,7 +21,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
 import { useToast } from "@/hooks/use-toast"
-import { isAfter, startOfDay } from "date-fns"
+import { isAfter, isBefore, isSameDay, startOfDay } from "date-fns"
 
 const COLORS = [
   { name: 'Default', value: 'hsl(var(--accent))' },
@@ -53,6 +53,7 @@ interface TimerDisplayProps {
   externalStartDate: Date
   externalHabitName: string
   externalAccentColor: string
+  resetDates: Date[]
   onOpenHistory: () => void
   onUpdateDate: (date: Date) => void
   onUpdateName: (name: string) => void
@@ -65,6 +66,7 @@ export function TimerDisplay({
   externalStartDate, 
   externalHabitName, 
   externalAccentColor, 
+  resetDates,
   onOpenHistory,
   onUpdateDate,
   onUpdateName,
@@ -120,11 +122,35 @@ export function TimerDisplay({
     toast({ title: "تم التعديل", description: "تم تغيير تاريخ البداية وتحديث السجل." })
   }
 
+  const today = startOfDay(new Date())
+  const start = startOfDay(externalStartDate)
+
+  const isRelapse = (date: Date) => {
+    const d = startOfDay(date)
+    return resetDates.some(rd => isSameDay(startOfDay(rd), d)) || isSameDay(d, start)
+  }
+
+  const isClean = (date: Date) => {
+    const d = startOfDay(date)
+    const isStrictlyAfterStart = isAfter(d, start)
+    const isBeforeOrEqualToday = isBefore(d, today) || isSameDay(d, today)
+    return isStrictlyAfterStart && isBeforeOrEqualToday && !isRelapse(d)
+  }
+
+  const modifiers = {
+    relapse: (date: Date) => isRelapse(date),
+    clean: (date: Date) => isClean(date)
+  }
+
+  const modifiersClassNames = {
+    relapse: "bg-red-500 text-white hover:bg-red-600 rounded-full font-black shadow-inner scale-110 z-10",
+    clean: "bg-emerald-500 text-white hover:bg-emerald-600 rounded-full font-black opacity-90"
+  }
+
   return (
     <div className="relative w-full max-w-[600px] flex-1 flex flex-col items-center justify-center p-2 min-h-0 overflow-hidden">
       <div className="w-full bg-white rounded-[2.5rem] shadow-2xl border flex flex-col items-center justify-center p-6 md:p-10 relative overflow-hidden max-h-full">
         
-        {/* Settings Menu */}
         <div className="absolute top-4 right-4 z-20">
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
@@ -149,7 +175,6 @@ export function TimerDisplay({
           </DropdownMenu>
         </div>
 
-        {/* Habit Header */}
         <div className="text-center mb-4">
           <h2 className="text-xl md:text-3xl font-black text-foreground mb-1">{externalHabitName}</h2>
           <div className="flex items-center justify-center space-x-2">
@@ -158,7 +183,6 @@ export function TimerDisplay({
           </div>
         </div>
         
-        {/* Timer Grid */}
         <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
           <TimeBox value={elapsed.days} label="أيام" color={externalAccentColor} />
           <TimeBox value={elapsed.hours} label="ساعات" color={externalAccentColor} />
@@ -166,7 +190,6 @@ export function TimerDisplay({
           <TimeBox value={elapsed.seconds} label="ثواني" color={externalAccentColor} />
         </div>
         
-        {/* Action Buttons */}
         <div className="flex gap-3 w-full max-w-[320px] mt-8 shrink-0">
           <Button onClick={onUrge} className="flex-1 h-12 rounded-2xl font-black bg-orange-500 hover:bg-orange-600 text-white shadow-lg">
             <Flame className="ml-2 h-4 w-4" /> رغبة
@@ -176,13 +199,11 @@ export function TimerDisplay({
           </Button>
         </div>
 
-        {/* History Button */}
         <Button variant="ghost" onClick={onOpenHistory} className="mt-4 rounded-full font-black text-[10px] uppercase opacity-40 hover:opacity-100">
           <History className="mr-2 h-3.5 w-3.5" /> سجل الرحلة
         </Button>
       </div>
 
-      {/* Name Dialog */}
       <Dialog open={showNameDialog} onOpenChange={setShowNameDialog}>
         <DialogContent className="rounded-[2.5rem] p-8 max-w-md">
           <DialogHeader><DialogTitle className="text-center font-black">تعديل الاسم</DialogTitle></DialogHeader>
@@ -191,17 +212,18 @@ export function TimerDisplay({
         </DialogContent>
       </Dialog>
 
-      {/* Date Picker Dialog */}
       <Dialog open={showDateDialog} onOpenChange={setShowDateDialog}>
         <DialogContent className="rounded-[2.5rem] p-6 max-w-[400px]">
           <DialogHeader><DialogTitle className="text-center font-black">تحديد تاريخ البداية</DialogTitle></DialogHeader>
-          <div className="flex justify-center bg-secondary/20 p-4 rounded-3xl">
+          <div className="flex justify-center bg-secondary/20 p-2 rounded-3xl">
             <Calendar 
               mode="single" 
               selected={externalStartDate} 
               onSelect={handleUpdateDate} 
               disabled={{ after: new Date() }}
-              className="rounded-3xl bg-white border shadow-sm" 
+              modifiers={modifiers}
+              modifiersClassNames={modifiersClassNames}
+              className="rounded-3xl bg-white border shadow-sm p-2" 
             />
           </div>
         </DialogContent>
