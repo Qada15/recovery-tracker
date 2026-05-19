@@ -44,34 +44,26 @@ export function RecoveryTrackerApp() {
       }
     }
     
-    // Prevent body bounce/scroll for native app feel
     document.body.style.overflow = 'hidden'
     document.body.style.position = 'fixed'
     document.body.style.width = '100%'
     document.body.style.height = '100%'
   }, [])
 
-  /**
-   * منطق التطهير الصارم:
-   * 1. حذف الانتكاسات التي تقع بـين تاريخ البداية الجديد واليوم الحالي.
-   * 2. استثناء يوم البداية الجديد نفسه (يبقى أحمر إذا كان كذلك).
-   * 3. استثناء الأيام التي تسبق تاريخ البداية (تبقى كما هي).
-   */
   const handleUpdateStartDate = (newDate: Date) => {
     const now = new Date();
     const startOfNewDate = startOfDay(newDate);
     const startOfToday = startOfDay(now);
     
+    // منطق التطهير الصارم:
+    // نحذف فقط الانتكاسات التي تقع بـعـد تاريخ البداية الجديد وحتى اليوم
+    // أي تاريخ يسبق تاريخ البداية الجديد أو يساويه يظل كما هو (محمي)
     const filteredResets = resetDates.filter(rd => {
       const rdDate = startOfDay(rd);
-      
-      // القاعدة: احذف فقط إذا كان اليوم بـعـد تاريخ البداية الجديد وقبل أو يساوي اليوم الحالي
       const isAfterNewStart = isAfter(rdDate, startOfNewDate);
       const isBeforeOrEqualToday = isBefore(rdDate, startOfToday) || isSameDay(rdDate, startOfToday);
       
       const shouldPurge = isAfterNewStart && isBeforeOrEqualToday;
-      
-      // إذا كان يجب التطهير، نعيد false للحذف من المصفوفة
       return !shouldPurge;
     });
 
@@ -87,7 +79,6 @@ export function RecoveryTrackerApp() {
     setStartDate(now)
     saveToStorage(STORAGE_KEYS.START_DATE, now.toISOString())
     
-    // Check if this date is already recorded to avoid duplicates
     const isAlreadyRecorded = resetDates.some(rd => isSameDay(startOfDay(rd), startOfDay(now)))
     if (!isAlreadyRecorded) {
       const newResets = [...resetDates, now]
@@ -108,7 +99,6 @@ export function RecoveryTrackerApp() {
 
   return (
     <div className="flex-1 flex flex-col items-center bg-background relative h-full overflow-hidden select-none touch-none">
-      {/* Top Header */}
       <header className="w-full h-14 md:h-16 bg-white border-b flex items-center justify-between px-6 shadow-sm z-40 shrink-0">
         <Button variant="ghost" size="icon" onClick={() => setIsAccountOpen(true)} className="rounded-full">
           <User className="h-5 w-5" />
@@ -119,7 +109,6 @@ export function RecoveryTrackerApp() {
         </Button>
       </header>
 
-      {/* Content Area - Strictly No Scroll */}
       <main className="flex-1 w-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
         <div className="text-center space-y-1 mb-2 shrink-0">
           <p className="text-muted-foreground font-black text-[8px] uppercase tracking-[0.3em]">Your Journey</p>
@@ -140,7 +129,6 @@ export function RecoveryTrackerApp() {
         </div>
       </main>
 
-      {/* Full Screen History Log */}
       <JourneyLog 
         isOpen={isHistoryOpen} 
         onClose={() => setIsHistoryOpen(false)} 
@@ -150,7 +138,6 @@ export function RecoveryTrackerApp() {
         accentColor={accentColor}
       />
 
-      {/* Side Panels */}
       <SidePanel isOpen={isAccountOpen} onClose={() => setIsAccountOpen(false)} side="left" title="Account">
         <div className="flex flex-col items-center space-y-6 pt-4">
           <div className="w-20 h-20 bg-accent/10 rounded-full flex items-center justify-center">

@@ -21,12 +21,11 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
 
   const today = new Date()
 
-  // منطق الملقبات (Modifiers): الانتكاسة (أحمر) والالتزام (أخضر)
   const modifiers = {
     relapse: (date: Date) => {
       const d = startOfDay(date)
       const start = startOfDay(startDate)
-      // يعتبر اليوم انتكاسة إذا كان هو يوم البداية (يوم التصفير) أو مسجلاً في قائمة الانتكاسات
+      // يوم البداية يلون بالأحمر دائماً + أي زلة مسجلة في resetDates
       const isStartDay = isSameDay(d, start)
       const isRecordedRelapse = resetDates.some(rd => isSameDay(startOfDay(rd), d))
       return isStartDay || isRecordedRelapse
@@ -36,14 +35,14 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
       const start = startOfDay(startDate)
       const now = startOfDay(today)
       
-      // اليوم النظيف يبدأ بـعـد يوم البداية وحتى اليوم الحالي
+      // الأيام النظيفة تبدأ من اليوم التالي ليوم البداية وحتى اليوم الحالي
       const isAfterStart = isAfter(d, start)
       const isBeforeOrEqualToday = isBefore(d, now) || isSameDay(d, now)
       
-      // إذا كان مسجلاً كانتكاسة، الأحمر له الأولوية
-      const isRelapse = resetDates.some(rd => isSameDay(startOfDay(rd), d))
+      // لا يلون بالأخضر إذا كان يوماً مسجلاً كزلة (الأحمر يطغى)
+      const isRelapseDate = isSameDay(d, start) || resetDates.some(rd => isSameDay(startOfDay(rd), d))
       
-      return isAfterStart && isBeforeOrEqualToday && !isRelapse
+      return isAfterStart && isBeforeOrEqualToday && !isRelapseDate
     }
   }
 
@@ -54,7 +53,6 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
 
   return (
     <div className="fixed inset-0 z-[100] bg-background flex flex-col animate-in fade-in slide-in-from-bottom-5 duration-300 overflow-hidden select-none">
-      {/* Header */}
       <header className="w-full h-14 border-b flex items-center px-4 bg-white/80 backdrop-blur-md shrink-0">
         <Button variant="ghost" size="icon" onClick={onClose} className="mr-2 rounded-full h-10 w-10">
           <ArrowLeft className="h-5 w-5" />
@@ -62,7 +60,6 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
         <h2 className="text-sm font-black uppercase tracking-tighter">سجل الالتزام</h2>
       </header>
 
-      {/* Main Content - No Scroll */}
       <main className="flex-1 flex flex-col items-center justify-center p-6 overflow-hidden">
         <div className="text-center mb-6 shrink-0">
           <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-1">{habitName}</p>
@@ -72,7 +69,6 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
           </div>
         </div>
 
-        {/* Calendar Box */}
         <div className="w-full max-w-[360px] bg-white rounded-[2.5rem] border shadow-2xl p-4 flex items-center justify-center overflow-hidden">
           <Calendar 
             mode="single" 
@@ -84,7 +80,6 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
           />
         </div>
         
-        {/* Legend */}
         <div className="mt-8 flex flex-col space-y-3 shrink-0">
           <div className="flex items-center space-x-3">
             <div className="w-4 h-4 bg-emerald-500 rounded-full shadow-sm" />
@@ -97,7 +92,6 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
         </div>
       </main>
 
-      {/* Footer Button */}
       <div className="p-6 border-t bg-white/80 backdrop-blur-md shrink-0">
         <Button 
           onClick={onClose} 
