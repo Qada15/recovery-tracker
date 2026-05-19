@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Calendar as CalendarIcon, Flame, Trash2, Settings2, X, Check } from "lucide-react"
+import { Calendar as CalendarIcon, Flame, Trash2, Settings2, X, Check, ChevronLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { format, isAfter, isBefore, isSameDay, startOfDay, setHours, setMinutes } from "date-fns"
@@ -92,8 +92,12 @@ export function JourneyLog({
 
   return (
     <div className="fixed inset-0 z-[100] bg-background flex flex-col animate-in fade-in slide-in-from-bottom-5 duration-300 overflow-hidden" dir={isAr ? 'rtl' : 'ltr'}>
-      <header className="w-full h-14 border-b flex items-center justify-center px-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shrink-0">
+      <header className="w-full h-14 border-b flex items-center justify-between px-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shrink-0">
+        <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full">
+          <ChevronLeft className={`h-6 w-6 ${isAr ? 'rotate-180' : ''}`} />
+        </Button>
         <h2 className="text-sm font-black uppercase tracking-tighter">{isAr ? "سجل الالتزام" : "Commitment Log"}</h2>
+        <div className="w-10" />
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden">
@@ -178,12 +182,6 @@ export function JourneyLog({
           )}
         </div>
       </main>
-
-      <div className="p-6 border-t bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shrink-0">
-        <Button onClick={onClose} className="w-full h-14 rounded-2xl text-base font-black shadow-lg text-white" style={{ backgroundColor: accentColor }}>
-          {isAr ? "العودة للعداد" : "Back to Timer"}
-        </Button>
-      </div>
 
       <Dialog open={showTimePicker} onOpenChange={setShowTimePicker}>
         <DialogContent className="rounded-[2.5rem] p-6 max-w-[420px] z-[200]">
