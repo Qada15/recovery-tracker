@@ -1,8 +1,7 @@
-
 "use client"
 
 import * as React from "react"
-import { MoreVertical, Trash2, History, Flame } from "lucide-react"
+import { MoreVertical, Trash2, History, Flame, ArrowRight, ArrowLeft, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -16,12 +15,12 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
 import { useToast } from "@/hooks/use-toast"
-import { isAfter, isBefore, isSameDay, startOfDay } from "date-fns"
+import { isAfter, isBefore, isSameDay, startOfDay, setHours, setMinutes } from "date-fns"
+import { CircularTimePicker } from "./CircularTimePicker"
 
 const COLORS = [
   { name: 'Default', value: 'hsl(var(--accent))' },
@@ -62,6 +61,8 @@ interface TimerDisplayProps {
   onUrge: () => void
 }
 
+type SetupStep = 'date' | 'hour' | 'minute'
+
 export function TimerDisplay({ 
   externalStartDate, 
   externalHabitName, 
@@ -79,6 +80,12 @@ export function TimerDisplay({
   const [showNameDialog, setShowNameDialog] = React.useState(false)
   const [showDateDialog, setShowDateDialog] = React.useState(false)
   const [tempHabitName, setTempHabitName] = React.useState(externalHabitName)
+  
+  // مراحل تعيين الوقت
+  const [setupStep, setSetupStep] = React.useState<SetupStep>('date')
+  const [selectedDate, setSelectedDate] = React.useState<Date>(externalStartDate)
+  const [selectedHour, setSelectedHour] = React.useState(externalStartDate.getHours())
+  const [selectedMinute, setSelectedMinute] = React.useState(externalStartDate.getMinutes())
 
   React.useEffect(() => {
     const updateTimer = () => {
@@ -111,15 +118,28 @@ export function TimerDisplay({
     toast({ title: "تم التغيير", description: "تم تحديث لون العداد." })
   }
 
-  const handleUpdateDate = (date: Date | undefined) => {
+  const handleDateSelect = (date: Date | undefined) => {
     if (!date) return
     if (isAfter(startOfDay(date), startOfDay(new Date()))) {
       toast({ variant: "destructive", title: "خطأ", description: "لا يمكن اختيار تاريخ مستقبلي." })
       return
     }
-    onUpdateDate(date)
+    setSelectedDate(date)
+    setSetupStep('hour')
+  }
+
+  const handleSaveFullDate = () => {
+    const finalDate = setMinutes(setHours(selectedDate, selectedHour), selectedMinute)
+    
+    if (isAfter(finalDate, new Date())) {
+      toast({ variant: "destructive", title: "خطأ", description: "الوقت المحدد في المستقبل." })
+      return
+    }
+
+    onUpdateDate(finalDate)
     setShowDateDialog(false)
-    toast({ title: "تم التعديل", description: "تم تغيير تاريخ البداية وتحديث السجل." })
+    setSetupStep('date')
+    toast({ title: "تم الحفظ", description: "تم تحديث تاريخ ووقت البداية بنجاح." })
   }
 
   const today = startOfDay(new Date())
@@ -162,8 +182,8 @@ export function TimerDisplay({
               <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setTempHabitName(externalHabitName); setShowNameDialog(true); }}>
                 تعديل الاسم
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setShowDateDialog(true); }}>
-                تاريخ البداية
+              <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setSetupStep('date'); setShowDateDialog(true); }}>
+                تعديل التاريخ والوقت
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <div className="grid grid-cols-6 gap-2 p-2">
@@ -208,23 +228,67 @@ export function TimerDisplay({
         <DialogContent className="rounded-[2.5rem] p-8 max-w-md">
           <DialogHeader><DialogTitle className="text-center font-black">تعديل الاسم</DialogTitle></DialogHeader>
           <div className="py-4"><Input value={tempHabitName} onChange={(e) => setTempHabitName(e.target.value)} className="text-center font-bold h-14 rounded-xl" /></div>
-          <DialogFooter><Button onClick={handleUpdateName} className="w-full h-14 rounded-xl font-black">حفظ</Button></DialogFooter>
+          <div className="flex gap-2">
+            <Button onClick={handleUpdateName} className="w-full h-14 rounded-xl font-black">حفظ</Button>
+          </div>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showDateDialog} onOpenChange={setShowDateDialog}>
-        <DialogContent className="rounded-[2.5rem] p-6 max-w-[400px]">
-          <DialogHeader><DialogTitle className="text-center font-black">تحديد تاريخ البداية</DialogTitle></DialogHeader>
-          <div className="flex justify-center bg-secondary/20 p-2 rounded-3xl">
-            <Calendar 
-              mode="single" 
-              selected={externalStartDate} 
-              onSelect={handleUpdateDate} 
-              disabled={{ after: new Date() }}
-              modifiers={modifiers}
-              modifiersClassNames={modifiersClassNames}
-              className="rounded-3xl bg-white border shadow-sm p-2" 
-            />
+      <Dialog open={showDateDialog} onOpenChange={(open) => { setShowDateDialog(open); if(!open) setSetupStep('date'); }}>
+        <DialogContent className="rounded-[2.5rem] p-6 max-w-[420px] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="text-center font-black flex items-center justify-center gap-2">
+              {setupStep === 'date' && '1. اختر التاريخ'}
+              {setupStep === 'hour' && '2. اختر الساعة'}
+              {setupStep === 'minute' && '3. اختر الدقيقة'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex flex-col items-center min-h-[350px] justify-center">
+            {setupStep === 'date' && (
+              <div className="flex flex-col items-center animate-in fade-in slide-in-from-right-4 duration-300">
+                <Calendar 
+                  mode="single" 
+                  selected={selectedDate} 
+                  onSelect={handleDateSelect} 
+                  disabled={{ after: new Date() }}
+                  modifiers={modifiers}
+                  modifiersClassNames={modifiersClassNames}
+                  className="rounded-3xl bg-white border shadow-sm p-2" 
+                />
+              </div>
+            )}
+
+            {setupStep === 'hour' && (
+              <div className="w-full animate-in fade-in slide-in-from-right-4 duration-300">
+                <CircularTimePicker 
+                  mode="hours" 
+                  value={selectedHour} 
+                  onChange={setSelectedHour} 
+                  onComplete={() => setSetupStep('minute')} 
+                />
+                <Button variant="ghost" onClick={() => setSetupStep('date')} className="w-full mt-2 font-black opacity-40">
+                  <ArrowLeft className="ml-2 h-4 w-4" /> العودة للتقويم
+                </Button>
+              </div>
+            )}
+
+            {setupStep === 'minute' && (
+              <div className="w-full animate-in fade-in slide-in-from-right-4 duration-300">
+                <CircularTimePicker 
+                  mode="minutes" 
+                  value={selectedMinute} 
+                  onChange={setSelectedMinute} 
+                  onComplete={handleSaveFullDate} 
+                />
+                <Button variant="ghost" onClick={() => setSetupStep('hour')} className="w-full mt-2 font-black opacity-40">
+                  <ArrowLeft className="ml-2 h-4 w-4" /> العودة للساعة
+                </Button>
+                <Button onClick={handleSaveFullDate} className="w-full h-14 mt-4 rounded-2xl font-black shadow-lg">
+                  حفظ التغييرات
+                </Button>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
