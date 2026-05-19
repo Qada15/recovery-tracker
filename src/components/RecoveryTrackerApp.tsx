@@ -52,24 +52,27 @@ export function RecoveryTrackerApp() {
   }, [])
 
   /**
-   * Logic: Data Purging and Rule Enforcement
-   * 1. Remove relapses between newStartDate and Today (Cleanse range)
-   * 2. Relapses before newStartDate remain unchanged (Exception Rule)
+   * منطق التطهير الصارم:
+   * 1. حذف الانتكاسات التي تقع بـين تاريخ البداية الجديد واليوم الحالي.
+   * 2. استثناء يوم البداية الجديد نفسه (يبقى أحمر إذا كان كذلك).
+   * 3. استثناء الأيام التي تسبق تاريخ البداية (تبقى كما هي).
    */
   const handleUpdateStartDate = (newDate: Date) => {
     const now = new Date();
-    const startTime = startOfDay(newDate).getTime();
-    const todayTime = startOfDay(now).getTime();
+    const startOfNewDate = startOfDay(newDate);
+    const startOfToday = startOfDay(now);
     
-    // Filter reset dates based on the strict rule
     const filteredResets = resetDates.filter(rd => {
-      const rdTime = startOfDay(rd).getTime();
+      const rdDate = startOfDay(rd);
       
-      // Rule 1: Purge relapses in the range [newStartDate, today]
-      const isInCleanseRange = rdTime >= startTime && rdTime <= todayTime;
+      // القاعدة: احذف فقط إذا كان اليوم بـعـد تاريخ البداية الجديد وقبل أو يساوي اليوم الحالي
+      const isAfterNewStart = isAfter(rdDate, startOfNewDate);
+      const isBeforeOrEqualToday = isBefore(rdDate, startOfToday) || isSameDay(rdDate, startOfToday);
       
-      // Keep it if it's outside the cleanse range (mostly if it's BEFORE the new start date)
-      return !isInCleanseRange;
+      const shouldPurge = isAfterNewStart && isBeforeOrEqualToday;
+      
+      // إذا كان يجب التطهير، نعيد false للحذف من المصفوفة
+      return !shouldPurge;
     });
 
     setStartDate(newDate);
