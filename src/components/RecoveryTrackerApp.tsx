@@ -1,14 +1,13 @@
-
 "use client"
 
 import * as React from "react"
-import { Settings, User, Languages, Moon, Sun, Trash2, Plus, Flame, Clock } from "lucide-react"
+import { Settings, User, Languages, Moon, Sun, Trash2, Plus, Flame, Clock, LayoutGrid } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SidePanel } from "@/components/SidePanel"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
-import { saveToStorage, getFromStorage, STORAGE_KEYS, clearAllStorage } from "@/lib/storage"
-import { isValid, parseISO, startOfDay, isBefore, isSameDay, setHours, setMinutes } from "date-fns"
+import { saveToStorage, getFromStorage, STORAGE_KEYS, clearAllStorage, type Habit } from "@/lib/storage"
+import { isValid, parseISO, startOfDay, isBefore, isSameDay, setHours, setMinutes, isAfter } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
@@ -24,7 +23,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog"
 import {
   AlertDialog,
@@ -39,6 +37,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
 import { CircularTimePicker } from "./CircularTimePicker"
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 
 const TRANSLATIONS = {
   ar: {
@@ -64,7 +63,8 @@ const TRANSLATIONS = {
     stepMinute: "3. اختر الدقيقة",
     confirmTitle: "تأكيد الحذف النهائي",
     cancel: "إلغاء",
-    delete: "حذف نهائي"
+    delete: "حذف نهائي",
+    myTrackers: "عداداتي"
   },
   en: {
     title: "Recovery Tracker",
@@ -89,7 +89,8 @@ const TRANSLATIONS = {
     stepMinute: "3. Select Minute",
     confirmTitle: "Confirm Permanent Deletion",
     cancel: "Cancel",
-    delete: "Delete All"
+    delete: "Delete All",
+    myTrackers: "My Trackers"
   }
 }
 
@@ -104,10 +105,9 @@ export function RecoveryTrackerApp() {
 
   const [language, setLanguage] = React.useState<'ar' | 'en'>('ar')
   const [theme, setTheme] = React.useState<'light' | 'dark'>('light')
-  const [habitName, setHabitName] = React.useState("")
-  const [accentColor, setAccentColor] = React.useState('hsl(var(--accent))')
-  const [startDate, setStartDate] = React.useState<Date | null>(null)
-  const [resetDates, setResetDates] = React.useState<Date[]>([])
+  
+  const [habits, setHabits] = React.useState<Habit[]>([])
+  const [activeHabitId, setActiveHabitId] = React.useState<string | null>(null)
 
   const [tempName, setTempName] = React.useState("")
   const [tempDate, setTempDate] = React.useState<Date>(new Date())
@@ -117,92 +117,96 @@ export function RecoveryTrackerApp() {
   const t = TRANSLATIONS[language]
   const isAr = language === 'ar'
 
+  const activeHabit = habits.find(h => h.id === activeHabitId) || habits[0]
+
   React.useEffect(() => {
     const savedLang = getFromStorage(STORAGE_KEYS.LANGUAGE) as 'ar' | 'en'
     const savedTheme = getFromStorage(STORAGE_KEYS.THEME) as 'light' | 'dark'
-    const savedDate = getFromStorage(STORAGE_KEYS.START_DATE)
-    const savedName = getFromStorage(STORAGE_KEYS.HABIT_NAME)
-    const savedColor = getFromStorage(STORAGE_KEYS.HABIT_COLOR)
-    const savedResets = getFromStorage(STORAGE_KEYS.RESET_DATES)
+    const savedHabits = getFromStorage(STORAGE_KEYS.HABITS)
+    const savedActiveId = getFromStorage(STORAGE_KEYS.ACTIVE_HABIT_ID)
 
     if (savedLang) setLanguage(savedLang)
     if (savedTheme) {
       setTheme(savedTheme)
       document.documentElement.classList.toggle('dark', savedTheme === 'dark')
     }
-    if (savedDate) {
-      const parsed = new Date(savedDate)
-      if (isValid(parsed)) setStartDate(parsed)
-    }
-    if (savedName) setHabitName(savedName)
-    if (savedColor) setAccentColor(savedColor)
-    if (savedResets) {
+    if (savedHabits) {
       try {
-        const parsedResets = JSON.parse(savedResets).map((d: string) => parseISO(d))
-        setResetDates(parsedResets)
-      } catch (e) {
-        console.error("Error parsing reset dates")
-      }
+        const parsed = JSON.parse(savedHabits)
+        setHabits(parsed)
+        if (savedActiveId) setActiveHabitId(savedActiveId)
+        else if (parsed.length > 0) setActiveHabitId(parsed[0].id)
+      } catch (e) { console.error("Parse error") }
     }
   }, [])
 
+  const updateHabits = (newHabits: Habit[]) => {
+    setHabits(newHabits)
+    saveToStorage(STORAGE_KEYS.HABITS, JSON.stringify(newHabits))
+  }
+
   const handleFinishSetup = () => {
     const finalDate = setMinutes(setHours(tempDate, tempHour), tempMinute)
-    setHabitName(tempName)
-    setStartDate(finalDate)
+    const newHabit: Habit = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: tempName,
+      startDate: finalDate.toISOString(),
+      resetDates: [finalDate.toISOString()],
+      color: 'hsl(var(--accent))'
+    }
     
-    const initialResets = [finalDate]
-    setResetDates(initialResets)
-
-    saveToStorage(STORAGE_KEYS.HABIT_NAME, tempName)
-    saveToStorage(STORAGE_KEYS.START_DATE, finalDate.toISOString())
-    saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(initialResets.map(d => d.toISOString())))
+    const newHabits = [...habits, newHabit]
+    updateHabits(newHabits)
+    setActiveHabitId(newHabit.id)
+    saveToStorage(STORAGE_KEYS.ACTIVE_HABIT_ID, newHabit.id)
     
     setIsSetupOpen(false)
     setSetupStep('name')
+    setTempName("")
+  }
+
+  const handleUpdateActiveHabit = (updates: Partial<Habit>) => {
+    if (!activeHabitId) return
+    const newHabits = habits.map(h => h.id === activeHabitId ? { ...h, ...updates } : h)
+    updateHabits(newHabits)
   }
 
   const handleUpdateStartDate = (newDate: Date) => {
-    const startOfNewDate = startOfDay(newDate);
-    const filteredResets = resetDates.filter(rd => isBefore(startOfDay(rd), startOfNewDate));
-    const finalResets = [...filteredResets, newDate];
-
-    setStartDate(newDate);
-    setResetDates(finalResets);
-    saveToStorage(STORAGE_KEYS.START_DATE, newDate.toISOString());
-    saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(finalResets.map(d => d.toISOString())));
-  }
-
-  const handleResetAction = (targetDate?: Date) => {
-    const dateToReset = targetDate || new Date()
-    const startOfDate = startOfDay(dateToReset)
+    if (!activeHabit) return
+    const startOfNewDate = startOfDay(newDate)
+    const currentResets = activeHabit.resetDates.map(d => parseISO(d))
     
-    if (!targetDate || isSameDay(startOfDate, startOfDay(new Date()))) {
-      const now = new Date()
-      setStartDate(now)
-      saveToStorage(STORAGE_KEYS.START_DATE, now.toISOString())
-    }
-    
-    const isAlreadyRecorded = resetDates.some(rd => isSameDay(startOfDay(rd), startOfDate))
-    if (!isAlreadyRecorded) {
-      const newResets = [...resetDates, dateToReset]
-      setResetDates(newResets)
-      saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(newResets.map(d => d.toISOString())))
-    }
-  }
+    // Protect past, purge future resets relative to new start
+    const filteredResets = currentResets.filter(rd => isBefore(startOfDay(rd), startOfNewDate))
+    const finalResets = [...filteredResets, newDate]
 
-  const handleUrgeAction = () => {
-    toast({ 
-      title: language === 'ar' ? "تنبيه رغبة" : "Urge Recorded", 
-      description: language === 'ar' ? "استمر في الصمود!" : "Keep fighting!",
-      className: "bg-orange-500 text-white border-none"
+    handleUpdateActiveHabit({
+      startDate: newDate.toISOString(),
+      resetDates: finalResets.map(d => d.toISOString())
     })
   }
 
-  const handleLanguageChange = (lang: string) => {
-    const newLang = lang as 'ar' | 'en'
-    setLanguage(newLang)
-    saveToStorage(STORAGE_KEYS.LANGUAGE, newLang)
+  const handleResetAction = (targetDate?: Date) => {
+    if (!activeHabit) return
+    const dateToReset = targetDate || new Date()
+    const startOfDate = startOfDay(dateToReset)
+    
+    const currentResets = activeHabit.resetDates.map(d => parseISO(d))
+    
+    if (!targetDate || isSameDay(startOfDate, startOfDay(new Date()))) {
+      const now = new Date()
+      handleUpdateActiveHabit({
+        startDate: now.toISOString(),
+        resetDates: [...currentResets, now].map(d => d.toISOString())
+      })
+    } else {
+      const isAlreadyRecorded = currentResets.some(rd => isSameDay(startOfDay(rd), startOfDate))
+      if (!isAlreadyRecorded) {
+        handleUpdateActiveHabit({
+          resetDates: [...currentResets, dateToReset].map(d => d.toISOString())
+        })
+      }
+    }
   }
 
   const toggleTheme = (checked: boolean) => {
@@ -212,15 +216,15 @@ export function RecoveryTrackerApp() {
     saveToStorage(STORAGE_KEYS.THEME, newTheme)
   }
 
-  const performFullDeletion = () => {
-    clearAllStorage();
+  const handleLanguageChange = (lang: string) => {
+    const newLang = lang as 'ar' | 'en'
+    setLanguage(newLang)
+    saveToStorage(STORAGE_KEYS.LANGUAGE, newLang)
   }
 
-  const hasHabit = habitName && startDate
-
   return (
-    <div className="flex-1 flex flex-col items-center bg-background relative h-full overflow-hidden select-none touch-none" dir={language === 'ar' ? 'rtl' : 'ltr'}>
-      <header className="w-full h-14 md:h-16 bg-white dark:bg-slate-950 border-b flex items-center justify-between px-6 shadow-sm z-40 shrink-0">
+    <div className="flex-1 flex flex-col items-center bg-background relative h-full overflow-hidden select-none touch-none" dir={isAr ? 'rtl' : 'ltr'}>
+      <header className="w-full h-14 bg-white dark:bg-slate-950 border-b flex items-center justify-between px-6 shadow-sm z-40 shrink-0">
         <Button variant="ghost" size="icon" onClick={() => setIsAccountOpen(true)} className="rounded-full">
           <User className="h-5 w-5" />
         </Button>
@@ -230,8 +234,8 @@ export function RecoveryTrackerApp() {
         </Button>
       </header>
 
-      <main className="flex-1 w-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
-        {hasHabit ? (
+      <main className="flex-1 w-full flex flex-col items-center justify-center p-4 relative overflow-hidden pb-20">
+        {habits.length > 0 && activeHabit ? (
           <>
             <div className="text-center space-y-1 mb-2 shrink-0">
               <p className="text-muted-foreground font-black text-[8px] uppercase tracking-[0.3em]">{t.journey}</p>
@@ -240,16 +244,16 @@ export function RecoveryTrackerApp() {
 
             <div className="w-full flex-1 flex items-center justify-center min-h-0 overflow-hidden">
               <TimerDisplay 
-                externalStartDate={startDate} 
-                externalHabitName={habitName}
-                externalAccentColor={accentColor}
-                resetDates={resetDates}
+                externalStartDate={parseISO(activeHabit.startDate)} 
+                externalHabitName={activeHabit.name}
+                externalAccentColor={activeHabit.color}
+                resetDates={activeHabit.resetDates.map(d => parseISO(d))}
                 onOpenHistory={() => setIsHistoryOpen(true)}
                 onUpdateDate={handleUpdateStartDate}
-                onUpdateName={(name) => { setHabitName(name); saveToStorage(STORAGE_KEYS.HABIT_NAME, name); }}
-                onUpdateColor={(color) => { setAccentColor(color); saveToStorage(STORAGE_KEYS.HABIT_COLOR, color); }}
+                onUpdateName={(name) => handleUpdateActiveHabit({ name })}
+                onUpdateColor={(color) => handleUpdateActiveHabit({ color })}
                 onReset={() => handleResetAction()}
-                onUrge={handleUrgeAction}
+                onUrge={() => toast({ title: isAr ? "تنبيه رغبة" : "Urge Recorded", className: "bg-orange-500 text-white" })}
                 language={language}
               />
             </div>
@@ -258,7 +262,7 @@ export function RecoveryTrackerApp() {
           <div className="flex flex-col items-center justify-center space-y-4 animate-in fade-in zoom-in-95 duration-500">
             <Button 
               onClick={() => setIsSetupOpen(true)}
-              className="w-24 h-24 rounded-full bg-primary text-white shadow-2xl hover:scale-110 transition-transform flex items-center justify-center"
+              className="w-24 h-24 rounded-full bg-primary text-white shadow-2xl hover:scale-110 transition-transform"
             >
               <Plus className="w-12 h-12" />
             </Button>
@@ -267,164 +271,126 @@ export function RecoveryTrackerApp() {
         )}
       </main>
 
-      {hasHabit && (
+      {/* Bottom Habits Bar */}
+      {habits.length > 0 && (
+        <div className="absolute bottom-4 left-4 right-4 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl border shadow-2xl z-50 flex items-center px-4 overflow-hidden">
+          <ScrollArea className="w-full h-full">
+            <div className="flex items-center h-full gap-3 py-2 px-1">
+              {habits.map((habit) => (
+                <button
+                  key={habit.id}
+                  onClick={() => {
+                    setActiveHabitId(habit.id);
+                    saveToStorage(STORAGE_KEYS.ACTIVE_HABIT_ID, habit.id);
+                  }}
+                  className={`shrink-0 h-10 px-4 rounded-2xl font-black text-[10px] uppercase tracking-tighter transition-all flex items-center gap-2 border-2 ${
+                    activeHabitId === habit.id 
+                      ? "bg-primary text-white border-primary shadow-lg scale-105" 
+                      : "bg-secondary/50 text-muted-foreground border-transparent opacity-60 hover:opacity-100"
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: habit.color }} />
+                  {habit.name}
+                </button>
+              ))}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setIsSetupOpen(true)}
+                className="shrink-0 h-10 w-10 rounded-2xl bg-secondary/30 text-muted-foreground border-2 border-dashed border-muted-foreground/20"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        </div>
+      )}
+
+      {activeHabit && (
         <JourneyLog 
           isOpen={isHistoryOpen} 
           onClose={() => setIsHistoryOpen(false)} 
-          startDate={startDate}
-          resetDates={resetDates}
-          habitName={habitName}
-          accentColor={accentColor}
+          startDate={parseISO(activeHabit.startDate)}
+          resetDates={activeHabit.resetDates.map(d => parseISO(d))}
+          habitName={activeHabit.name}
+          accentColor={activeHabit.color}
           onReset={handleResetAction}
-          onUrge={(date) => handleUrgeAction()}
+          onUrge={(date) => toast({ title: "Urge Recorded" })}
           language={language}
         />
       )}
 
-      {/* Setup Wizard Dialog */}
+      {/* Setup Wizard */}
       <Dialog open={isSetupOpen} onOpenChange={(open) => { setIsSetupOpen(open); if(!open) setSetupStep('name'); }}>
         <DialogContent className="rounded-[2.5rem] p-6 max-w-[420px]">
-          <DialogHeader>
-            <DialogTitle className="text-center font-black">
-              {setupStep === 'name' && t.setupTitle}
-              {setupStep === 'date' && t.stepDate}
-              {setupStep === 'hour' && t.stepHour}
-              {setupStep === 'minute' && t.stepMinute}
-            </DialogTitle>
-          </DialogHeader>
-          
+          <DialogHeader><DialogTitle className="text-center font-black">
+            {setupStep === 'name' && t.setupTitle}
+            {setupStep === 'date' && t.stepDate}
+            {setupStep === 'hour' && t.stepHour}
+            {setupStep === 'minute' && t.stepMinute}
+          </DialogTitle></DialogHeader>
           <div className="flex flex-col items-center min-h-[350px] justify-center">
             {setupStep === 'name' && (
               <div className="w-full space-y-6">
-                <p className="text-center text-xs font-black uppercase opacity-40 tracking-widest">{t.enterName}</p>
-                <Input 
-                  value={tempName} 
-                  onChange={(e) => setTempName(e.target.value)}
-                  placeholder={isAr ? "مثال: الامتناع عن التدخين" : "e.g. Quitting Smoking"}
-                  className="h-14 rounded-2xl text-center font-bold text-lg shadow-inner"
-                />
-                <Button 
-                  disabled={!tempName.trim()}
-                  onClick={() => setSetupStep('date')}
-                  className="w-full h-14 rounded-2xl font-black shadow-lg"
-                >
-                  {t.save}
-                </Button>
+                <Input value={tempName} onChange={(e) => setTempName(e.target.value)} placeholder={isAr ? "اسم العداد..." : "Habit name..."} className="h-14 rounded-2xl text-center font-bold" />
+                <Button disabled={!tempName.trim()} onClick={() => setSetupStep('date')} className="w-full h-14 rounded-2xl font-black">{t.save}</Button>
               </div>
             )}
             {setupStep === 'date' && (
-              <div className="w-full flex flex-col items-center">
-                <Calendar 
-                  mode="single" 
-                  selected={tempDate} 
-                  onSelect={(date) => { if(date) { setTempDate(date); setSetupStep('hour'); } }} 
-                  disabled={{ after: new Date() }}
-                  modifiers={{
-                    relapse: (date) => resetDates.some(rd => isSameDay(rd, date)),
-                    clean: (date) => startDate ? (isAfter(startOfDay(date), startOfDay(startDate)) && isBefore(startOfDay(date), startOfDay(new Date()))) : false
-                  }}
-                  modifiersClassNames={{
-                    relapse: "bg-red-500 text-white rounded-full font-black scale-110",
-                    clean: "bg-emerald-500 text-white rounded-full font-black opacity-90"
-                  }}
-                  className="rounded-3xl border p-2" 
-                />
-                <Button variant="ghost" onClick={() => setSetupStep('name')} className="mt-4 font-black opacity-40 uppercase text-[10px] tracking-widest">
-                  {isAr ? "العودة للاسم" : "Back to Name"}
-                </Button>
-              </div>
+              <Calendar mode="single" selected={tempDate} onSelect={(date) => { if(date) { setTempDate(date); setSetupStep('hour'); } }} disabled={{ after: new Date() }} className="rounded-3xl border" />
             )}
             {setupStep === 'hour' && (
-              <div className="w-full">
-                <CircularTimePicker mode="hours" value={tempHour} onChange={setTempHour} onComplete={() => setSetupStep('minute')} />
-                <Button variant="ghost" onClick={() => setSetupStep('date')} className="w-full mt-2 font-black opacity-40 uppercase text-[10px] tracking-widest">
-                  {isAr ? "العودة للتقويم" : "Back to Calendar"}
-                </Button>
-              </div>
+              <CircularTimePicker mode="hours" value={tempHour} onChange={setTempHour} onComplete={() => setSetupStep('minute')} />
             )}
             {setupStep === 'minute' && (
-              <div className="w-full">
-                <CircularTimePicker mode="minutes" value={tempMinute} onChange={setTempMinute} onComplete={handleFinishSetup} />
-                <Button variant="ghost" onClick={() => setSetupStep('hour')} className="w-full mt-2 font-black opacity-40 uppercase text-[10px] tracking-widest">
-                  {isAr ? "العودة للساعة" : "Back to Hour"}
-                </Button>
-                <Button onClick={handleFinishSetup} className="w-full h-14 mt-4 rounded-2xl font-black shadow-lg">
-                  {isAr ? "بدء الالتزام" : "Start Journey"}
-                </Button>
-              </div>
+              <CircularTimePicker mode="minutes" value={tempMinute} onChange={setTempMinute} onComplete={handleFinishSetup} />
             )}
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Alert */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent className="rounded-[2.5rem]">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-black text-center">{t.confirmTitle}</AlertDialogTitle>
-            <AlertDialogDescription className="text-center font-bold">
-              {t.confirmDelete}
-            </AlertDialogDescription>
+            <AlertDialogDescription className="text-center font-bold">{t.confirmDelete}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex flex-col sm:flex-row gap-2">
             <AlertDialogCancel className="rounded-xl font-black">{t.cancel}</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={performFullDeletion}
-              className="bg-destructive text-destructive-foreground rounded-xl font-black"
-            >
-              {t.delete}
-            </AlertDialogAction>
+            <AlertDialogAction onClick={clearAllStorage} className="bg-destructive text-destructive-foreground rounded-xl font-black">{t.delete}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <SidePanel isOpen={isAccountOpen} onClose={() => setIsAccountOpen(false)} side={language === 'ar' ? 'right' : 'left'} title={t.account}>
-        <div className="flex flex-col items-center space-y-6 pt-4">
-          <div className="w-20 h-20 bg-accent/10 rounded-full flex items-center justify-center">
-            <User className="w-10 h-10 text-accent" />
-          </div>
-          <div className="text-center">
-            <h3 className="text-lg font-bold">{t.profile}</h3>
-            <p className="text-xs text-muted-foreground">{t.localActive}</p>
-          </div>
-        </div>
-      </SidePanel>
-
-      <SidePanel isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} side={language === 'ar' ? 'left' : 'right'} title={t.settings}>
-        <div className="space-y-8 py-4">
+      <SidePanel isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} side={isAr ? 'left' : 'right'} title={t.settings}>
+        <div className="space-y-6 py-4">
           <div className="flex items-center justify-between p-4 bg-secondary/30 rounded-3xl">
-            <div className="flex items-center gap-3">
-              <Languages className="w-5 h-5 opacity-60" />
-              <Label className="font-bold">{t.language}</Label>
-            </div>
+            <div className="flex items-center gap-3"><Languages className="w-5 h-5 opacity-60" /><Label className="font-bold">{t.language}</Label></div>
             <Select value={language} onValueChange={handleLanguageChange}>
-              <SelectTrigger className="w-24 h-10 rounded-xl border-none bg-background shadow-sm">
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger className="w-24 h-10 rounded-xl border-none shadow-sm"><SelectValue /></SelectTrigger>
               <SelectContent className="rounded-xl">
                 <SelectItem value="ar">العربية</SelectItem>
                 <SelectItem value="en">English</SelectItem>
               </SelectContent>
             </Select>
           </div>
-
           <div className="flex items-center justify-between p-4 bg-secondary/30 rounded-3xl">
-            <div className="flex items-center gap-3">
-              {theme === 'dark' ? <Moon className="w-5 h-5 opacity-60" /> : <Sun className="w-5 h-5 opacity-60" />}
-              <Label className="font-bold">{t.darkMode}</Label>
-            </div>
+            <div className="flex items-center gap-3">{theme === 'dark' ? <Moon className="w-5 h-5 opacity-60" /> : <Sun className="w-5 h-5 opacity-60" />}<Label className="font-bold">{t.darkMode}</Label></div>
             <Switch checked={theme === 'dark'} onCheckedChange={toggleTheme} />
           </div>
+          <Button variant="destructive" className="w-full h-14 rounded-2xl font-black gap-2 mt-10 shadow-lg" onClick={() => setIsDeleteDialogOpen(true)}>
+            <Trash2 className="w-5 h-5" /> {t.deleteData}
+          </Button>
+        </div>
+      </SidePanel>
 
-          <div className="pt-10">
-            <Button 
-              variant="destructive" 
-              className="w-full h-14 rounded-2xl font-black gap-2 shadow-lg"
-              onClick={() => setIsDeleteDialogOpen(true)}
-            >
-              <Trash2 className="w-5 h-5" />
-              {t.deleteData}
-            </Button>
+      <SidePanel isOpen={isAccountOpen} onClose={() => setIsAccountOpen(false)} side={isAr ? 'right' : 'left'} title={t.account}>
+        <div className="flex flex-col items-center space-y-4 pt-4">
+          <div className="w-20 h-20 bg-accent/10 rounded-full flex items-center justify-center"><User className="w-10 h-10 text-accent" /></div>
+          <div className="text-center">
+            <h3 className="text-lg font-bold">{t.profile}</h3>
+            <p className="text-xs text-muted-foreground">{t.localActive}</p>
           </div>
         </div>
       </SidePanel>

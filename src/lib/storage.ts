@@ -1,11 +1,17 @@
 export const STORAGE_KEYS = {
-  HABIT_NAME: 'recovery_tracker_habit_name',
-  START_DATE: 'recovery_tracker_start_date',
-  HABIT_COLOR: 'recovery_tracker_habit_color',
-  RESET_DATES: 'recovery_tracker_reset_dates',
+  HABITS: 'recovery_tracker_habits',
+  ACTIVE_HABIT_ID: 'recovery_tracker_active_id',
   LANGUAGE: 'recovery_tracker_language',
   THEME: 'recovery_tracker_theme',
 };
+
+export interface Habit {
+  id: string;
+  name: string;
+  startDate: string;
+  resetDates: string[];
+  color: string;
+}
 
 export function saveToStorage(key: string, value: string) {
   if (typeof window !== 'undefined') {
@@ -23,7 +29,6 @@ export function getFromStorage(key: string): string | null {
 export function clearAllStorage() {
   if (typeof window !== 'undefined') {
     localStorage.clear();
-    // استخدام reload لضمان عودة التطبيق لحالته الأصلية تماماً
     window.location.href = '/';
   }
 }
