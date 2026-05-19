@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label"
 import { Calendar } from "@/components/ui/calendar"
 import { format, isValid } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
 
 const COLORS = [
   { name: 'Default', value: 'hsl(var(--accent))' },
@@ -34,38 +35,39 @@ const COLORS = [
   { name: 'Violet', value: '#8b5cf6' },
 ]
 
-// Component moved outside to prevent re-creation and focus loss during timer updates
-function TimeBox({ value, label, color }: { value: number; label: string; color: string }) {
+// Pure component to avoid re-renders of the whole timer logic
+const TimeBox = React.memo(({ value, label, color }: { value: number; label: string; color: string }) => {
   return (
-    <div className="flex flex-col items-center justify-center p-1 sm:p-2 shrink-0">
+    <div className="flex flex-col items-center justify-center p-1 md:p-2 shrink-0">
       <span 
-        className="text-4xl sm:text-5xl md:text-7xl font-black font-headline transition-colors duration-500 tabular-nums tracking-tighter" 
+        className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black font-headline transition-colors duration-500 tabular-nums tracking-tighter" 
         style={{ color: color }}
       >
         {value.toString().padStart(2, '0')}
       </span>
-      <span className="text-[8px] md:text-xs uppercase tracking-[0.2em] text-muted-foreground mt-0.5 font-black opacity-60">
+      <span className="text-[7px] md:text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-0.5 font-black opacity-60">
         {label}
       </span>
     </div>
   )
-}
+})
+TimeBox.displayName = "TimeBox"
 
 export function TimerDisplay() {
   const { toast } = useToast()
   
-  // States
+  // Core States
   const [habitName, setHabitName] = React.useState("Abstinence")
   const [accentColor, setAccentColor] = React.useState('hsl(var(--accent))')
   const [startDate, setStartDate] = React.useState<Date>(new Date())
   const [elapsed, setElapsed] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
 
-  // Dialog control states
+  // Dialog Control States
   const [isEditNameOpen, setIsEditNameOpen] = React.useState(false)
   const [isDatePickerOpen, setIsDatePickerOpen] = React.useState(false)
   const [tempHabitName, setTempHabitName] = React.useState("")
 
-  // Load initial data
+  // Load Initial Data
   React.useEffect(() => {
     const storedName = getFromStorage(STORAGE_KEYS.HABIT_NAME)
     const storedColor = getFromStorage(STORAGE_KEYS.HABIT_COLOR)
@@ -82,7 +84,7 @@ export function TimerDisplay() {
     }
   }, [])
 
-  // Timer logic
+  // Timer Logic
   React.useEffect(() => {
     const updateTimer = () => {
       const start = startDate.getTime()
@@ -107,68 +109,79 @@ export function TimerDisplay() {
     return () => clearInterval(interval)
   }, [startDate])
 
-  const handleUpdateName = () => {
+  // Handlers
+  const handleUpdateName = React.useCallback(() => {
     if (!tempHabitName.trim()) return
     saveToStorage(STORAGE_KEYS.HABIT_NAME, tempHabitName)
     setHabitName(tempHabitName)
     setIsEditNameOpen(false)
-    toast({ title: "Updated", description: "Habit name updated successfully." })
-  }
+    toast({ title: "Updated", description: "Habit name updated." })
+  }, [tempHabitName, toast])
 
-  const handleUpdateColor = (color: string) => {
+  const handleUpdateColor = React.useCallback((color: string) => {
     saveToStorage(STORAGE_KEYS.HABIT_COLOR, color)
     setAccentColor(color)
-    toast({ title: "Color Changed", description: "Counter accent color updated." })
-  }
+    toast({ title: "Updated", description: "Color changed." })
+  }, [toast])
 
-  const handleUpdateDate = (date: Date | undefined) => {
+  const handleUpdateDate = React.useCallback((date: Date | undefined) => {
     if (!date) return
     saveToStorage(STORAGE_KEYS.START_DATE, date.toISOString())
     setStartDate(date)
     setIsDatePickerOpen(false)
-    toast({ title: "Date Reset", description: `Counter starts from ${format(date, "PPP")}` })
-  }
+    toast({ title: "Reset", description: `New start date: ${format(date, "PPP")}` })
+  }, [toast])
 
-  const handleReset = () => {
+  const handleReset = React.useCallback(() => {
     const now = new Date()
     saveToStorage(STORAGE_KEYS.START_DATE, now.toISOString())
     setStartDate(now)
-    toast({ title: "Reset", description: "Your journey starts now." })
-  }
+    toast({ title: "Success", description: "Counter reset to now." })
+  }, [toast])
 
   return (
-    <div className="relative w-full max-w-[500px] px-2 animate-in fade-in zoom-in duration-500 shrink min-h-0">
-      <div className="w-full bg-white rounded-[40px] md:rounded-[60px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] border border-primary/5 flex flex-col items-center justify-center p-6 md:p-10 relative transition-all duration-500 overflow-hidden shrink min-h-0">
+    <div className="relative w-full max-w-[540px] px-4 animate-in fade-in zoom-in duration-500 flex flex-col items-center justify-center min-h-0">
+      <div className="w-full bg-white rounded-[32px] md:rounded-[48px] shadow-[0_24px_48px_-12px_rgba(0,0,0,0.08)] border border-primary/5 flex flex-col items-center justify-center p-6 md:p-8 relative overflow-hidden shrink-0">
         
         {/* Options Trigger */}
-        <div className="absolute top-4 right-4 z-10">
+        <div className="absolute top-2 right-2 md:top-4 md:right-4 z-10">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 md:h-10 md:w-10 hover:bg-secondary">
-                <MoreVertical className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
+              <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 hover:bg-secondary">
+                <MoreVertical className="h-4 w-4 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64 rounded-2xl p-2">
-              <DropdownMenuLabel className="px-3 py-2 text-xs font-black uppercase opacity-40">Counter Options</DropdownMenuLabel>
+            <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 z-50">
+              <DropdownMenuLabel className="px-3 py-2 text-[10px] font-black uppercase opacity-40">Options</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => {
-                setTempHabitName(habitName)
-                setIsEditNameOpen(true)
-              }} className="rounded-xl py-3 cursor-pointer">
+              <DropdownMenuItem 
+                onSelect={(e) => {
+                  e.preventDefault()
+                  setTempHabitName(habitName)
+                  setIsEditNameOpen(true)
+                }}
+                className="rounded-xl py-2.5 cursor-pointer"
+              >
                 <Edit2 className="mr-3 h-4 w-4" /> Edit Name
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setIsDatePickerOpen(true)} className="rounded-xl py-3 cursor-pointer">
-                <CalendarIcon className="mr-3 h-4 w-4" /> Set Start Date
+              <DropdownMenuItem 
+                onSelect={(e) => {
+                  e.preventDefault()
+                  setIsDatePickerOpen(true)
+                }}
+                className="rounded-xl py-2.5 cursor-pointer"
+              >
+                <CalendarIcon className="mr-3 h-4 w-4" /> Set Date
               </DropdownMenuItem>
               
               <DropdownMenuSeparator />
-              <div className="px-3 py-2 text-sm font-bold">Theme Color</div>
+              <div className="px-3 py-1.5 text-xs font-bold text-muted-foreground uppercase">Color</div>
               <div className="grid grid-cols-6 gap-2 p-2">
                 {COLORS.map((c) => (
                   <button
                     key={c.value}
                     onClick={() => handleUpdateColor(c.value)}
-                    className="w-7 h-7 rounded-full border border-black/5 flex items-center justify-center transition-transform hover:scale-125"
+                    className="w-6 h-6 rounded-full border border-black/5 flex items-center justify-center transition-transform hover:scale-110"
                     style={{ backgroundColor: c.value }}
                   >
                     {accentColor === c.value && <Check className="h-3 w-3 text-white" />}
@@ -177,32 +190,32 @@ export function TimerDisplay() {
               </div>
 
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive focus:bg-destructive/10 rounded-xl py-3 cursor-pointer" onClick={handleReset}>
-                <Trash2 className="mr-3 h-4 w-4" /> Reset Counter
+              <DropdownMenuItem className="text-destructive focus:bg-destructive/10 rounded-xl py-2.5 cursor-pointer" onClick={handleReset}>
+                <Trash2 className="mr-3 h-4 w-4" /> Reset Now
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
 
-        {/* Info */}
-        <div className="text-center mb-6 md:mb-8">
-          <h2 className="text-xl md:text-3xl font-black text-foreground mb-1 tracking-tight line-clamp-1">{habitName}</h2>
+        {/* Header Info */}
+        <div className="text-center mb-4 md:mb-6">
+          <h2 className="text-lg md:text-2xl font-black text-foreground mb-1 tracking-tight line-clamp-1">{habitName}</h2>
           <div className="flex items-center justify-center space-x-2">
-            <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: accentColor }} />
-            <span className="text-[8px] font-black uppercase tracking-[0.4em] opacity-30">Live Progress</span>
+            <span className="h-1 w-1 md:h-1.5 md:w-1.5 rounded-full animate-pulse" style={{ backgroundColor: accentColor }} />
+            <span className="text-[7px] md:text-[8px] font-black uppercase tracking-[0.4em] opacity-30">Tracking</span>
           </div>
         </div>
         
-        {/* Timer Grid - More compact to fit screen */}
-        <div className="grid grid-cols-2 gap-x-4 md:gap-x-10 gap-y-4 md:gap-y-8 w-full">
+        {/* Timer Grid */}
+        <div className="grid grid-cols-2 gap-x-4 md:gap-x-8 gap-y-2 md:gap-y-4 w-full px-2">
           <TimeBox value={elapsed.days} label="Days" color={accentColor} />
           <TimeBox value={elapsed.hours} label="Hours" color={accentColor} />
           <TimeBox value={elapsed.minutes} label="Minutes" color={accentColor} />
           <TimeBox value={elapsed.seconds} label="Seconds" color={accentColor} />
         </div>
         
-        {/* Aesthetic Progress Bar */}
-        <div className="mt-6 md:mt-10 w-20 h-1 bg-secondary rounded-full overflow-hidden">
+        {/* Visual Progress Bar */}
+        <div className="mt-6 md:mt-8 w-16 h-1 bg-secondary rounded-full overflow-hidden shrink-0">
           <div 
             className="h-full animate-pulse transition-all duration-1000" 
             style={{ width: '100%', backgroundColor: accentColor }} 
@@ -210,35 +223,33 @@ export function TimerDisplay() {
         </div>
       </div>
 
-      {/* Edit Dialog */}
+      {/* Dialogs - Moved outside for stability */}
       <Dialog open={isEditNameOpen} onOpenChange={setIsEditNameOpen}>
-        <DialogContent className="sm:max-w-[425px] rounded-[32px] p-6">
+        <DialogContent className="sm:max-w-[400px] rounded-[24px] p-6 z-[60]">
           <DialogHeader>
-            <DialogTitle className="text-xl md:text-2xl font-black">Edit Habit Name</DialogTitle>
+            <DialogTitle className="text-xl font-black">Rename Habit</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-3">
-              <Label htmlFor="name" className="text-xs font-bold uppercase opacity-50">New Name</Label>
-              <Input
-                id="name"
-                value={tempHabitName}
-                onChange={(e) => setTempHabitName(e.target.value)}
-                className="rounded-2xl h-14 text-lg font-bold border-2 focus-visible:ring-offset-0"
-                placeholder="Ex: Social Media Fast"
-              />
-            </div>
+          <div className="py-4">
+            <Label htmlFor="name" className="text-[10px] font-bold uppercase opacity-50 mb-2 block">New Name</Label>
+            <Input
+              id="name"
+              value={tempHabitName}
+              onChange={(e) => setTempHabitName(e.target.value)}
+              className="rounded-xl h-12 text-base font-bold"
+              placeholder="Ex: No Sweets"
+              autoFocus
+            />
           </div>
           <DialogFooter>
-            <Button onClick={handleUpdateName} className="w-full h-14 rounded-2xl text-lg font-bold">Save Changes</Button>
+            <Button onClick={handleUpdateName} className="w-full h-12 rounded-xl text-base font-bold">Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Date Dialog */}
       <Dialog open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
-        <DialogContent className="sm:max-w-[425px] rounded-[32px] p-6">
+        <DialogContent className="sm:max-w-[400px] rounded-[24px] p-6 z-[60]">
           <DialogHeader>
-            <DialogTitle className="text-xl md:text-2xl font-black">Select Start Date</DialogTitle>
+            <DialogTitle className="text-xl font-black">Select Start Date</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col items-center py-4">
             <Calendar
@@ -246,12 +257,8 @@ export function TimerDisplay() {
               selected={startDate}
               onSelect={handleUpdateDate}
               initialFocus
-              className="rounded-[24px] border-2 shadow-sm p-4"
+              className="rounded-2xl border p-2"
             />
-            <div className="mt-6 p-4 bg-secondary/50 rounded-2xl w-full text-center">
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Selected Date</p>
-              <p className="text-base font-black">{format(startDate, "PPP")}</p>
-            </div>
           </div>
         </DialogContent>
       </Dialog>
