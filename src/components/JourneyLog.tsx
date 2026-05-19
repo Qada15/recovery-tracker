@@ -77,7 +77,7 @@ export function JourneyLog({
     const newDateTime = setMinutes(setHours(startOfDay(selectedDay), tempHour), tempMinute)
     onReset(newDateTime)
     setShowTimePicker(false)
-    setSelectedDay(undefined) // Reset selection after save
+    // لا نحذف الاختيار هنا لنسمح للمستخدم برؤية التعديل
   }
 
   const existingReset = selectedDay ? getResetForDay(selectedDay) : null
@@ -134,7 +134,7 @@ export function JourneyLog({
             existingReset ? (
               <>
                 <Button 
-                  onClick={() => { onRemoveReset(selectedDay); setSelectedDay(undefined); }} 
+                  onClick={() => { onRemoveReset(selectedDay); }} 
                   variant="outline" 
                   className="flex-1 h-12 rounded-2xl font-black border-2 border-red-500 text-red-500 animate-in zoom-in-95"
                 >
@@ -149,10 +149,10 @@ export function JourneyLog({
               </>
             ) : (
               <>
-                <Button onClick={() => { onUrge(selectedDay); setSelectedDay(undefined); }} className="flex-1 h-12 rounded-2xl font-black bg-orange-500 hover:bg-orange-600 text-white shadow-lg animate-in zoom-in-95">
+                <Button onClick={() => { onUrge(selectedDay); }} className="flex-1 h-12 rounded-2xl font-black bg-orange-500 hover:bg-orange-600 text-white shadow-lg animate-in zoom-in-95">
                   <Flame className="ml-2 h-4 w-4" /> {isAr ? "رغبة" : "Urge"}
                 </Button>
-                <Button onClick={() => { onReset(selectedDay); setSelectedDay(undefined); }} variant="destructive" className="flex-1 h-12 rounded-2xl font-black shadow-lg animate-in zoom-in-95">
+                <Button onClick={() => { onReset(selectedDay); }} variant="destructive" className="flex-1 h-12 rounded-2xl font-black shadow-lg animate-in zoom-in-95">
                   <Trash2 className="ml-2 h-4 w-4" /> {isAr ? "انتكاسة" : "Relapse"}
                 </Button>
               </>
@@ -181,7 +181,6 @@ export function JourneyLog({
               onChange={pickerMode === 'hours' ? setTempHour : setTempMinute} 
               onComplete={() => {
                 if (pickerMode === 'hours') setPickerMode('minutes')
-                // No auto-complete for minutes to allow checking value
               }} 
             />
             {pickerMode === 'minutes' && (
