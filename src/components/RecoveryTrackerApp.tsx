@@ -8,7 +8,7 @@ import { SidePanel } from "@/components/SidePanel"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
 import { saveToStorage, getFromStorage, STORAGE_KEYS } from "@/lib/storage"
-import { isValid, parseISO } from "date-fns"
+import { isValid, parseISO, isWithinInterval, startOfDay } from "date-fns"
 
 export function RecoveryTrackerApp() {
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false)
@@ -51,14 +51,28 @@ export function RecoveryTrackerApp() {
     document.body.style.height = '100%'
   }, [])
 
-  const handleUpdateStartDate = (date: Date) => {
-    setStartDate(date)
-    saveToStorage(STORAGE_KEYS.START_DATE, date.toISOString())
+  const handleUpdateStartDate = (newDate: Date) => {
+    const oldDate = startDate;
     
-    // Reverted: manual date update also adds a red dot
-    const newResets = [...resetDates, date]
-    setResetDates(newResets)
-    saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(newResets.map(d => d.toISOString())))
+    // Determine the interval between the two dates
+    const startRange = newDate < oldDate ? newDate : oldDate;
+    const endRange = newDate < oldDate ? oldDate : newDate;
+
+    // Filter out any existing reset dates that fall within the interval [startRange, endRange]
+    // This effectively "cleans" those days as per the requirement
+    const filteredResets = resetDates.filter(rd => {
+      const d = rd.getTime();
+      return d < startRange.getTime() || d > endRange.getTime();
+    });
+
+    // Per user requirement: manual date update still marks the NEW date as a reset/start point
+    const updatedResets = [...filteredResets, newDate];
+    
+    setStartDate(newDate);
+    setResetDates(updatedResets);
+    
+    saveToStorage(STORAGE_KEYS.START_DATE, newDate.toISOString());
+    saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(updatedResets.map(d => d.toISOString())));
   }
 
   const handleResetAction = () => {
