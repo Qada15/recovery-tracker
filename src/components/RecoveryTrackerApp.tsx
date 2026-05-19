@@ -21,7 +21,7 @@ export function RecoveryTrackerApp() {
   }, [])
 
   return (
-    <div className="flex-1 flex flex-col items-center bg-background relative h-full">
+    <div className="flex-1 flex flex-col items-center bg-background relative h-full overflow-hidden">
       {/* Top Navigation Bar */}
       <header className="w-full h-16 bg-white border-b flex items-center justify-between px-6 shadow-sm z-40 shrink-0">
         <Button 
@@ -47,19 +47,19 @@ export function RecoveryTrackerApp() {
         </Button>
       </header>
 
-      {/* Main Content Area - Made Scrollable */}
-      <main className="flex-1 w-full overflow-y-auto flex flex-col items-center p-6 space-y-8 pb-12">
-        <div className="text-center space-y-2 mt-4 animate-in fade-in slide-in-from-bottom-4 duration-700 shrink-0">
+      {/* Main Content Area - Fixed height, No scroll */}
+      <main className="flex-1 w-full flex flex-col items-center justify-center p-4 md:p-6 space-y-4 md:space-y-6 overflow-hidden">
+        <div className="text-center space-y-1 animate-in fade-in slide-in-from-bottom-4 duration-700 shrink-0">
           <p className="text-muted-foreground font-bold text-[10px] uppercase tracking-[0.3em]">Your Journey</p>
-          <h2 className="text-2xl md:text-3xl font-black text-foreground font-headline tracking-tight">Stay Strong</h2>
+          <h2 className="text-xl md:text-2xl font-black text-foreground font-headline tracking-tight">Stay Strong</h2>
         </div>
 
-        <div className="w-full flex justify-center items-center">
+        <div className="w-full max-w-2xl flex justify-center items-center shrink min-h-0">
           <TimerDisplay />
         </div>
 
-        <div className="text-center max-w-xs animate-in fade-in slide-in-from-bottom-8 duration-1000 pb-8 shrink-0">
-          <p className="text-sm text-muted-foreground font-medium italic">
+        <div className="text-center max-w-xs animate-in fade-in slide-in-from-bottom-8 duration-1000 shrink-0 px-4">
+          <p className="text-xs md:text-sm text-muted-foreground font-medium italic">
             "The journey of a thousand miles begins with a single step."
           </p>
         </div>

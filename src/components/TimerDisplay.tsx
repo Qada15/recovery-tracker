@@ -24,7 +24,6 @@ import { Label } from "@/components/ui/label"
 import { Calendar } from "@/components/ui/calendar"
 import { format, isValid } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
-import { cn } from "@/lib/utils"
 
 const COLORS = [
   { name: 'Default', value: 'hsl(var(--accent))' },
@@ -35,16 +34,17 @@ const COLORS = [
   { name: 'Violet', value: '#8b5cf6' },
 ]
 
+// Component moved outside to prevent re-creation and focus loss during timer updates
 function TimeBox({ value, label, color }: { value: number; label: string; color: string }) {
   return (
-    <div className="flex flex-col items-center justify-center p-2 sm:p-4 shrink-0">
+    <div className="flex flex-col items-center justify-center p-1 sm:p-2 shrink-0">
       <span 
-        className="text-5xl md:text-7xl font-black font-headline transition-colors duration-500 tabular-nums tracking-tighter" 
+        className="text-4xl sm:text-5xl md:text-7xl font-black font-headline transition-colors duration-500 tabular-nums tracking-tighter" 
         style={{ color: color }}
       >
         {value.toString().padStart(2, '0')}
       </span>
-      <span className="text-[9px] md:text-xs uppercase tracking-[0.2em] text-muted-foreground mt-1 font-black opacity-60">
+      <span className="text-[8px] md:text-xs uppercase tracking-[0.2em] text-muted-foreground mt-0.5 font-black opacity-60">
         {label}
       </span>
     </div>
@@ -137,15 +137,15 @@ export function TimerDisplay() {
   }
 
   return (
-    <div className="relative w-full max-w-[500px] px-2 animate-in fade-in zoom-in duration-500">
-      <div className="w-full bg-white rounded-[40px] md:rounded-[60px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] border border-primary/5 flex flex-col items-center justify-center p-8 md:p-14 relative transition-all duration-500 overflow-hidden">
+    <div className="relative w-full max-w-[500px] px-2 animate-in fade-in zoom-in duration-500 shrink min-h-0">
+      <div className="w-full bg-white rounded-[40px] md:rounded-[60px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] border border-primary/5 flex flex-col items-center justify-center p-6 md:p-10 relative transition-all duration-500 overflow-hidden shrink min-h-0">
         
         {/* Options Trigger */}
-        <div className="absolute top-4 right-4 md:top-8 md:right-8 z-10">
+        <div className="absolute top-4 right-4 z-10">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 md:h-12 md:w-12 hover:bg-secondary">
-                <MoreVertical className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground" />
+              <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 md:h-10 md:w-10 hover:bg-secondary">
+                <MoreVertical className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64 rounded-2xl p-2">
@@ -185,16 +185,16 @@ export function TimerDisplay() {
         </div>
 
         {/* Info */}
-        <div className="text-center mb-8 md:mb-12">
-          <h2 className="text-2xl md:text-4xl font-black text-foreground mb-2 tracking-tight line-clamp-1">{habitName}</h2>
+        <div className="text-center mb-6 md:mb-8">
+          <h2 className="text-xl md:text-3xl font-black text-foreground mb-1 tracking-tight line-clamp-1">{habitName}</h2>
           <div className="flex items-center justify-center space-x-2">
             <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: accentColor }} />
-            <span className="text-[9px] font-black uppercase tracking-[0.4em] opacity-30">Live Progress</span>
+            <span className="text-[8px] font-black uppercase tracking-[0.4em] opacity-30">Live Progress</span>
           </div>
         </div>
         
-        {/* Timer Grid */}
-        <div className="grid grid-cols-2 gap-x-6 md:gap-x-12 gap-y-6 md:gap-y-12 w-full">
+        {/* Timer Grid - More compact to fit screen */}
+        <div className="grid grid-cols-2 gap-x-4 md:gap-x-10 gap-y-4 md:gap-y-8 w-full">
           <TimeBox value={elapsed.days} label="Days" color={accentColor} />
           <TimeBox value={elapsed.hours} label="Hours" color={accentColor} />
           <TimeBox value={elapsed.minutes} label="Minutes" color={accentColor} />
@@ -202,7 +202,7 @@ export function TimerDisplay() {
         </div>
         
         {/* Aesthetic Progress Bar */}
-        <div className="mt-10 md:mt-14 w-24 h-1 bg-secondary rounded-full overflow-hidden">
+        <div className="mt-6 md:mt-10 w-20 h-1 bg-secondary rounded-full overflow-hidden">
           <div 
             className="h-full animate-pulse transition-all duration-1000" 
             style={{ width: '100%', backgroundColor: accentColor }} 
