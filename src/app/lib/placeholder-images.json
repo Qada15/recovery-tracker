@@ -1,0 +1,11 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "habit-hero",
+      "description": "A peaceful landscape representing transformation and calm.",
+      "imageUrl": "https://picsum.photos/seed/habit1/800/800",
+      "imageHint": "peaceful nature"
+    }
+  ]
+}
