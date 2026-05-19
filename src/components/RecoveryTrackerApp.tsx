@@ -9,8 +9,10 @@ import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
 import { saveToStorage, getFromStorage, STORAGE_KEYS } from "@/lib/storage"
 import { isValid, parseISO, startOfDay, isAfter, isBefore, isSameDay } from "date-fns"
+import { useToast } from "@/hooks/use-toast"
 
 export function RecoveryTrackerApp() {
+  const { toast } = useToast()
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false)
   const [isAccountOpen, setIsAccountOpen] = React.useState(false)
   const [isHistoryOpen, setIsHistoryOpen] = React.useState(false)
@@ -60,12 +62,11 @@ export function RecoveryTrackerApp() {
     // 2. نستثني (نحمي) يوم البداية الجديد والايام التي تسبقه
     const filteredResets = resetDates.filter(rd => {
       const rdDate = startOfDay(rd);
-      // الشرط: هل يقع التاريخ في نطاق الحذف؟ (بعد البداية الجديدة وقبل أو في اليوم الحالي)
       const isStrictlyAfterNewStart = isAfter(rdDate, startOfNewDate);
       const isBeforeOrEqualToday = isBefore(rdDate, startOfToday) || isSameDay(rdDate, startOfToday);
       
       const shouldPurge = isStrictlyAfterNewStart && isBeforeOrEqualToday;
-      return !shouldPurge; // نحتفظ به إذا لم يكن ضمن نطاق التطهير
+      return !shouldPurge;
     });
 
     // نضمن أن يوم البداية الجديد مسجل كـ "تصفير" ليبقى أحمر دائماً
@@ -85,11 +86,24 @@ export function RecoveryTrackerApp() {
     saveToStorage(STORAGE_KEYS.START_DATE, now.toISOString())
     
     const isAlreadyRecorded = resetDates.some(rd => isSameDay(startOfDay(rd), startOfDay(now)))
-    if (!isAlreadyRecorded) {
-      const newResets = [...resetDates, now]
-      setResetDates(newResets)
-      saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(newResets.map(d => d.toISOString())))
-    }
+    const newResets = isAlreadyRecorded ? resetDates : [...resetDates, now]
+    
+    setResetDates(newResets)
+    saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(newResets.map(d => d.toISOString())))
+    
+    toast({ 
+      variant: "destructive", 
+      title: "إعادة تعيين", 
+      description: "تم تسجيل انتكاسة لليوم والبدء من جديد." 
+    })
+  }
+
+  const handleUrgeAction = () => {
+    toast({ 
+      title: "تنبيه رغبة", 
+      description: "تذكر لماذا بدأت، استمر في الصمود!",
+      className: "bg-orange-500 text-white border-none"
+    })
   }
 
   const handleUpdateName = (name: string) => {
@@ -130,6 +144,7 @@ export function RecoveryTrackerApp() {
             onUpdateName={handleUpdateName}
             onUpdateColor={handleUpdateColor}
             onReset={handleResetAction}
+            onUrge={handleUrgeAction}
           />
         </div>
       </main>
@@ -141,6 +156,8 @@ export function RecoveryTrackerApp() {
         resetDates={resetDates}
         habitName={habitName}
         accentColor={accentColor}
+        onReset={handleResetAction}
+        onUrge={handleUrgeAction}
       />
 
       <SidePanel isOpen={isAccountOpen} onClose={() => setIsAccountOpen(false)} side="left" title="Account">

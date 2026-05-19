@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { ArrowLeft, Calendar as CalendarIcon } from "lucide-react"
+import { ArrowLeft, Calendar as CalendarIcon, Flame, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { format, isAfter, isBefore, isSameDay, startOfDay } from "date-fns"
@@ -14,9 +14,20 @@ interface JourneyLogProps {
   resetDates: Date[]
   habitName: string
   accentColor: string
+  onReset: () => void
+  onUrge: () => void
 }
 
-export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, accentColor }: JourneyLogProps) {
+export function JourneyLog({ 
+  isOpen, 
+  onClose, 
+  startDate, 
+  resetDates, 
+  habitName, 
+  accentColor,
+  onReset,
+  onUrge
+}: JourneyLogProps) {
   if (!isOpen) return null
 
   const today = new Date()
@@ -25,7 +36,6 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
     relapse: (date: Date) => {
       const d = startOfDay(date)
       const start = startOfDay(startDate)
-      // يوم البداية يلون بالأحمر دائماً + أي زلة مسجلة في resetDates
       const isStartDay = isSameDay(d, start)
       const isRecordedRelapse = resetDates.some(rd => isSameDay(startOfDay(rd), d))
       return isStartDay || isRecordedRelapse
@@ -35,11 +45,9 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
       const start = startOfDay(startDate)
       const now = startOfDay(today)
       
-      // الأيام النظيفة تبدأ حصراً من اليوم التالي ليوم البداية وحتى اليوم الحالي
       const isStrictlyAfterStart = isAfter(d, start)
       const isBeforeOrEqualToday = isBefore(d, now) || isSameDay(d, now)
       
-      // لا يلون بالأخضر إذا كان يوماً مسجلاً كزلة أو هو يوم البداية
       const isRelapseDate = isSameDay(d, start) || resetDates.some(rd => isSameDay(startOfDay(rd), d))
       
       return isStrictlyAfterStart && isBeforeOrEqualToday && !isRelapseDate
@@ -60,16 +68,16 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
         <h2 className="text-sm font-black uppercase tracking-tighter">سجل الالتزام</h2>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-center p-6 overflow-hidden">
-        <div className="text-center mb-6 shrink-0">
+      <main className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden">
+        <div className="text-center mb-4 shrink-0">
           <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-1">{habitName}</p>
           <div className="flex items-center justify-center space-x-2">
-            <CalendarIcon className="h-4 w-4" style={{ color: accentColor }} />
-            <span className="text-sm font-black opacity-70">بداية الالتزام: {format(startDate, 'yyyy/MM/dd')}</span>
+            <CalendarIcon className="h-3 w-3" style={{ color: accentColor }} />
+            <span className="text-[11px] font-black opacity-70">بداية الالتزام: {format(startDate, 'yyyy/MM/dd')}</span>
           </div>
         </div>
 
-        <div className="w-full max-w-[360px] bg-white rounded-[2.5rem] border shadow-2xl p-4 flex items-center justify-center overflow-hidden">
+        <div className="w-full max-w-[340px] bg-white rounded-[2rem] border shadow-2xl p-2 flex items-center justify-center overflow-hidden shrink-0">
           <Calendar 
             mode="single" 
             className="w-full"
@@ -80,15 +88,25 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
           />
         </div>
         
-        <div className="mt-8 flex flex-col space-y-3 shrink-0">
-          <div className="flex items-center space-x-3">
-            <div className="w-4 h-4 bg-emerald-500 rounded-full shadow-sm" />
-            <span className="text-[11px] font-black uppercase tracking-tight opacity-60">أيام الالتزام (نظيفة)</span>
+        <div className="mt-4 flex gap-4 shrink-0">
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-emerald-500 rounded-full shadow-sm" />
+            <span className="text-[9px] font-black uppercase tracking-tight opacity-60">أيام نظيفة</span>
           </div>
-          <div className="flex items-center space-x-3">
-            <div className="w-4 h-4 bg-red-500 rounded-full shadow-sm" />
-            <span className="text-[11px] font-black uppercase tracking-tight opacity-60">أيام التصفير / الانتكاسة</span>
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-red-500 rounded-full shadow-sm" />
+            <span className="text-[9px] font-black uppercase tracking-tight opacity-60">تصفير / انتكاسة</span>
           </div>
+        </div>
+
+        {/* Action Buttons inside the Log */}
+        <div className="mt-6 flex gap-3 w-full max-w-[320px] shrink-0">
+          <Button onClick={onUrge} className="flex-1 h-12 rounded-2xl font-black bg-orange-500 hover:bg-orange-600 text-white shadow-lg">
+            <Flame className="ml-2 h-4 w-4" /> رغبة
+          </Button>
+          <Button onClick={onReset} variant="destructive" className="flex-1 h-12 rounded-2xl font-black shadow-lg">
+            <Trash2 className="ml-2 h-4 w-4" /> انتكاسة
+          </Button>
         </div>
       </main>
 

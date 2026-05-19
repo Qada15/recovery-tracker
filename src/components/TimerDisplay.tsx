@@ -58,6 +58,7 @@ interface TimerDisplayProps {
   onUpdateName: (name: string) => void
   onUpdateColor: (color: string) => void
   onReset: () => void
+  onUrge: () => void
 }
 
 export function TimerDisplay({ 
@@ -68,7 +69,8 @@ export function TimerDisplay({
   onUpdateDate,
   onUpdateName,
   onUpdateColor,
-  onReset
+  onReset,
+  onUrge
 }: TimerDisplayProps) {
   const { toast } = useToast()
   const [elapsed, setElapsed] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
@@ -109,7 +111,6 @@ export function TimerDisplay({
 
   const handleUpdateDate = (date: Date | undefined) => {
     if (!date) return
-    // Prevent setting future dates programmatically just in case
     if (isAfter(startOfDay(date), startOfDay(new Date()))) {
       toast({ variant: "destructive", title: "خطأ", description: "لا يمكن اختيار تاريخ مستقبلي." })
       return
@@ -117,19 +118,6 @@ export function TimerDisplay({
     onUpdateDate(date)
     setShowDateDialog(false)
     toast({ title: "تم التعديل", description: "تم تغيير تاريخ البداية وتحديث السجل." })
-  }
-
-  const handleResetClick = () => {
-    onReset()
-    toast({ variant: "destructive", title: "إعادة تعيين", description: "بدأ العداد من جديد وتم تسجيل اليوم في السجل." })
-  }
-
-  const handleUrge = () => {
-    toast({ 
-      title: "تنبيه رغبة", 
-      description: "تذكر لماذا بدأت، استمر في الصمود!",
-      className: "bg-orange-500 text-white border-none"
-    })
   }
 
   return (
@@ -180,11 +168,11 @@ export function TimerDisplay({
         
         {/* Action Buttons */}
         <div className="flex gap-3 w-full max-w-[320px] mt-8 shrink-0">
-          <Button onClick={handleUrge} className="flex-1 h-12 rounded-2xl font-black bg-orange-500 hover:bg-orange-600 text-white shadow-lg">
+          <Button onClick={onUrge} className="flex-1 h-12 rounded-2xl font-black bg-orange-500 hover:bg-orange-600 text-white shadow-lg">
             <Flame className="ml-2 h-4 w-4" /> رغبة
           </Button>
-          <Button onClick={handleResetClick} variant="destructive" className="flex-1 h-12 rounded-2xl font-black shadow-lg">
-            <Trash2 className="ml-2 h-4 w-4" /> تصفير
+          <Button onClick={onReset} variant="destructive" className="flex-1 h-12 rounded-2xl font-black shadow-lg">
+            <Trash2 className="ml-2 h-4 w-4" /> انتكاسة
           </Button>
         </div>
 
@@ -212,7 +200,7 @@ export function TimerDisplay({
               mode="single" 
               selected={externalStartDate} 
               onSelect={handleUpdateDate} 
-              disabled={{ after: new Date() }} // Disable future dates
+              disabled={{ after: new Date() }}
               className="rounded-3xl bg-white border shadow-sm" 
             />
           </div>
