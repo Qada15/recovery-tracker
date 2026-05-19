@@ -62,9 +62,9 @@ export function TimerDisplay() {
   const [startDate, setStartDate] = React.useState<Date>(new Date())
   const [elapsed, setElapsed] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
 
-  // Dialog Control States
-  const [isEditNameOpen, setIsEditNameOpen] = React.useState(false)
-  const [isDatePickerOpen, setIsDatePickerOpen] = React.useState(false)
+  // UI Control States - Using separate booleans to prevent dropdown conflict
+  const [showNameDialog, setShowNameDialog] = React.useState(false)
+  const [showDateDialog, setShowDateDialog] = React.useState(false)
   const [tempHabitName, setTempHabitName] = React.useState("")
 
   // Load Initial Data
@@ -114,7 +114,7 @@ export function TimerDisplay() {
     if (!tempHabitName.trim()) return
     saveToStorage(STORAGE_KEYS.HABIT_NAME, tempHabitName)
     setHabitName(tempHabitName)
-    setIsEditNameOpen(false)
+    setShowNameDialog(false)
     toast({ title: "Updated", description: "Habit name updated." })
   }, [tempHabitName, toast])
 
@@ -128,7 +128,7 @@ export function TimerDisplay() {
     if (!date) return
     saveToStorage(STORAGE_KEYS.START_DATE, date.toISOString())
     setStartDate(date)
-    setIsDatePickerOpen(false)
+    setShowDateDialog(false)
     toast({ title: "Reset", description: `New start date: ${format(date, "PPP")}` })
   }, [toast])
 
@@ -158,7 +158,7 @@ export function TimerDisplay() {
                 onSelect={(e) => {
                   e.preventDefault()
                   setTempHabitName(habitName)
-                  setIsEditNameOpen(true)
+                  setShowNameDialog(true)
                 }}
                 className="rounded-xl py-2.5 cursor-pointer"
               >
@@ -167,7 +167,7 @@ export function TimerDisplay() {
               <DropdownMenuItem 
                 onSelect={(e) => {
                   e.preventDefault()
-                  setIsDatePickerOpen(true)
+                  setShowDateDialog(true)
                 }}
                 className="rounded-xl py-2.5 cursor-pointer"
               >
@@ -190,7 +190,13 @@ export function TimerDisplay() {
               </div>
 
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive focus:bg-destructive/10 rounded-xl py-2.5 cursor-pointer" onClick={handleReset}>
+              <DropdownMenuItem 
+                className="text-destructive focus:bg-destructive/10 rounded-xl py-2.5 cursor-pointer" 
+                onSelect={(e) => {
+                  e.preventDefault()
+                  handleReset()
+                }}
+              >
                 <Trash2 className="mr-3 h-4 w-4" /> Reset Now
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -223,9 +229,9 @@ export function TimerDisplay() {
         </div>
       </div>
 
-      {/* Dialogs - Moved outside for stability */}
-      <Dialog open={isEditNameOpen} onOpenChange={setIsEditNameOpen}>
-        <DialogContent className="sm:max-w-[400px] rounded-[24px] p-6 z-[60]">
+      {/* Dialogs - Controlled independently to prevent UI lock */}
+      <Dialog open={showNameDialog} onOpenChange={setShowNameDialog}>
+        <DialogContent className="sm:max-w-[400px] rounded-[24px] p-6">
           <DialogHeader>
             <DialogTitle className="text-xl font-black">Rename Habit</DialogTitle>
           </DialogHeader>
@@ -246,8 +252,8 @@ export function TimerDisplay() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
-        <DialogContent className="sm:max-w-[400px] rounded-[24px] p-6 z-[60]">
+      <Dialog open={showDateDialog} onOpenChange={setShowDateDialog}>
+        <DialogContent className="sm:max-w-[400px] rounded-[24px] p-6">
           <DialogHeader>
             <DialogTitle className="text-xl font-black">Select Start Date</DialogTitle>
           </DialogHeader>

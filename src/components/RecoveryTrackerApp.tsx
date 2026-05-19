@@ -46,15 +46,15 @@ export function RecoveryTrackerApp() {
         </Button>
       </header>
 
-      {/* Main Content Area - Strictly No Scroll */}
-      <main className="flex-1 w-full flex flex-col items-center justify-center p-2 md:p-6 space-y-2 md:space-y-4 overflow-hidden">
+      {/* Main Content Area - Strictly No Scroll, No Overflow */}
+      <main className="flex-1 w-full flex flex-col items-center justify-center p-4 space-y-4 overflow-hidden relative">
         <div className="text-center space-y-1 animate-in fade-in slide-in-from-bottom-2 duration-700 shrink-0">
           <p className="text-muted-foreground font-bold text-[8px] md:text-[10px] uppercase tracking-[0.3em]">Your Journey</p>
           <h2 className="text-lg md:text-2xl font-black text-foreground font-headline tracking-tight">Stay Strong</h2>
         </div>
 
-        {/* Counter Container - Takes available space */}
-        <div className="w-full max-w-2xl flex-1 flex items-center justify-center min-h-0 overflow-hidden">
+        {/* Counter Container - Takes available space without spilling */}
+        <div className="w-full flex-1 flex items-center justify-center min-h-0 overflow-hidden">
           <TimerDisplay />
         </div>
 
