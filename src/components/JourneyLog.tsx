@@ -21,24 +21,29 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
 
   const today = new Date()
 
-  // Logic to identify modifiers: Relapse (Red) and Clean (Green)
+  // منطق الملقبات (Modifiers): الانتكاسة (أحمر) والالتزام (أخضر)
   const modifiers = {
-    relapse: resetDates,
+    relapse: (date: Date) => {
+      const d = startOfDay(date)
+      const start = startOfDay(startDate)
+      // يعتبر اليوم انتكاسة إذا كان هو يوم البداية (يوم التصفير) أو مسجلاً في قائمة الانتكاسات
+      const isStartDay = isSameDay(d, start)
+      const isRecordedRelapse = resetDates.some(rd => isSameDay(startOfDay(rd), d))
+      return isStartDay || isRecordedRelapse
+    },
     clean: (date: Date) => {
       const d = startOfDay(date)
       const start = startOfDay(startDate)
       const now = startOfDay(today)
       
-      // القاعدة: اليوم النظيف يبدأ بـعـد يوم البداية (isAfter) وحتى اليوم الحالي
+      // اليوم النظيف يبدأ بـعـد يوم البداية وحتى اليوم الحالي
       const isAfterStart = isAfter(d, start)
       const isBeforeOrEqualToday = isBefore(d, now) || isSameDay(d, now)
-      
-      const isWithinCleanRange = isAfterStart && isBeforeOrEqualToday
       
       // إذا كان مسجلاً كانتكاسة، الأحمر له الأولوية
       const isRelapse = resetDates.some(rd => isSameDay(startOfDay(rd), d))
       
-      return isWithinCleanRange && !isRelapse
+      return isAfterStart && isBeforeOrEqualToday && !isRelapse
     }
   }
 
@@ -57,7 +62,7 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
         <h2 className="text-sm font-black uppercase tracking-tighter">سجل الالتزام</h2>
       </header>
 
-      {/* Main Content - No Scroll, Focused */}
+      {/* Main Content - No Scroll */}
       <main className="flex-1 flex flex-col items-center justify-center p-6 overflow-hidden">
         <div className="text-center mb-6 shrink-0">
           <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-1">{habitName}</p>
@@ -67,7 +72,7 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
           </div>
         </div>
 
-        {/* Calendar Box - Strictly Horizontal 7 cols */}
+        {/* Calendar Box */}
         <div className="w-full max-w-[360px] bg-white rounded-[2.5rem] border shadow-2xl p-4 flex items-center justify-center overflow-hidden">
           <Calendar 
             mode="single" 
@@ -96,7 +101,7 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
       <div className="p-6 border-t bg-white/80 backdrop-blur-md shrink-0">
         <Button 
           onClick={onClose} 
-          className="w-full h-14 rounded-2xl text-base font-black shadow-lg"
+          className="w-full h-14 rounded-2xl text-base font-black shadow-lg text-white"
           style={{ backgroundColor: accentColor }}
         >
           العودة للعداد
