@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -246,7 +247,7 @@ export function RecoveryTrackerApp() {
     const startOfDate = startOfDay(dateToUrge)
 
     // التأكد من أن اليوم ليس انتكاسة
-    const isRelapse = activeHabit.resetDates.some(rd => isSameDay(startOfDay(parseISO(rd)), startOfDate)) || 
+    const isRelapse = (activeHabit.resetDates || []).some(rd => isSameDay(startOfDay(parseISO(rd)), startOfDate)) || 
                      isSameDay(startOfDay(parseISO(activeHabit.startDate)), startOfDate)
     
     if (isRelapse) return
@@ -303,7 +304,7 @@ export function RecoveryTrackerApp() {
         </Button>
       </header>
 
-      <main className="flex-1 w-full flex flex-col items-center justify-center p-4 relative overflow-hidden pb-20">
+      <main className="flex-1 w-full flex flex-col items-center justify-center p-2 sm:p-4 relative pb-24 overflow-hidden">
         {habits.length > 0 && activeHabit ? (
           <>
             <div className="text-center space-y-1 mb-2 shrink-0">
@@ -311,7 +312,7 @@ export function RecoveryTrackerApp() {
               <h2 className="text-lg font-black tracking-tight">{t.stayStrong}</h2>
             </div>
 
-            <div className="w-full flex-1 flex items-center justify-center min-h-0 overflow-hidden">
+            <div className="w-full flex-1 flex items-center justify-center min-h-0 relative">
               <TimerDisplay 
                 externalStartDate={parseISO(activeHabit.startDate)} 
                 externalHabitName={activeHabit.name}

@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -170,8 +171,8 @@ export function TimerDisplay({
   }
 
   return (
-    <div className="relative w-full max-w-[600px] flex-1 flex flex-col items-center justify-center p-2 min-h-0 overflow-hidden">
-      <div className="w-full bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl border flex flex-col items-center justify-center p-8 relative overflow-hidden max-h-full">
+    <div className="relative w-full max-w-[600px] flex-1 flex flex-col items-center justify-center p-4 min-h-0 overflow-hidden">
+      <div className="w-full bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl border flex flex-col items-center justify-center p-6 sm:p-8 relative overflow-hidden max-h-full">
         
         <div className={`absolute top-6 ${isAr ? 'left-6' : 'right-6'} z-20`}>
           <DropdownMenu modal={false}>
@@ -202,54 +203,54 @@ export function TimerDisplay({
           </DropdownMenu>
         </div>
 
-        <div className="text-center mb-6">
-          <h2 className="text-lg font-black text-muted-foreground/60 tracking-widest uppercase mb-1">{externalHabitName}</h2>
+        <div className="text-center mb-4 sm:mb-6">
+          <h2 className="text-sm sm:text-lg font-black text-muted-foreground/60 tracking-widest uppercase mb-1">{externalHabitName}</h2>
           <div className="flex items-center justify-center gap-2">
             <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: externalAccentColor }} />
             <span className="text-[7px] font-black uppercase opacity-40 tracking-widest">{isAr ? "عداد نشط" : "Active Tracker"}</span>
           </div>
         </div>
 
-        {/* Statistics Section - Moved to Top and Enlarged */}
-        <div className="w-full max-w-[340px] grid grid-cols-2 gap-4 mb-8">
-          <div className="bg-secondary/10 rounded-3xl p-4 flex flex-col items-center justify-center text-center border border-white/20 shadow-sm">
-            <Trophy className="h-6 w-6 text-amber-500 mb-2 opacity-90" />
-            <span className="text-2xl font-black tabular-nums leading-none" style={{ color: externalAccentColor }}>
+        {/* Statistics Section */}
+        <div className="w-full max-w-[340px] grid grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <div className="bg-secondary/10 rounded-3xl p-3 sm:p-4 flex flex-col items-center justify-center text-center border border-white/20 shadow-sm">
+            <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500 mb-1 sm:mb-2 opacity-90" />
+            <span className="text-xl sm:text-2xl font-black tabular-nums leading-none" style={{ color: externalAccentColor }}>
               {stats.highest !== null ? stats.highest : "—"}
             </span>
-            <span className="text-[9px] font-black uppercase tracking-widest opacity-60 mt-2">
+            <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest opacity-60 mt-1 sm:mt-2">
               {isAr ? "أعلى رقم قياسي" : "Best Record"}
             </span>
           </div>
-          <div className="bg-secondary/10 rounded-3xl p-4 flex flex-col items-center justify-center text-center border border-white/20 shadow-sm">
-            <RotateCcw className="h-6 w-6 text-slate-400 mb-2 opacity-90" />
-            <span className="text-2xl font-black tabular-nums leading-none text-slate-700 dark:text-slate-300">
+          <div className="bg-secondary/10 rounded-3xl p-3 sm:p-4 flex flex-col items-center justify-center text-center border border-white/20 shadow-sm">
+            <RotateCcw className="h-5 w-5 sm:h-6 sm:w-6 text-slate-400 mb-1 sm:mb-2 opacity-90" />
+            <span className="text-xl sm:text-2xl font-black tabular-nums leading-none text-slate-700 dark:text-slate-300">
               {stats.previous !== null ? stats.previous : "—"}
             </span>
-            <span className="text-[9px] font-black uppercase tracking-widest opacity-60 mt-2">
+            <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest opacity-60 mt-1 sm:mt-2">
               {isAr ? "الرقم السابق" : "Prev Record"}
             </span>
           </div>
         </div>
 
-        {/* Hero Unit: Days */}
+        {/* Hero Unit: Days - Adjusted font size for better fit */}
         <div className="flex flex-col items-center justify-center mb-4">
           <span 
-            className="text-[9rem] leading-none font-black tabular-nums tracking-tighter transition-all duration-700 select-none"
+            className="text-[7rem] sm:text-[9rem] leading-none font-black tabular-nums tracking-tighter transition-all duration-700 select-none"
             style={{ 
               color: externalAccentColor,
-              textShadow: '0 15px 30px rgba(0,0,0,0.05)'
+              textShadow: '0 10px 20px rgba(0,0,0,0.05)'
             }}
           >
             {elapsed.days}
           </span>
-          <span className="text-sm font-black uppercase tracking-[0.4em] text-muted-foreground -mt-1 opacity-50">
+          <span className="text-xs sm:text-sm font-black uppercase tracking-[0.4em] text-muted-foreground -mt-1 opacity-50">
             {isAr ? "يوم" : "Days"}
           </span>
         </div>
         
         {/* Completion Units: H, M, S */}
-        <div className="flex items-center justify-center divide-x divide-border rtl:divide-x-reverse mb-8">
+        <div className="flex items-center justify-center divide-x divide-border rtl:divide-x-reverse mb-6 sm:mb-8">
           <MiniTimeBox value={elapsed.hours} label={isAr ? "ساعة" : "Hour"} color={externalAccentColor} />
           <MiniTimeBox value={elapsed.minutes} label={isAr ? "دقيقة" : "Min"} color={externalAccentColor} />
           <MiniTimeBox value={elapsed.seconds} label={isAr ? "ثانية" : "Sec"} color={externalAccentColor} />
@@ -257,16 +258,16 @@ export function TimerDisplay({
         
         <div className="flex gap-3 w-full max-w-[320px] shrink-0">
           {elapsed.days >= 1 && (
-            <Button onClick={onUrge} className="flex-1 h-14 rounded-2xl font-black bg-orange-500 hover:bg-orange-600 text-white shadow-xl hover:scale-105 active:scale-95 transition-all">
+            <Button onClick={onUrge} className="flex-1 h-12 sm:h-14 rounded-2xl font-black bg-orange-500 hover:bg-orange-600 text-white shadow-xl hover:scale-105 active:scale-95 transition-all">
               <Flame className="ml-2 h-4 w-4" /> {isAr ? "رغبة" : "Urge"}
             </Button>
           )}
-          <Button onClick={onReset} variant="destructive" className="flex-1 h-14 rounded-2xl font-black shadow-xl hover:scale-105 active:scale-95 transition-all">
+          <Button onClick={onReset} variant="destructive" className="flex-1 h-12 sm:h-14 rounded-2xl font-black shadow-xl hover:scale-105 active:scale-95 transition-all">
             <Trash2 className="ml-2 h-4 w-4" /> {isAr ? "انتكاسة" : "Relapse"}
           </Button>
         </div>
 
-        <Button variant="ghost" onClick={onOpenHistory} className="mt-6 rounded-full font-black text-[10px] uppercase opacity-40 hover:opacity-100 transition-opacity">
+        <Button variant="ghost" onClick={onOpenHistory} className="mt-4 sm:mt-6 rounded-full font-black text-[10px] uppercase opacity-40 hover:opacity-100 transition-opacity">
           <History className="mr-2 h-3.5 w-3.5" /> {isAr ? "سجل الرحلة" : "Journey Log"}
         </Button>
       </div>
