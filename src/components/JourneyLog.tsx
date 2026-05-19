@@ -35,7 +35,7 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
           <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-1">{habitName}</p>
           <div className="flex items-center justify-center space-x-2">
             <CalendarIcon className="h-4 w-4" style={{ color: accentColor }} />
-            <span className="text-sm font-black opacity-70">بداية الرحلة: {format(startDate, 'yyyy/MM/dd')}</span>
+            <span className="text-sm font-black opacity-70">تاريخ البداية النشط: {format(startDate, 'yyyy/MM/dd')}</span>
           </div>
         </div>
 
@@ -43,14 +43,14 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
         <div className="w-full max-w-[360px] bg-white rounded-[2.5rem] border shadow-2xl p-4 flex items-center justify-center overflow-hidden">
           <Calendar 
             mode="single" 
-            selected={startDate} 
+            // We don't use 'selected' to avoid the default blue circle
             className="w-full"
             numberOfMonths={1}
             modifiers={{
               relapse: resetDates
             }}
             modifiersClassNames={{
-              relapse: "bg-red-500 text-white hover:bg-red-600 rounded-full font-black shadow-inner"
+              relapse: "bg-red-500 text-white hover:bg-red-600 rounded-full font-black shadow-inner scale-110"
             }}
           />
         </div>
@@ -58,7 +58,7 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
         {/* Simple Legend */}
         <div className="mt-6 flex items-center space-x-2 opacity-50">
           <div className="w-3 h-3 bg-red-500 rounded-full" />
-          <span className="text-[10px] font-black uppercase">أيام الانتكاسة (تم التصفير)</span>
+          <span className="text-[10px] font-black uppercase">أيام التصفير / التغيير (بداية جديدة)</span>
         </div>
       </main>
 

@@ -51,19 +51,23 @@ export function RecoveryTrackerApp() {
     document.body.style.height = '100%'
   }, [])
 
+  const updateResetDates = (newDate: Date) => {
+    const newResets = [...resetDates, newDate]
+    setResetDates(newResets)
+    saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(newResets.map(d => d.toISOString())))
+  }
+
   const handleUpdateStartDate = (date: Date) => {
     setStartDate(date)
     saveToStorage(STORAGE_KEYS.START_DATE, date.toISOString())
+    updateResetDates(date) // Also mark this date in red in the log
   }
 
   const handleResetAction = () => {
     const now = new Date()
-    handleUpdateStartDate(now)
-    
-    // Record the relapse date
-    const newResetDates = [...resetDates, now]
-    setResetDates(newResetDates)
-    saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(newResetDates.map(d => d.toISOString())))
+    setStartDate(now)
+    saveToStorage(STORAGE_KEYS.START_DATE, now.toISOString())
+    updateResetDates(now) // Mark the relapse/reset date in red
   }
 
   const handleUpdateName = (name: string) => {
