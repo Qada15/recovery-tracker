@@ -34,14 +34,14 @@ const COLORS = [
 
 const MiniTimeBox = React.memo(({ value, label, color }: { value: number; label: string; color: string }) => {
   return (
-    <div className="flex flex-col items-center justify-center px-2 sm:px-3 shrink-0">
+    <div className="flex flex-col items-center justify-center px-3 sm:px-4 shrink-0">
       <span 
-        className="text-xl sm:text-3xl font-black tabular-nums tracking-tighter" 
+        className="text-2xl sm:text-3xl font-black tabular-nums tracking-tighter" 
         style={{ color: color }}
       >
         {value.toString().padStart(2, '0')}
       </span>
-      <span className="text-[6px] sm:text-[7px] uppercase tracking-widest text-muted-foreground font-black opacity-50">
+      <span className="text-[7px] sm:text-[8px] uppercase tracking-widest text-muted-foreground font-black opacity-50">
         {label}
       </span>
     </div>
@@ -170,31 +170,32 @@ export function TimerDisplay({
   }
 
   return (
-    <div className="relative w-full max-w-[600px] flex-1 flex flex-col items-center justify-center p-3 sm:p-4 min-h-0 overflow-hidden">
-      <div className="w-full bg-white dark:bg-slate-900 rounded-[2.5rem] sm:rounded-[3rem] shadow-2xl border flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden max-h-full">
+    <div className="relative w-full max-w-[600px] flex flex-col items-center justify-center p-4">
+      <div className="w-full bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl border flex flex-col items-center p-6 sm:p-10 relative overflow-hidden">
         
-        <div className={`absolute top-4 sm:top-6 ${isAr ? 'left-4 sm:left-6' : 'right-4 sm:right-6'} z-20`}>
+        {/* Dropdown Menu */}
+        <div className={`absolute top-6 ${isAr ? 'left-6' : 'right-6'} z-20`}>
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full w-8 h-8 sm:w-10 sm:h-10">
-                <MoreVertical className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
+              <Button variant="ghost" size="icon" className="rounded-full w-10 h-10 hover:bg-secondary/50">
+                <MoreVertical className="h-5 w-5 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align={isAr ? "start" : "end"} className="w-64 p-3 shadow-2xl rounded-2xl">
-              <DropdownMenuItem onSelect={() => setShowNameDialog(true)} className="font-bold">
+            <DropdownMenuContent align={isAr ? "start" : "end"} className="w-64 p-3 shadow-2xl rounded-2xl border-none">
+              <DropdownMenuItem onSelect={() => setShowNameDialog(true)} className="font-bold py-3">
                 {isAr ? "تعديل الاسم" : "Edit Name"}
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setShowDateDialog(true)} className="font-bold">
+              <DropdownMenuItem onSelect={() => setShowDateDialog(true)} className="font-bold py-3">
                 {isAr ? "تعديل التاريخ والوقت" : "Edit Date & Time"}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <div className="grid grid-cols-6 gap-2 p-2">
+              <div className="grid grid-cols-6 gap-2 p-3">
                 {COLORS.map((c) => (
                   <button key={c.value} onClick={() => onUpdateColor(c.value)} className="w-6 h-6 rounded-full border shadow-sm transition-transform hover:scale-125" style={{ backgroundColor: c.value }} title={c.name} />
                 ))}
               </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={onDelete} className="font-bold text-destructive focus:text-destructive">
+              <DropdownMenuItem onSelect={onDelete} className="font-bold text-destructive focus:text-destructive py-3">
                 <Trash2 className="ml-2 h-4 w-4" />
                 {isAr ? "حذف العداد بالكامل" : "Delete Tracker"}
               </DropdownMenuItem>
@@ -202,74 +203,86 @@ export function TimerDisplay({
           </DropdownMenu>
         </div>
 
-        <div className="text-center mb-2 sm:mb-4">
-          <h2 className="text-xs sm:text-base font-black text-muted-foreground/60 tracking-widest uppercase mb-0.5">{externalHabitName}</h2>
-          <div className="flex items-center justify-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: externalAccentColor }} />
-            <span className="text-[6px] sm:text-[7px] font-black uppercase opacity-40 tracking-widest">{isAr ? "عداد نشط" : "Active Tracker"}</span>
+        {/* Top Section: Title & Stats */}
+        <div className="w-full flex flex-col items-center mb-6">
+          <div className="text-center mb-6">
+            <h2 className="text-sm font-black text-muted-foreground/60 tracking-widest uppercase mb-1">{externalHabitName}</h2>
+            <div className="flex items-center justify-center gap-2">
+              <span className="h-2 w-2 rounded-full animate-pulse" style={{ backgroundColor: externalAccentColor }} />
+              <span className="text-[8px] font-black uppercase opacity-40 tracking-widest">{isAr ? "عداد نشط" : "Active Tracker"}</span>
+            </div>
+          </div>
+
+          <div className="w-full max-w-[400px] grid grid-cols-2 gap-4">
+            <div className="bg-secondary/10 rounded-[2rem] p-4 flex flex-col items-center justify-center text-center border border-white/20 shadow-sm transition-all hover:bg-secondary/20">
+              <Trophy className="h-5 w-5 text-amber-500 mb-2" />
+              <span className="text-2xl font-black tabular-nums leading-none" style={{ color: externalAccentColor }}>
+                {stats.highest !== null ? stats.highest : "—"}
+              </span>
+              <span className="text-[9px] font-black uppercase tracking-widest opacity-60 mt-2">
+                {isAr ? "أعلى رقم" : "Best Streak"}
+              </span>
+            </div>
+            <div className="bg-secondary/10 rounded-[2rem] p-4 flex flex-col items-center justify-center text-center border border-white/20 shadow-sm transition-all hover:bg-secondary/20">
+              <RotateCcw className="h-5 w-5 text-slate-400 mb-2" />
+              <span className="text-2xl font-black tabular-nums leading-none text-slate-700 dark:text-slate-300">
+                {stats.previous !== null ? stats.previous : "—"}
+              </span>
+              <span className="text-[9px] font-black uppercase tracking-widest opacity-60 mt-2">
+                {isAr ? "الرقم السابق" : "Prev Streak"}
+              </span>
+            </div>
           </div>
         </div>
 
-        <div className="w-full max-w-[340px] grid grid-cols-2 gap-2 sm:gap-4 mb-3 sm:mb-6">
-          <div className="bg-secondary/10 rounded-2xl sm:rounded-3xl p-2 sm:p-4 flex flex-col items-center justify-center text-center border border-white/20 shadow-sm">
-            <Trophy className="h-4 w-4 sm:h-6 sm:w-6 text-amber-500 mb-1 sm:mb-2 opacity-90" />
-            <span className="text-lg sm:text-2xl font-black tabular-nums leading-none" style={{ color: externalAccentColor }}>
-              {stats.highest !== null ? stats.highest : "—"}
+        {/* Main Section: Days Counter */}
+        <div className="flex flex-col items-center justify-center mb-6 py-4">
+          <div className="relative">
+            <span 
+              className="text-[7rem] sm:text-[9rem] leading-none font-black tabular-nums tracking-tighter select-none"
+              style={{ 
+                color: externalAccentColor,
+                textShadow: '0 15px 30px rgba(0,0,0,0.08)'
+              }}
+            >
+              {elapsed.days}
             </span>
-            <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-widest opacity-60 mt-0.5 sm:mt-2">
-              {isAr ? "أعلى رقم" : "Best"}
-            </span>
+            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2">
+              <span className="text-sm font-black uppercase tracking-[0.4em] text-muted-foreground opacity-50">
+                {isAr ? "يوم" : "Days"}
+              </span>
+            </div>
           </div>
-          <div className="bg-secondary/10 rounded-2xl sm:rounded-3xl p-2 sm:p-4 flex flex-col items-center justify-center text-center border border-white/20 shadow-sm">
-            <RotateCcw className="h-4 w-4 sm:h-6 sm:w-6 text-slate-400 mb-1 sm:mb-2 opacity-90" />
-            <span className="text-lg sm:text-2xl font-black tabular-nums leading-none text-slate-700 dark:text-slate-300">
-              {stats.previous !== null ? stats.previous : "—"}
-            </span>
-            <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-widest opacity-60 mt-0.5 sm:mt-2">
-              {isAr ? "السابق" : "Prev"}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex flex-col items-center justify-center mb-2 sm:mb-4">
-          <span 
-            className="text-[5.5rem] sm:text-[9rem] leading-none font-black tabular-nums tracking-tighter transition-all duration-700 select-none"
-            style={{ 
-              color: externalAccentColor,
-              textShadow: '0 10px 20px rgba(0,0,0,0.05)'
-            }}
-          >
-            {elapsed.days}
-          </span>
-          <span className="text-[10px] sm:text-sm font-black uppercase tracking-[0.4em] text-muted-foreground -mt-1 sm:-mt-2 opacity-50">
-            {isAr ? "يوم" : "Days"}
-          </span>
         </div>
         
-        <div className="flex items-center justify-center divide-x divide-border rtl:divide-x-reverse mb-4 sm:mb-8">
+        {/* Time Detail Section */}
+        <div className="flex items-center justify-center divide-x divide-border rtl:divide-x-reverse mb-8 mt-4">
           <MiniTimeBox value={elapsed.hours} label={isAr ? "ساعة" : "Hour"} color={externalAccentColor} />
           <MiniTimeBox value={elapsed.minutes} label={isAr ? "دقيقة" : "Min"} color={externalAccentColor} />
           <MiniTimeBox value={elapsed.seconds} label={isAr ? "ثانية" : "Sec"} color={externalAccentColor} />
         </div>
         
-        <div className="flex gap-2 sm:gap-3 w-full max-w-[320px] shrink-0">
+        {/* Buttons Section */}
+        <div className="flex gap-4 w-full max-w-[360px] mb-6">
           {elapsed.days >= 1 && (
-            <Button onClick={onUrge} className="flex-1 h-11 sm:h-14 rounded-xl sm:rounded-2xl font-black bg-orange-500 hover:bg-orange-600 text-white shadow-lg hover:scale-105 active:scale-95 transition-all">
-              <Flame className="ml-1 sm:ml-2 h-4 w-4" /> {isAr ? "رغبة" : "Urge"}
+            <Button onClick={onUrge} className="flex-1 h-14 rounded-2xl font-black bg-orange-500 hover:bg-orange-600 text-white shadow-lg transition-transform active:scale-95">
+              <Flame className="ml-2 h-5 w-5" /> {isAr ? "رغبة" : "Urge"}
             </Button>
           )}
-          <Button onClick={onReset} variant="destructive" className="flex-1 h-11 sm:h-14 rounded-xl sm:rounded-2xl font-black shadow-lg hover:scale-105 active:scale-95 transition-all">
-            <Trash2 className="ml-1 sm:ml-2 h-4 w-4" /> {isAr ? "انتكاسة" : "Relapse"}
+          <Button onClick={onReset} variant="destructive" className="flex-1 h-14 rounded-2xl font-black shadow-lg transition-transform active:scale-95">
+            <Trash2 className="ml-2 h-5 w-5" /> {isAr ? "انتكاسة" : "Relapse"}
           </Button>
         </div>
 
-        <Button variant="ghost" onClick={onOpenHistory} className="mt-2 sm:mt-6 h-8 sm:h-10 rounded-full font-black text-[9px] sm:text-[10px] uppercase opacity-40 hover:opacity-100 transition-opacity">
-          <History className="mr-1.5 sm:mr-2 h-3.5 w-3.5" /> {isAr ? "سجل الرحلة" : "Journey Log"}
+        {/* Log Button */}
+        <Button variant="ghost" onClick={onOpenHistory} className="h-10 rounded-full font-black text-[10px] uppercase opacity-40 hover:opacity-100 hover:bg-secondary/50 transition-all gap-2">
+          <History className="h-4 w-4" /> {isAr ? "سجل الرحلة" : "Journey Log"}
         </Button>
       </div>
 
+      {/* Dialogs */}
       <Dialog open={showNameDialog} onOpenChange={setShowNameDialog}>
-        <DialogContent className="rounded-[2.5rem] p-8 max-md">
+        <DialogContent className="rounded-[2.5rem] p-8">
           <DialogHeader><DialogTitle className="text-center font-black">{isAr ? "تعديل الاسم" : "Edit Name"}</DialogTitle></DialogHeader>
           <div className="py-4"><Input value={tempHabitName} onChange={(e) => setTempHabitName(e.target.value)} className="text-center font-bold h-14 rounded-xl" /></div>
           <Button onClick={handleUpdateName} className="w-full h-14 rounded-xl font-black">{isAr ? "حفظ" : "Save"}</Button>
@@ -288,7 +301,7 @@ export function TimerDisplay({
           
           <div className="flex flex-col items-center min-h-[350px] justify-center">
             {setupStep === 'date' && (
-              <Calendar mode="single" selected={selectedDate} onSelect={handleDateSelect} disabled={{ after: new Date() }} modifiers={modifiers} modifiersClassNames={modifiersClassNames} className="rounded-3xl bg-white dark:bg-slate-800 border p-2" />
+              <Calendar mode="single" selected={selectedDate} onSelect={handleDateSelect} disabled={{ after: new Date() }} modifiers={modifiers} modifiersClassNames={modifiersClassNames} className="rounded-3xl bg-white dark:bg-slate-800 border p-2 shadow-inner" />
             )}
             {setupStep === 'hour' && (
               <div className="w-full">
