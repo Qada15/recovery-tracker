@@ -58,7 +58,7 @@ export function JourneyLog({ isOpen, onClose, startDate, resetDates, habitName, 
         {/* Simple Legend */}
         <div className="mt-6 flex items-center space-x-2 opacity-50">
           <div className="w-3 h-3 bg-red-500 rounded-full" />
-          <span className="text-[10px] font-black uppercase">أيام التصفير / التغيير (بداية جديدة)</span>
+          <span className="text-[10px] font-black uppercase">أيام التصفير / الانتكاسة</span>
         </div>
       </main>
 
