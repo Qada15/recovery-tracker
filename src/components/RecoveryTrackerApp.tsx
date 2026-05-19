@@ -24,7 +24,18 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
 import { CircularTimePicker } from "./CircularTimePicker"
@@ -51,6 +62,9 @@ const TRANSLATIONS = {
     stepDate: "1. اختر التاريخ",
     stepHour: "2. اختر الساعة",
     stepMinute: "3. اختر الدقيقة",
+    confirmTitle: "تأكيد الحذف النهائي",
+    cancel: "إلغاء",
+    delete: "حذف نهائي"
   },
   en: {
     title: "Recovery Tracker",
@@ -73,6 +87,9 @@ const TRANSLATIONS = {
     stepDate: "1. Select Date",
     stepHour: "2. Select Hour",
     stepMinute: "3. Select Minute",
+    confirmTitle: "Confirm Permanent Deletion",
+    cancel: "Cancel",
+    delete: "Delete All"
   }
 }
 
@@ -82,6 +99,7 @@ export function RecoveryTrackerApp() {
   const [isAccountOpen, setIsAccountOpen] = React.useState(false)
   const [isHistoryOpen, setIsHistoryOpen] = React.useState(false)
   const [isSetupOpen, setIsSetupOpen] = React.useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
   const [setupStep, setSetupStep] = React.useState<'name' | 'date' | 'hour' | 'minute'>('name')
 
   const [language, setLanguage] = React.useState<'ar' | 'en'>('ar')
@@ -133,7 +151,6 @@ export function RecoveryTrackerApp() {
     setHabitName(tempName)
     setStartDate(finalDate)
     
-    // عند إنشاء عداد جديد، يوم البداية هو يوم تصفير
     const initialResets = [finalDate]
     setResetDates(initialResets)
 
@@ -195,13 +212,8 @@ export function RecoveryTrackerApp() {
     saveToStorage(STORAGE_KEYS.THEME, newTheme)
   }
 
-  const handleDeleteData = () => {
-    if (typeof window !== 'undefined') {
-      const confirmed = window.confirm(t.confirmDelete);
-      if (confirmed) {
-        clearAllStorage();
-      }
-    }
+  const performFullDeletion = () => {
+    clearAllStorage();
   }
 
   const hasHabit = habitName && startDate
@@ -307,6 +319,14 @@ export function RecoveryTrackerApp() {
                   selected={tempDate} 
                   onSelect={(date) => { if(date) { setTempDate(date); setSetupStep('hour'); } }} 
                   disabled={{ after: new Date() }}
+                  modifiers={{
+                    relapse: (date) => resetDates.some(rd => isSameDay(rd, date)),
+                    clean: (date) => startDate ? (isAfter(startOfDay(date), startOfDay(startDate)) && isBefore(startOfDay(date), startOfDay(new Date()))) : false
+                  }}
+                  modifiersClassNames={{
+                    relapse: "bg-red-500 text-white rounded-full font-black scale-110",
+                    clean: "bg-emerald-500 text-white rounded-full font-black opacity-90"
+                  }}
                   className="rounded-3xl border p-2" 
                 />
                 <Button variant="ghost" onClick={() => setSetupStep('name')} className="mt-4 font-black opacity-40 uppercase text-[10px] tracking-widest">
@@ -336,6 +356,27 @@ export function RecoveryTrackerApp() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Alert */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent className="rounded-[2.5rem]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-black text-center">{t.confirmTitle}</AlertDialogTitle>
+            <AlertDialogDescription className="text-center font-bold">
+              {t.confirmDelete}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="rounded-xl font-black">{t.cancel}</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={performFullDeletion}
+              className="bg-destructive text-destructive-foreground rounded-xl font-black"
+            >
+              {t.delete}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <SidePanel isOpen={isAccountOpen} onClose={() => setIsAccountOpen(false)} side={language === 'ar' ? 'right' : 'left'} title={t.account}>
         <div className="flex flex-col items-center space-y-6 pt-4">
@@ -379,7 +420,7 @@ export function RecoveryTrackerApp() {
             <Button 
               variant="destructive" 
               className="w-full h-14 rounded-2xl font-black gap-2 shadow-lg"
-              onClick={handleDeleteData}
+              onClick={() => setIsDeleteDialogOpen(true)}
             >
               <Trash2 className="w-5 h-5" />
               {t.deleteData}
