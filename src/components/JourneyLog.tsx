@@ -4,7 +4,7 @@ import * as React from "react"
 import { ArrowLeft, ArrowRight, Calendar as CalendarIcon, Flame, Trash2, Settings2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
-import { format, isAfter, isBefore, isSameDay, startOfDay, setHours, setMinutes, parseISO } from "date-fns"
+import { format, isAfter, isBefore, isSameDay, startOfDay, setHours, setMinutes } from "date-fns"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { CircularTimePicker } from "./CircularTimePicker"
 
@@ -140,7 +140,7 @@ export function JourneyLog({
                 </Button>
                 <Button 
                   onClick={handleAdjustTime} 
-                  className="w-14 h-12 rounded-2xl font-black bg-slate-200 text-slate-700 animate-in zoom-in-95"
+                  className="w-14 h-12 rounded-2xl font-black bg-slate-200 text-slate-700 animate-in zoom-in-95 flex items-center justify-center"
                 >
                   <Settings2 className="h-5 w-5" />
                 </Button>

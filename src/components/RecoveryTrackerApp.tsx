@@ -204,7 +204,6 @@ export function RecoveryTrackerApp() {
     
     const currentResets = activeHabit.resetDates.map(d => parseISO(d))
     
-    // Check if there is already a reset on this day to update it, or add new
     const existingIndex = currentResets.findIndex(rd => isSameDay(startOfDay(rd), startOfDate))
     
     let newResets = [...currentResets]
@@ -214,11 +213,8 @@ export function RecoveryTrackerApp() {
       newResets.push(dateToReset)
     }
 
-    // Sort resets by time
     newResets.sort((a, b) => a.getTime() - b.getTime())
 
-    // Update startDate if the reset is today or the latest
-    const now = new Date()
     const latestReset = newResets[newResets.length - 1]
     
     handleUpdateActiveHabit({
@@ -232,7 +228,6 @@ export function RecoveryTrackerApp() {
     const currentResets = activeHabit.resetDates.map(d => parseISO(d))
     const newResets = currentResets.filter(rd => !isSameDay(startOfDay(rd), startOfDay(dateToRemove)))
     
-    // Ensure startDate is always the latest reset
     const latestReset = newResets.length > 0 ? newResets[newResets.length - 1] : parseISO(activeHabit.startDate)
 
     handleUpdateActiveHabit({
