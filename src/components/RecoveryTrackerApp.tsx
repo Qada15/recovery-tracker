@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -96,6 +97,7 @@ const TRANSLATIONS = {
 
 export function RecoveryTrackerApp() {
   const { toast } = useToast()
+  const [mounted, setMounted] = React.useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false)
   const [isAccountOpen, setIsAccountOpen] = React.useState(false)
   const [isHistoryOpen, setIsHistoryOpen] = React.useState(false)
@@ -114,12 +116,8 @@ export function RecoveryTrackerApp() {
   const [tempHour, setTempHour] = React.useState(new Date().getHours())
   const [tempMinute, setTempMinute] = React.useState(new Date().getMinutes())
 
-  const t = TRANSLATIONS[language]
-  const isAr = language === 'ar'
-
-  const activeHabit = habits.find(h => h.id === activeHabitId) || habits[0]
-
   React.useEffect(() => {
+    setMounted(true)
     const savedLang = getFromStorage(STORAGE_KEYS.LANGUAGE) as 'ar' | 'en'
     const savedTheme = getFromStorage(STORAGE_KEYS.THEME) as 'light' | 'dark'
     const savedHabits = getFromStorage(STORAGE_KEYS.HABITS)
@@ -139,6 +137,15 @@ export function RecoveryTrackerApp() {
       } catch (e) { console.error("Parse error") }
     }
   }, [])
+
+  if (!mounted) {
+    return <div className="flex-1 bg-background h-screen w-screen" />
+  }
+
+  const t = TRANSLATIONS[language]
+  const isAr = language === 'ar'
+
+  const activeHabit = habits.find(h => h.id === activeHabitId) || habits[0]
 
   const updateHabits = (newHabits: Habit[]) => {
     setHabits(newHabits)
@@ -176,7 +183,6 @@ export function RecoveryTrackerApp() {
     const startOfNewDate = startOfDay(newDate)
     const currentResets = activeHabit.resetDates.map(d => parseISO(d))
     
-    // Protect past, purge future resets relative to new start
     const filteredResets = currentResets.filter(rd => isBefore(startOfDay(rd), startOfNewDate))
     const finalResets = [...filteredResets, newDate]
 
@@ -271,7 +277,6 @@ export function RecoveryTrackerApp() {
         )}
       </main>
 
-      {/* Bottom Habits Bar */}
       {habits.length > 0 && (
         <div className="absolute bottom-4 left-4 right-4 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl border shadow-2xl z-50 flex items-center px-4 overflow-hidden">
           <ScrollArea className="w-full h-full">
@@ -321,7 +326,6 @@ export function RecoveryTrackerApp() {
         />
       )}
 
-      {/* Setup Wizard */}
       <Dialog open={isSetupOpen} onOpenChange={(open) => { setIsSetupOpen(open); if(!open) setSetupStep('name'); }}>
         <DialogContent className="rounded-[2.5rem] p-6 max-w-[420px]">
           <DialogHeader><DialogTitle className="text-center font-black">
