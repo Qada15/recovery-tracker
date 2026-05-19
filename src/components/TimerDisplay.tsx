@@ -216,9 +216,11 @@ export function TimerDisplay({
         </div>
         
         <div className="flex gap-3 w-full max-w-[320px] shrink-0">
-          <Button onClick={onUrge} className="flex-1 h-14 rounded-2xl font-black bg-orange-500 hover:bg-orange-600 text-white shadow-xl hover:scale-105 active:scale-95 transition-all">
-            <Flame className="ml-2 h-4 w-4" /> {isAr ? "رغبة" : "Urge"}
-          </Button>
+          {elapsed.days >= 1 && (
+            <Button onClick={onUrge} className="flex-1 h-14 rounded-2xl font-black bg-orange-500 hover:bg-orange-600 text-white shadow-xl hover:scale-105 active:scale-95 transition-all">
+              <Flame className="ml-2 h-4 w-4" /> {isAr ? "رغبة" : "Urge"}
+            </Button>
+          )}
           <Button onClick={onReset} variant="destructive" className="flex-1 h-14 rounded-2xl font-black shadow-xl hover:scale-105 active:scale-95 transition-all">
             <Trash2 className="ml-2 h-4 w-4" /> {isAr ? "انتكاسة" : "Relapse"}
           </Button>
@@ -230,7 +232,7 @@ export function TimerDisplay({
       </div>
 
       <Dialog open={showNameDialog} onOpenChange={setShowNameDialog}>
-        <DialogContent className="rounded-[2.5rem] p-8 max-w-md">
+        <DialogContent className="rounded-[2.5rem] p-8 max-md">
           <DialogHeader><DialogTitle className="text-center font-black">{isAr ? "تعديل الاسم" : "Edit Name"}</DialogTitle></DialogHeader>
           <div className="py-4"><Input value={tempHabitName} onChange={(e) => setTempHabitName(e.target.value)} className="text-center font-bold h-14 rounded-xl" /></div>
           <Button onClick={handleUpdateName} className="w-full h-14 rounded-xl font-black">{isAr ? "حفظ" : "Save"}</Button>
