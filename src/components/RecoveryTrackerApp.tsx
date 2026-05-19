@@ -8,7 +8,7 @@ import { SidePanel } from "@/components/SidePanel"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
 import { saveToStorage, getFromStorage, STORAGE_KEYS } from "@/lib/storage"
-import { isValid, parseISO, isWithinInterval, startOfDay } from "date-fns"
+import { isValid, parseISO, startOfDay } from "date-fns"
 
 export function RecoveryTrackerApp() {
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false)
@@ -52,27 +52,24 @@ export function RecoveryTrackerApp() {
   }, [])
 
   const handleUpdateStartDate = (newDate: Date) => {
-    const oldDate = startDate;
+    const now = new Date();
     
-    // Determine the interval between the two dates
-    const startRange = newDate < oldDate ? newDate : oldDate;
-    const endRange = newDate < oldDate ? oldDate : newDate;
-
-    // Filter out any existing reset dates that fall within the interval [startRange, endRange]
-    // This effectively "cleans" those days as per the requirement
+    // Logic: Delete and remove any relapse (red color) recorded between the new start date and the current day
+    // This makes those days "clean" (green) automatically in the JourneyLog
     const filteredResets = resetDates.filter(rd => {
-      const d = rd.getTime();
-      return d < startRange.getTime() || d > endRange.getTime();
+      const time = rd.getTime();
+      const startTime = newDate.getTime();
+      const endTime = now.getTime();
+      
+      // Keep reset dates that are OUTSIDE the range [newDate, now]
+      return time < startTime || time > endTime;
     });
 
-    // Per user requirement: manual date update still marks the NEW date as a reset/start point
-    const updatedResets = [...filteredResets, newDate];
-    
     setStartDate(newDate);
-    setResetDates(updatedResets);
+    setResetDates(filteredResets);
     
     saveToStorage(STORAGE_KEYS.START_DATE, newDate.toISOString());
-    saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(updatedResets.map(d => d.toISOString())));
+    saveToStorage(STORAGE_KEYS.RESET_DATES, JSON.stringify(filteredResets.map(d => d.toISOString())));
   }
 
   const handleResetAction = () => {
