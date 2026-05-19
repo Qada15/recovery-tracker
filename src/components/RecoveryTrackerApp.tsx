@@ -1,13 +1,13 @@
 "use client"
 
 import * as React from "react"
-import { Settings, User, Languages, Moon, Sun, Trash2, LogOut } from "lucide-react"
+import { Settings, User, Languages, Moon, Sun, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SidePanel } from "@/components/SidePanel"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
 import { saveToStorage, getFromStorage, STORAGE_KEYS, clearAllStorage } from "@/lib/storage"
-import { isValid, parseISO, startOfDay, isAfter, isBefore, isSameDay } from "date-fns"
+import { isValid, parseISO, startOfDay, isBefore, isSameDay } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
@@ -28,7 +28,7 @@ const TRANSLATIONS = {
     theme: "المظهر",
     darkMode: "الوضع الداكن",
     deleteData: "حذف كافة البيانات",
-    confirmDelete: "هل أنت متأكد؟ سيتم حذف كل شيء نهائياً.",
+    confirmDelete: "هل أنت متأكد؟ سيتم حذف كل شيء نهائياً ولا يمكن التراجع.",
     stayStrong: "كن قوياً",
     journey: "رحلتك",
     habitDefault: "الامتناع",
@@ -43,7 +43,7 @@ const TRANSLATIONS = {
     theme: "Theme",
     darkMode: "Dark Mode",
     deleteData: "Delete All Data",
-    confirmDelete: "Are you sure? Everything will be permanently deleted.",
+    confirmDelete: "Are you sure? Everything will be permanently deleted and cannot be undone.",
     stayStrong: "Stay Strong",
     journey: "Your Journey",
     habitDefault: "Abstinence",
@@ -98,18 +98,16 @@ export function RecoveryTrackerApp() {
 
   const handleUpdateStartDate = (newDate: Date) => {
     const startOfNewDate = startOfDay(newDate);
-    const startOfToday = startOfDay(new Date());
     
-    // منطق التطهير الصارم
-    const filteredResets = resetDates.filter(rd => {
-      const rdDate = startOfDay(rd);
-      if (isBefore(rdDate, startOfNewDate)) return true;
-      return false;
-    });
-
-    const finalResets = filteredResets.some(rd => isSameDay(rd, startOfNewDate))
-      ? filteredResets 
-      : [...filteredResets, startOfNewDate];
+    // منطق التطهير الصارم والمحمي:
+    // 1. نحافظ على أي انتكاسة حدثت قبل تاريخ البداية الجديد.
+    // 2. نحذف أي انتكاسات مسجلة بين التاريخ الجديد والوقت الحالي (تطهير).
+    // 3. نعتبر يوم البداية الجديد هو "يوم صفر" ويجب أن يظهر بالأحمر.
+    
+    const filteredResets = resetDates.filter(rd => isBefore(startOfDay(rd), startOfNewDate));
+    
+    // إضافة تاريخ البداية الجديد للمجموعة لضمان ظهوره بالأحمر
+    const finalResets = [...filteredResets, newDate];
 
     setStartDate(newDate);
     setResetDates(finalResets);
@@ -121,6 +119,7 @@ export function RecoveryTrackerApp() {
     const dateToReset = targetDate || new Date()
     const startOfDate = startOfDay(dateToReset)
     
+    // إذا كان التصفير لليوم الحالي، نقوم بتحديث تاريخ البداية الكلي
     if (!targetDate || isSameDay(startOfDate, startOfDay(new Date()))) {
       setStartDate(new Date())
       saveToStorage(STORAGE_KEYS.START_DATE, new Date().toISOString())
@@ -156,8 +155,12 @@ export function RecoveryTrackerApp() {
   }
 
   const handleDeleteData = () => {
-    if (window.confirm(t.confirmDelete)) {
-      clearAllStorage()
+    // التأكد من عمل زر الحذف بشكل مباشر وصحيح
+    if (typeof window !== 'undefined') {
+      const confirmed = window.confirm(t.confirmDelete);
+      if (confirmed) {
+        clearAllStorage();
+      }
     }
   }
 

@@ -23,6 +23,7 @@ export function getFromStorage(key: string): string | null {
 export function clearAllStorage() {
   if (typeof window !== 'undefined') {
     localStorage.clear();
-    window.location.reload();
+    // استخدام reload لضمان عودة التطبيق لحالته الأصلية تماماً
+    window.location.href = '/';
   }
 }
