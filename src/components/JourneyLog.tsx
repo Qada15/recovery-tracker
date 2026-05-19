@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ArrowLeft, ArrowRight, Calendar as CalendarIcon, Flame, Trash2, Settings2, X, Check } from "lucide-react"
+import { Calendar as CalendarIcon, Flame, Trash2, Settings2, X, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { format, isAfter, isBefore, isSameDay, startOfDay, setHours, setMinutes } from "date-fns"
@@ -92,11 +92,8 @@ export function JourneyLog({
 
   return (
     <div className="fixed inset-0 z-[100] bg-background flex flex-col animate-in fade-in slide-in-from-bottom-5 duration-300 overflow-hidden" dir={isAr ? 'rtl' : 'ltr'}>
-      <header className="w-full h-14 border-b flex items-center px-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shrink-0">
-        <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full h-10 w-10">
-          {isAr ? <ArrowLeft className="h-5 w-5" /> : <ArrowRight className="h-5 w-5" />}
-        </Button>
-        <h2 className="text-sm font-black uppercase tracking-tighter mx-4">{isAr ? "سجل الالتزام" : "Commitment Log"}</h2>
+      <header className="w-full h-14 border-b flex items-center justify-center px-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shrink-0">
+        <h2 className="text-sm font-black uppercase tracking-tighter">{isAr ? "سجل الالتزام" : "Commitment Log"}</h2>
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden">
