@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -22,9 +21,9 @@ export function RecoveryTrackerApp() {
   }, [])
 
   return (
-    <div className="flex-1 flex flex-col items-center bg-background relative overflow-hidden">
+    <div className="flex-1 flex flex-col items-center bg-background relative h-full">
       {/* Top Navigation Bar */}
-      <header className="w-full h-16 bg-white border-b flex items-center justify-between px-6 shadow-sm z-40">
+      <header className="w-full h-16 bg-white border-b flex items-center justify-between px-6 shadow-sm z-40 shrink-0">
         <Button 
           variant="ghost" 
           size="icon" 
@@ -48,17 +47,19 @@ export function RecoveryTrackerApp() {
         </Button>
       </header>
 
-      {/* Main Content Area */}
-      <main className="flex-1 w-full flex flex-col items-center justify-center p-6 space-y-12">
-        <div className="text-center space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <p className="text-muted-foreground font-bold text-xs uppercase tracking-[0.3em]">Your Journey</p>
-          <h2 className="text-3xl font-black text-foreground font-headline tracking-tight">Stay Strong</h2>
+      {/* Main Content Area - Made Scrollable */}
+      <main className="flex-1 w-full overflow-y-auto flex flex-col items-center p-6 space-y-8 pb-12">
+        <div className="text-center space-y-2 mt-4 animate-in fade-in slide-in-from-bottom-4 duration-700 shrink-0">
+          <p className="text-muted-foreground font-bold text-[10px] uppercase tracking-[0.3em]">Your Journey</p>
+          <h2 className="text-2xl md:text-3xl font-black text-foreground font-headline tracking-tight">Stay Strong</h2>
         </div>
 
-        <TimerDisplay />
+        <div className="w-full flex justify-center items-center">
+          <TimerDisplay />
+        </div>
 
-        <div className="text-center max-w-xs animate-in fade-in slide-in-from-bottom-8 duration-1000">
-          <p className="text-sm text-muted-foreground font-medium">
+        <div className="text-center max-w-xs animate-in fade-in slide-in-from-bottom-8 duration-1000 pb-8 shrink-0">
+          <p className="text-sm text-muted-foreground font-medium italic">
             "The journey of a thousand miles begins with a single step."
           </p>
         </div>
