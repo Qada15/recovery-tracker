@@ -34,14 +34,14 @@ const COLORS = [
 
 const MiniTimeBox = React.memo(({ value, label, color }: { value: number; label: string; color: string }) => {
   return (
-    <div className="flex flex-col items-center justify-center px-2 sm:px-4 shrink-0">
+    <div className="flex flex-col items-center justify-center px-4 shrink-0">
       <span 
         className="text-xl sm:text-2xl font-black tabular-nums tracking-tighter leading-none" 
         style={{ color: color }}
       >
         {value.toString().padStart(2, '0')}
       </span>
-      <span className="text-[6px] sm:text-[7px] uppercase tracking-widest text-muted-foreground font-black opacity-50 mt-1">
+      <span className="text-[7px] uppercase tracking-widest text-muted-foreground font-black opacity-40 mt-1">
         {label}
       </span>
     </div>
@@ -170,10 +170,10 @@ export function TimerDisplay({
   }
 
   return (
-    <div className="relative w-full max-w-[650px] flex flex-col items-center justify-center p-2 sm:p-4">
-      <div className="w-full bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border flex flex-col items-center p-4 sm:p-6 relative overflow-hidden">
+    <div className="relative w-full max-w-[600px] flex flex-col items-center justify-center p-2">
+      <div className="w-full bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border flex flex-col items-center p-6 relative overflow-hidden transition-all duration-500">
         
-        {/* Dropdown Menu - Positioned more discreetly */}
+        {/* Dropdown Menu */}
         <div className={`absolute top-4 ${isAr ? 'left-4' : 'right-4'} z-20`}>
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
@@ -203,64 +203,53 @@ export function TimerDisplay({
           </DropdownMenu>
         </div>
 
-        {/* Title and Badge - More compact */}
-        <div className="w-full text-center mb-4">
-          <h2 className="text-[10px] font-black text-muted-foreground/40 tracking-[0.4em] uppercase mb-1">{externalHabitName}</h2>
-          <div className="flex items-center justify-center gap-1.5 opacity-50">
-             <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: externalAccentColor }} />
-             <span className="text-[7px] font-black uppercase tracking-widest">{isAr ? "نشط" : "Active"}</span>
+        {/* 1. Statistics (TOP) */}
+        <div className="w-full flex justify-center gap-4 mb-4 shrink-0">
+          <div className="bg-secondary/10 rounded-2xl px-4 py-2 flex flex-col items-center justify-center min-w-[100px] border border-white/10">
+            <Trophy className="h-3 w-3 text-amber-500 mb-0.5" />
+            <span className="text-xl font-black tabular-nums leading-none" style={{ color: externalAccentColor }}>
+              {stats.highest !== null ? stats.highest : "—"}
+            </span>
+            <span className="text-[7px] font-black uppercase opacity-40 mt-1">{isAr ? "أعلى رقم" : "Best Streak"}</span>
+          </div>
+          <div className="bg-secondary/10 rounded-2xl px-4 py-2 flex flex-col items-center justify-center min-w-[100px] border border-white/10">
+            <RotateCcw className="h-3 w-3 text-slate-400 mb-0.5" />
+            <span className="text-xl font-black tabular-nums text-slate-700 dark:text-slate-300 leading-none">
+              {stats.previous !== null ? stats.previous : "—"}
+            </span>
+            <span className="text-[7px] font-black uppercase opacity-40 mt-1">{isAr ? "الرقم السابق" : "Previous"}</span>
           </div>
         </div>
 
-        <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 px-2 sm:px-6">
-          {/* Left/Top Section: Stats (Stacked in Horizontal mode) */}
-          <div className="flex flex-row sm:flex-col gap-2 w-full sm:w-auto shrink-0 order-2 sm:order-1">
-            <div className="flex-1 bg-secondary/5 rounded-2xl p-2 sm:p-3 flex flex-col items-center justify-center border border-white/10 min-w-[80px]">
-              <Trophy className="h-3 w-3 text-amber-500 mb-1" />
-              <span className="text-lg font-black tabular-nums" style={{ color: externalAccentColor }}>
-                {stats.highest !== null ? stats.highest : "—"}
+        {/* 2. Main Day Counter (MIDDLE) */}
+        <div className="flex flex-col items-center justify-center mb-4">
+          <div className="relative">
+            <span 
+              className="text-7xl sm:text-8xl font-black tabular-nums tracking-tighter leading-none"
+              style={{ 
+                color: externalAccentColor,
+                textShadow: '0 8px 25px rgba(0,0,0,0.05)'
+              }}
+            >
+              {elapsed.days}
+            </span>
+            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2">
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground opacity-30">
+                {isAr ? "يوم" : "Days"}
               </span>
-              <span className="text-[7px] font-black uppercase opacity-40">{isAr ? "أعلى" : "Best"}</span>
-            </div>
-            <div className="flex-1 bg-secondary/5 rounded-2xl p-2 sm:p-3 flex flex-col items-center justify-center border border-white/10 min-w-[80px]">
-              <RotateCcw className="h-3 w-3 text-slate-400 mb-1" />
-              <span className="text-lg font-black tabular-nums text-slate-700 dark:text-slate-300">
-                {stats.previous !== null ? stats.previous : "—"}
-              </span>
-              <span className="text-[7px] font-black uppercase opacity-40">{isAr ? "سابق" : "Prev"}</span>
             </div>
           </div>
+        </div>
 
-          {/* Center Section: Main Counter */}
-          <div className="flex flex-col items-center justify-center order-1 sm:order-2 flex-1">
-            <div className="relative">
-              <span 
-                className="text-7xl sm:text-8xl font-black tabular-nums tracking-tighter leading-none"
-                style={{ 
-                  color: externalAccentColor,
-                  textShadow: '0 8px 20px rgba(0,0,0,0.05)'
-                }}
-              >
-                {elapsed.days}
-              </span>
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2">
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground opacity-30">
-                  {isAr ? "يوم" : "Days"}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Right/Bottom Section: Time Details (Stacked) */}
-          <div className="flex flex-row sm:flex-col items-center justify-center divide-x sm:divide-x-0 sm:divide-y divide-border/30 rtl:divide-x-reverse order-3 w-full sm:w-auto shrink-0">
-            <MiniTimeBox value={elapsed.hours} label={isAr ? "ساعة" : "H"} color={externalAccentColor} />
-            <MiniTimeBox value={elapsed.minutes} label={isAr ? "دقيقة" : "M"} color={externalAccentColor} />
-            <MiniTimeBox value={elapsed.seconds} label={isAr ? "ثانية" : "S"} color={externalAccentColor} />
-          </div>
+        {/* 3. Time Details (BOTTOM) */}
+        <div className="flex items-center justify-center divide-x divide-border/20 rtl:divide-x-reverse mb-2">
+          <MiniTimeBox value={elapsed.hours} label={isAr ? "ساعة" : "H"} color={externalAccentColor} />
+          <MiniTimeBox value={elapsed.minutes} label={isAr ? "دقيقة" : "M"} color={externalAccentColor} />
+          <MiniTimeBox value={elapsed.seconds} label={isAr ? "ثانية" : "S"} color={externalAccentColor} />
         </div>
         
-        {/* Buttons Section - Horizontal row below the main rectangle elements */}
-        <div className="flex gap-3 w-full max-w-[400px] mt-8 mb-2">
+        {/* Buttons Row */}
+        <div className="flex gap-3 w-full max-w-[360px] mt-6">
           {elapsed.days >= 1 && (
             <Button onClick={onUrge} className="flex-1 h-12 rounded-xl font-black bg-orange-500 hover:bg-orange-600 text-white shadow-md active:scale-95 transition-transform">
               <Flame className="ml-2 h-4 w-4" /> {isAr ? "رغبة" : "Urge"}
@@ -271,8 +260,8 @@ export function TimerDisplay({
           </Button>
         </div>
 
-        {/* Small Log Trigger */}
-        <Button variant="ghost" onClick={onOpenHistory} className="h-8 mt-2 rounded-full font-black text-[8px] uppercase opacity-30 hover:opacity-100 transition-all gap-1.5">
+        {/* Journal Link */}
+        <Button variant="ghost" onClick={onOpenHistory} className="h-8 mt-4 rounded-full font-black text-[8px] uppercase opacity-30 hover:opacity-100 transition-all gap-1.5">
           <History className="h-3 w-3" /> {isAr ? "سجل الرحلة" : "Journal"}
         </Button>
       </div>
