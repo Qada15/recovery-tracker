@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -65,7 +64,8 @@ const TRANSLATIONS = {
     confirmTitle: "تأكيد الحذف النهائي",
     cancel: "إلغاء",
     delete: "حذف نهائي",
-    myTrackers: "عداداتي"
+    myTrackers: "عداداتي",
+    deleteHabitConfirm: "هل أنت متأكد من حذف هذا العداد؟ سيتم حذف كافة سجلاته بشكل نهائي."
   },
   en: {
     title: "Recovery Tracker",
@@ -91,7 +91,8 @@ const TRANSLATIONS = {
     confirmTitle: "Confirm Permanent Deletion",
     cancel: "Cancel",
     delete: "Delete All",
-    myTrackers: "My Trackers"
+    myTrackers: "My Trackers",
+    deleteHabitConfirm: "Are you sure you want to delete this tracker? All its records will be permanently removed."
   }
 }
 
@@ -103,6 +104,7 @@ export function RecoveryTrackerApp() {
   const [isHistoryOpen, setIsHistoryOpen] = React.useState(false)
   const [isSetupOpen, setIsSetupOpen] = React.useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
+  const [isHabitDeleteDialogOpen, setIsHabitDeleteDialogOpen] = React.useState(false)
   const [setupStep, setSetupStep] = React.useState<'name' | 'date' | 'hour' | 'minute'>('name')
 
   const [language, setLanguage] = React.useState<'ar' | 'en'>('ar')
@@ -132,8 +134,11 @@ export function RecoveryTrackerApp() {
       try {
         const parsed = JSON.parse(savedHabits)
         setHabits(parsed)
-        if (savedActiveId) setActiveHabitId(savedActiveId)
-        else if (parsed.length > 0) setActiveHabitId(parsed[0].id)
+        if (savedActiveId && parsed.some((h: Habit) => h.id === savedActiveId)) {
+          setActiveHabitId(savedActiveId)
+        } else if (parsed.length > 0) {
+          setActiveHabitId(parsed[0].id)
+        }
       } catch (e) { console.error("Parse error") }
     }
   }, [])
@@ -145,7 +150,7 @@ export function RecoveryTrackerApp() {
   const t = TRANSLATIONS[language]
   const isAr = language === 'ar'
 
-  const activeHabit = habits.find(h => h.id === activeHabitId) || habits[0]
+  const activeHabit = habits.find(h => h.id === activeHabitId)
 
   const updateHabits = (newHabits: Habit[]) => {
     setHabits(newHabits)
@@ -215,6 +220,19 @@ export function RecoveryTrackerApp() {
     }
   }
 
+  const handleDeleteActiveHabit = () => {
+    if (!activeHabitId) return
+    const newHabits = habits.filter(h => h.id !== activeHabitId)
+    updateHabits(newHabits)
+    
+    const nextActiveId = newHabits.length > 0 ? newHabits[0].id : null
+    setActiveHabitId(nextActiveId)
+    saveToStorage(STORAGE_KEYS.ACTIVE_HABIT_ID, nextActiveId || "")
+    
+    setIsHabitDeleteDialogOpen(false)
+    toast({ title: isAr ? "تم حذف العداد بنجاح" : "Tracker deleted successfully" })
+  }
+
   const toggleTheme = (checked: boolean) => {
     const newTheme = checked ? 'dark' : 'light'
     setTheme(newTheme)
@@ -260,6 +278,7 @@ export function RecoveryTrackerApp() {
                 onUpdateColor={(color) => handleUpdateActiveHabit({ color })}
                 onReset={() => handleResetAction()}
                 onUrge={() => toast({ title: isAr ? "تنبيه رغبة" : "Urge Recorded", className: "bg-orange-500 text-white" })}
+                onDelete={() => setIsHabitDeleteDialogOpen(true)}
                 language={language}
               />
             </div>
@@ -354,6 +373,21 @@ export function RecoveryTrackerApp() {
         </DialogContent>
       </Dialog>
 
+      {/* Habit Deletion Confirmation */}
+      <AlertDialog open={isHabitDeleteDialogOpen} onOpenChange={setIsHabitDeleteDialogOpen}>
+        <AlertDialogContent className="rounded-[2.5rem]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-black text-center">{isAr ? "حذف العداد" : "Delete Tracker"}</AlertDialogTitle>
+            <AlertDialogDescription className="text-center font-bold">{t.deleteHabitConfirm}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="rounded-xl font-black">{t.cancel}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteActiveHabit} className="bg-destructive text-destructive-foreground rounded-xl font-black">{t.delete}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Global Deletion Confirmation */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent className="rounded-[2.5rem]">
           <AlertDialogHeader>

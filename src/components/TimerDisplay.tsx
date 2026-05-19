@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { MoreVertical, Trash2, History, Flame, ArrowLeft, Clock } from "lucide-react"
+import { MoreVertical, Trash2, History, Flame, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -59,6 +59,7 @@ interface TimerDisplayProps {
   onUpdateColor: (color: string) => void
   onReset: () => void
   onUrge: () => void
+  onDelete: () => void
   language: 'ar' | 'en'
 }
 
@@ -75,6 +76,7 @@ export function TimerDisplay({
   onUpdateColor,
   onReset,
   onUrge,
+  onDelete,
   language
 }: TimerDisplayProps) {
   const { toast } = useToast()
@@ -173,6 +175,11 @@ export function TimerDisplay({
                   <button key={c.value} onClick={() => onUpdateColor(c.value)} className="w-6 h-6 rounded-full border" style={{ backgroundColor: c.value }} title={c.name} />
                 ))}
               </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={onDelete} className="font-bold text-destructive focus:text-destructive">
+                <Trash2 className="ml-2 h-4 w-4" />
+                {isAr ? "حذف العداد بالكامل" : "Delete Tracker Completely"}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
