@@ -1,7 +1,8 @@
+
 "use client"
 
 import * as React from "react"
-import { Settings, User, Plus, Sparkles, MoreVertical, Trash2, RefreshCw } from "lucide-react"
+import { Settings, User, Plus, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
@@ -11,13 +12,6 @@ import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
 import { CircularTimePicker } from "./CircularTimePicker"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
 import {
   Dialog,
   DialogContent,
@@ -39,14 +33,14 @@ const TRANSLATIONS = {
   ar: {
     title: "نقاهة",
     subtitle: "المتابعة",
-    motivation: "أنت تبلي بلاءً حسناً!",
+    motivation: "أنت تبلي بلاءً حسنًا!",
     addHabit: "إضافة عداد جديد",
     setupTitle: "إعداد العداد",
     save: "حفظ",
     cancel: "إلغاء",
-    delete: "حذف العداد نهائياً",
+    delete: "حذف العداد نهائيًا",
     clearData: "حذف سجلات العداد",
-    confirmDelete: "سيتم حذف كافة البيانات نهائياً.",
+    confirmDelete: "سيتم حذف كافة البيانات نهائيًا.",
     confirmClear: "سيتم تصفير السجل وحذف كافة الزلات والرغبات لهذا العداد.",
     urgeRecorded: "تم تسجيل رغبة",
     historyCleared: "تم تصفير السجل"
@@ -163,6 +157,14 @@ export function RecoveryTrackerApp() {
     toast({ title: t.historyCleared })
   }
 
+  const handleDeleteTracker = () => {
+    if (!activeHabitId) return
+    const newHabits = habits.filter(h => h.id !== activeHabitId)
+    updateHabits(newHabits)
+    setActiveHabitId(newHabits[0]?.id || null)
+    setIsDeleteDialogOpen(false)
+  }
+
   const handleUrgeAction = () => {
     if (!activeHabit) return
     const now = new Date()
@@ -178,29 +180,9 @@ export function RecoveryTrackerApp() {
           <User className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-black text-slate-700 dark:text-white tracking-tighter">{t.title}</h1>
-        <div className="flex items-center gap-1">
-          {activeHabit && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full text-slate-400">
-                  <MoreVertical className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="rounded-2xl w-56">
-                <DropdownMenuItem onClick={() => setIsClearDataOpen(true)} className="text-orange-500 font-bold p-3">
-                  <RefreshCw className="h-4 w-4 ml-2" /> {t.clearData}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="text-red-500 font-bold p-3">
-                  <Trash2 className="h-4 w-4 ml-2" /> {t.delete}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-          <Button variant="ghost" size="icon" className="rounded-full text-slate-400">
-            <Settings className="h-5 w-5" />
-          </Button>
-        </div>
+        <Button variant="ghost" size="icon" className="rounded-full text-slate-400">
+          <Settings className="h-5 w-5" />
+        </Button>
       </header>
 
       <main className="flex-1 w-full flex flex-col items-center p-6 pt-2 overflow-hidden">
@@ -226,8 +208,8 @@ export function RecoveryTrackerApp() {
               onUpdateColor={(color) => handleUpdateActiveHabit({ color })}
               onReset={handleResetAction}
               onUrge={handleUrgeAction}
-              onDelete={() => { updateHabits(habits.filter(h => h.id !== activeHabitId)); setActiveHabitId(habits[0]?.id || null); }}
-              onClearData={handleClearTrackerData}
+              onDelete={() => setIsDeleteDialogOpen(true)}
+              onClearData={() => setIsClearDataOpen(true)}
               language={language}
             />
 
@@ -345,7 +327,7 @@ export function RecoveryTrackerApp() {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent className="rounded-[2.5rem]">
           <AlertDialogHeader><AlertDialogTitle className="font-black">{isAr ? "تأكيد الحذف" : "Confirm Delete"}</AlertDialogTitle><AlertDialogDescription>{t.confirmDelete}</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter><AlertDialogCancel className="rounded-xl">{t.cancel}</AlertDialogCancel><AlertDialogAction onClick={() => { updateHabits(habits.filter(h => h.id !== activeHabitId)); setActiveHabitId(habits[0]?.id || null); setIsDeleteDialogOpen(false); }} className="bg-red-500 rounded-xl">{isAr ? "حذف" : "Delete"}</AlertDialogAction></AlertDialogFooter>
+          <AlertDialogFooter><AlertDialogCancel className="rounded-xl">{t.cancel}</AlertDialogCancel><AlertDialogAction onClick={handleDeleteTracker} className="bg-red-500 rounded-xl">{isAr ? "حذف" : "Delete"}</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>

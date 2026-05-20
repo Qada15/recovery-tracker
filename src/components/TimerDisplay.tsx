@@ -1,7 +1,8 @@
+
 "use client"
 
 import * as React from "react"
-import { History, Flame, Trophy, RefreshCw, Settings2, Calendar as CalendarIcon, Sparkles } from "lucide-react"
+import { History, Flame, Trophy, RefreshCw, MoreVertical, Settings2, Calendar as CalendarIcon, Sparkles, Trash2, RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -9,6 +10,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
 import { isAfter, startOfDay, setHours, setMinutes, differenceInDays } from "date-fns"
@@ -39,6 +47,8 @@ export function TimerDisplay({
   onUpdateName,
   onReset,
   onUrge,
+  onDelete,
+  onClearData,
   language
 }: TimerDisplayProps) {
   const [elapsed, setElapsed] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
@@ -100,6 +110,7 @@ export function TimerDisplay({
 
   return (
     <div className="w-full max-w-[480px] flex flex-col items-center">
+      {/* هالات الإحصائيات */}
       <div className="w-full flex justify-between gap-3 mb-4">
         <div className="flex-1 bg-amber-500/10 border-2 border-amber-500/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
           <Trophy className="h-4 w-4 text-amber-500 mb-1" />
@@ -124,12 +135,28 @@ export function TimerDisplay({
       <div className="w-full bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-slate-800 p-6 flex flex-col items-center">
         <div className="w-full flex items-center justify-between mb-4">
           <div className="flex gap-2">
-             <button onClick={() => setShowNameDialog(true)} className="p-2 hover:bg-slate-50 rounded-xl transition-colors">
-                <Settings2 className="h-5 w-5 text-slate-400" />
-             </button>
-             <button onClick={() => setShowDateDialog(true)} className="p-2 hover:bg-slate-50 rounded-xl transition-colors">
-                <CalendarIcon className="h-5 w-5 text-slate-400" />
-             </button>
+             <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="p-2 hover:bg-slate-50 rounded-xl transition-colors">
+                  <MoreVertical className="h-5 w-5 text-slate-400" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="rounded-2xl w-56">
+                <DropdownMenuItem onClick={() => setShowNameDialog(true)} className="p-3 font-bold">
+                  <Settings2 className="h-4 w-4 ml-2" /> {isAr ? "تعديل الاسم" : "Edit Name"}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowDateDialog(true)} className="p-3 font-bold">
+                  <CalendarIcon className="h-4 w-4 ml-2" /> {isAr ? "تعديل وقت البداية" : "Edit Start Time"}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onClearData} className="text-orange-500 font-bold p-3">
+                  <RotateCcw className="h-4 w-4 ml-2" /> {isAr ? "حذف سجلات العداد" : "Clear Records"}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onDelete} className="text-red-500 font-bold p-3">
+                  <Trash2 className="h-4 w-4 ml-2" /> {isAr ? "حذف العداد نهائياً" : "Delete Permanently"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+             </DropdownMenu>
           </div>
           <div className="flex items-center gap-2">
             <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">{externalHabitName}</h3>
@@ -137,6 +164,7 @@ export function TimerDisplay({
           </div>
         </div>
 
+        {/* عداد الأيام الضخم */}
         <div className="flex flex-col items-center justify-center mb-4">
           <div className="relative flex flex-col items-center">
             <span className="text-7xl font-black text-orange-500 tabular-nums leading-none">
@@ -148,6 +176,7 @@ export function TimerDisplay({
           </div>
         </div>
 
+        {/* تفاصيل الوقت في الأسفل */}
         <div className="w-full flex justify-center gap-4 py-3 bg-slate-50 dark:bg-slate-800/40 rounded-2xl mb-6">
           <div className="text-center">
             <span className="text-xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.hours}</span>
@@ -166,18 +195,21 @@ export function TimerDisplay({
         </div>
 
         <div className="w-full grid grid-cols-5 gap-3 mb-3">
-          <Button 
-            onClick={onUrge}
-            variant="outline"
-            className="col-span-3 h-12 rounded-2xl border-2 border-orange-100 text-orange-500 font-black text-sm flex items-center justify-center gap-2"
-          >
-            <Flame className="h-5 w-5" />
-            {isAr ? "أشعر برغبة" : "Feel Urge"}
-          </Button>
+          {/* يظهر زر الرغبة فقط إذا أكمل المستخدم 24 ساعة */}
+          {elapsed.days >= 1 && (
+            <Button 
+              onClick={onUrge}
+              variant="outline"
+              className="col-span-3 h-12 rounded-2xl border-2 border-orange-100 text-orange-500 font-black text-sm flex items-center justify-center gap-2"
+            >
+              <Flame className="h-5 w-5" />
+              {isAr ? "أشعر برغبة" : "Feel Urge"}
+            </Button>
+          )}
           <Button 
             onClick={onReset}
             variant="outline"
-            className="col-span-2 h-12 rounded-2xl border-2 border-red-100 text-red-500 font-black text-sm flex items-center justify-center gap-2"
+            className={`${elapsed.days >= 1 ? 'col-span-2' : 'col-span-5'} h-12 rounded-2xl border-2 border-red-100 text-red-500 font-black text-sm flex items-center justify-center gap-2`}
           >
             <RefreshCw className="h-5 w-5" />
             {isAr ? "تصفير" : "Reset"}
