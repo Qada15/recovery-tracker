@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { MoreVertical, Trash2, History, Flame, Clock, Trophy, RotateCcw, Eraser } from "lucide-react"
+import { MoreVertical, Trash2, History, Flame, Clock, Trophy, RotateCcw, Eraser, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -262,7 +262,7 @@ export function TimerDisplay({
             </Button>
           )}
           <Button onClick={onReset} variant="destructive" className="flex-1 h-12 rounded-xl font-black shadow-md active:scale-95 transition-transform">
-            <Trash2 className="ml-2 h-4 w-4" /> {isAr ? "تصفير" : "Relapse"}
+            <RefreshCw className="ml-2 h-4 w-4" /> {isAr ? "تصفير" : "Reset"}
           </Button>
         </div>
 
