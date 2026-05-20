@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { MoreVertical, Trash2, History, Flame, Clock, Trophy, RotateCcw, Eraser, RefreshCw } from "lucide-react"
+import { MoreVertical, Trash2, History, Flame, Clock, Trophy, RotateCcw, Eraser, RefreshCw, ChevronLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -209,21 +209,21 @@ export function TimerDisplay({
           </DropdownMenu>
         </div>
 
-        {/* 1. Statistics (TOP) */}
-        <div className="w-full flex justify-center gap-4 mb-4 shrink-0">
-          <div className="bg-secondary/10 rounded-2xl px-4 py-2 flex flex-col items-center justify-center min-w-[100px] border border-white/10">
-            <Trophy className="h-3 w-3 text-amber-500 mb-0.5" />
-            <span className="text-xl font-black tabular-nums leading-none" style={{ color: externalAccentColor }}>
+        {/* 1. Statistics (TOP) with Halo Design */}
+        <div className="w-full flex justify-center gap-4 mb-4 shrink-0 px-2">
+          <div className="flex-1 bg-amber-500/10 border-2 border-amber-500/20 rounded-2xl px-3 py-3 flex flex-col items-center justify-center shadow-sm">
+            <Trophy className="h-4 w-4 text-amber-500 mb-1" />
+            <span className="text-2xl font-black tabular-nums leading-none text-amber-600">
               {stats.highest !== null ? stats.highest : "—"}
             </span>
-            <span className="text-[7px] font-black uppercase opacity-40 mt-1">{isAr ? "أعلى رقم" : "Best Streak"}</span>
+            <span className="text-[8px] font-black uppercase opacity-60 tracking-wider mt-1">{isAr ? "أعلى رقم" : "Best Streak"}</span>
           </div>
-          <div className="bg-secondary/10 rounded-2xl px-4 py-2 flex flex-col items-center justify-center min-w-[100px] border border-white/10">
-            <RotateCcw className="h-3 w-3 text-slate-400 mb-0.5" />
-            <span className="text-xl font-black tabular-nums text-slate-700 dark:text-slate-300 leading-none">
+          <div className="flex-1 bg-slate-500/10 border-2 border-slate-500/20 rounded-2xl px-3 py-3 flex flex-col items-center justify-center shadow-sm">
+            <RotateCcw className="h-4 w-4 text-slate-500 mb-1" />
+            <span className="text-2xl font-black tabular-nums text-slate-700 dark:text-slate-300 leading-none">
               {stats.previous !== null ? stats.previous : "—"}
             </span>
-            <span className="text-[7px] font-black uppercase opacity-40 mt-1">{isAr ? "الرقم السابق" : "Previous"}</span>
+            <span className="text-[8px] font-black uppercase opacity-60 tracking-wider mt-1">{isAr ? "الرقم السابق" : "Previous"}</span>
           </div>
         </div>
 
@@ -248,28 +248,36 @@ export function TimerDisplay({
         </div>
 
         {/* 3. Time Details (BOTTOM) */}
-        <div className="flex items-center justify-center divide-x divide-border/20 rtl:divide-x-reverse mb-2">
+        <div className="flex items-center justify-center divide-x divide-border/20 rtl:divide-x-reverse mb-6">
           <MiniTimeBox value={elapsed.hours} label={isAr ? "ساعة" : "H"} color={externalAccentColor} />
           <MiniTimeBox value={elapsed.minutes} label={isAr ? "دقيقة" : "M"} color={externalAccentColor} />
           <MiniTimeBox value={elapsed.seconds} label={isAr ? "ثانية" : "S"} color={externalAccentColor} />
         </div>
         
-        {/* Buttons Row */}
-        <div className="flex gap-3 w-full max-w-[360px] mt-6">
-          {elapsed.days >= 1 && (
-            <Button onClick={onUrge} className="flex-1 h-12 rounded-xl font-black bg-orange-500 hover:bg-orange-600 text-white shadow-md active:scale-95 transition-transform">
-              <Flame className="ml-2 h-4 w-4" /> {isAr ? "رغبة" : "Urge"}
+        {/* Buttons Section: Redesigned as requested */}
+        <div className="flex flex-col gap-3 w-full max-w-[380px] px-2">
+          {/* Top Row: Urge (if available) and Reset (Small) */}
+          <div className="flex gap-2">
+            {elapsed.days >= 1 && (
+              <Button onClick={onUrge} className="flex-1 h-12 rounded-2xl font-black bg-orange-500 hover:bg-orange-600 text-white shadow-lg active:scale-95 transition-all">
+                <Flame className="ml-2 h-4 w-4" /> {isAr ? "رغبة" : "Urge"}
+              </Button>
+            )}
+            <Button onClick={onReset} variant="destructive" className={`${elapsed.days >= 1 ? 'w-24' : 'flex-1'} h-12 rounded-2xl font-black shadow-lg active:scale-95 transition-all`}>
+              <RefreshCw className={`${isAr ? 'ml-1' : 'mr-1'} h-4 w-4`} /> {isAr ? "تصفير" : "Reset"}
             </Button>
-          )}
-          <Button onClick={onReset} variant="destructive" className="flex-1 h-12 rounded-xl font-black shadow-md active:scale-95 transition-transform">
-            <RefreshCw className="ml-2 h-4 w-4" /> {isAr ? "تصفير" : "Reset"}
+          </div>
+
+          {/* Bottom Row: Journey Log (Largest) */}
+          <Button 
+            onClick={onOpenHistory} 
+            variant="outline"
+            className="w-full h-16 rounded-3xl font-black text-sm uppercase tracking-wider gap-2 border-2 border-primary/20 text-primary shadow-xl hover:bg-primary/5 active:scale-95 transition-all"
+          >
+            <History className="h-5 w-5" /> {isAr ? "سجل الرحلة" : "Journey Log"}
           </Button>
         </div>
 
-        {/* Journal Link */}
-        <Button variant="ghost" onClick={onOpenHistory} className="h-8 mt-4 rounded-full font-black text-[8px] uppercase opacity-30 hover:opacity-100 transition-all gap-1.5">
-          <History className="h-3 w-3" /> {isAr ? "سجل الرحلة" : "Journal"}
-        </Button>
       </div>
 
       {/* Dialogs */}
