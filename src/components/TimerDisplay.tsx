@@ -31,21 +31,15 @@ interface TimerDisplayProps {
   language: 'ar' | 'en'
 }
 
-type SetupStep = 'date' | 'hour' | 'minute'
-
 export function TimerDisplay({ 
   externalStartDate, 
   externalHabitName, 
-  externalAccentColor, 
   resetDates,
   onOpenHistory,
   onUpdateDate,
   onUpdateName,
-  onUpdateColor,
   onReset,
   onUrge,
-  onDelete,
-  onClearData,
   language
 }: TimerDisplayProps) {
   const [elapsed, setElapsed] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
@@ -53,7 +47,7 @@ export function TimerDisplay({
   const [showDateDialog, setShowDateDialog] = React.useState(false)
   const [tempHabitName, setTempHabitName] = React.useState(externalHabitName)
   
-  const [setupStep, setSetupStep] = React.useState<SetupStep>('date')
+  const [setupStep, setSetupStep] = React.useState<'date' | 'hour' | 'minute'>('date')
   const [selectedDate, setSelectedDate] = React.useState<Date>(externalStartDate)
   const [selectedHour, setSelectedHour] = React.useState(externalStartDate.getHours())
   const [selectedMinute, setSelectedMinute] = React.useState(externalStartDate.getMinutes())
@@ -99,13 +93,6 @@ export function TimerDisplay({
     setShowNameDialog(false)
   }
 
-  const handleDateSelect = (date: Date | undefined) => {
-    if (!date) return
-    if (isAfter(startOfDay(date), startOfDay(new Date()))) return
-    setSelectedDate(date)
-    setSetupStep('hour')
-  }
-
   const handleSaveFullDate = () => {
     const finalDate = setMinutes(setHours(selectedDate, selectedHour), selectedMinute)
     onUpdateDate(finalDate)
@@ -115,7 +102,6 @@ export function TimerDisplay({
 
   return (
     <div className="w-full max-w-[480px] flex flex-col items-center">
-      {/* هالات الإحصائيات العلوية الملونة */}
       <div className="w-full flex justify-between gap-3 mb-4">
         <div className="flex-1 bg-amber-500/10 border-2 border-amber-500/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
           <Trophy className="h-4 w-4 text-amber-500 mb-1" />
@@ -137,10 +123,9 @@ export function TimerDisplay({
         </div>
       </div>
 
-      {/* العداد المستطيل الرئيسي */}
       <div className="w-full bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-slate-800 p-6 flex flex-col items-center">
-        <div className="w-full flex items-center justify-between mb-6">
-          <div className="flex gap-3">
+        <div className="w-full flex items-center justify-between mb-4">
+          <div className="flex gap-2">
              <button onClick={() => setShowNameDialog(true)} className="p-2 hover:bg-slate-50 rounded-xl transition-colors">
                 <Settings2 className="h-5 w-5 text-slate-400" />
              </button>
@@ -149,23 +134,23 @@ export function TimerDisplay({
              </button>
           </div>
           <div className="flex items-center gap-2">
-            <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">{externalHabitName}</h3>
+            <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">{externalHabitName}</h3>
             <Sparkles className="h-5 w-5 text-orange-400" />
           </div>
         </div>
 
-        <div className="flex flex-col items-center justify-center mb-6">
+        <div className="flex flex-col items-center justify-center mb-4">
           <div className="relative flex flex-col items-center">
-            <span className="text-8xl font-black text-orange-500 tabular-nums leading-none">
+            <span className="text-7xl font-black text-orange-500 tabular-nums leading-none">
               {elapsed.days}
             </span>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">
               {isAr ? "يوم" : "Day"}
             </span>
           </div>
         </div>
 
-        <div className="w-full flex justify-center gap-4 py-3 bg-slate-50 dark:bg-slate-800/40 rounded-2xl mb-8">
+        <div className="w-full flex justify-center gap-4 py-3 bg-slate-50 dark:bg-slate-800/40 rounded-2xl mb-6">
           <div className="text-center">
             <span className="text-xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.hours}</span>
             <p className="text-[8px] font-black uppercase opacity-40">{isAr ? "ساعة" : "H"}</p>
@@ -186,7 +171,7 @@ export function TimerDisplay({
           <Button 
             onClick={onUrge}
             variant="outline"
-            className="col-span-3 h-14 rounded-2xl border-2 border-orange-100 text-orange-500 font-black text-sm flex items-center justify-center gap-2 shadow-sm"
+            className="col-span-3 h-12 rounded-2xl border-2 border-orange-100 text-orange-500 font-black text-sm flex items-center justify-center gap-2"
           >
             <Flame className="h-5 w-5" />
             {isAr ? "أشعر برغبة" : "Feel Urge"}
@@ -194,7 +179,7 @@ export function TimerDisplay({
           <Button 
             onClick={onReset}
             variant="outline"
-            className="col-span-2 h-14 rounded-2xl border-2 border-red-100 text-red-500 font-black text-sm flex items-center justify-center gap-2 shadow-sm"
+            className="col-span-2 h-12 rounded-2xl border-2 border-red-100 text-red-500 font-black text-sm flex items-center justify-center gap-2"
           >
             <RefreshCw className="h-5 w-5" />
             {isAr ? "تصفير" : "Reset"}
@@ -203,7 +188,7 @@ export function TimerDisplay({
 
         <Button 
           onClick={onOpenHistory}
-          className="w-full h-16 rounded-[1.5rem] bg-slate-900 dark:bg-slate-800 text-white font-black text-lg flex items-center justify-center gap-3 shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
+          className="w-full h-16 rounded-[1.5rem] bg-slate-900 dark:bg-slate-800 text-white font-black text-lg flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all"
         >
           <History className="h-6 w-6" />
           {isAr ? "سجل الرحلة" : "Journey Log"}
@@ -223,7 +208,7 @@ export function TimerDisplay({
           <DialogHeader><DialogTitle className="text-center font-black">{isAr ? "تعديل الوقت" : "Edit Time"}</DialogTitle></DialogHeader>
           <div className="flex flex-col items-center min-h-[320px] justify-center">
             {setupStep === 'date' && (
-              <Calendar mode="single" selected={selectedDate} onSelect={handleDateSelect} disabled={{ after: new Date() }} className="rounded-3xl border p-2" />
+              <Calendar mode="single" selected={selectedDate} onSelect={(d) => { if(d) { setSelectedDate(d); setSetupStep('hour'); } }} disabled={{ after: new Date() }} className="rounded-3xl border p-2" />
             )}
             {setupStep === 'hour' && (
               <div className="w-full">

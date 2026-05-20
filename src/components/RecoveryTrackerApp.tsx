@@ -4,14 +4,14 @@
 import * as React from "react"
 import { Settings, User, Plus, Sparkles, MoreVertical, Trash2, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { SidePanel } from "@/components/SidePanel"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
-import { saveToStorage, getFromStorage, STORAGE_KEYS, clearAllStorage, type Habit } from "@/lib/storage"
-import { parseISO, startOfDay, setHours, setMinutes } from "date-fns"
+import { saveToStorage, getFromStorage, STORAGE_KEYS, type Habit } from "@/lib/storage"
+import { parseISO, setHours, setMinutes } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
+import { Input } from "@/components/ui/input"
+import { Calendar } from "@/components/ui/calendar"
+import { CircularTimePicker } from "./CircularTimePicker"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,17 +35,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Input } from "@/components/ui/input"
-import { Calendar } from "@/components/ui/calendar"
-import { CircularTimePicker } from "./CircularTimePicker"
 
 const TRANSLATIONS = {
   ar: {
     title: "نقاهة",
     subtitle: "المتابعة",
     motivation: "أنت تبلي بلاءً حسناً!",
-    settings: "الإعدادات",
-    account: "الحساب",
     addHabit: "إضافة عداد جديد",
     setupTitle: "إعداد العداد",
     save: "حفظ",
@@ -61,8 +56,6 @@ const TRANSLATIONS = {
     title: "Recovery",
     subtitle: "Tracking",
     motivation: "You are doing great!",
-    settings: "Settings",
-    account: "Account",
     addHabit: "Add New Tracker",
     setupTitle: "Setup Tracker",
     save: "Save",
@@ -79,17 +72,13 @@ const TRANSLATIONS = {
 export function RecoveryTrackerApp() {
   const { toast } = useToast()
   const [mounted, setMounted] = React.useState(false)
-  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false)
-  const [isAccountOpen, setIsAccountOpen] = React.useState(false)
   const [isHistoryOpen, setIsHistoryOpen] = React.useState(false)
   const [isSetupOpen, setIsSetupOpen] = React.useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
   const [isClearDataOpen, setIsClearDataOpen] = React.useState(false)
   const [setupStep, setSetupStep] = React.useState<'name' | 'date' | 'hour' | 'minute'>('name')
 
-  const [language, setLanguage] = React.useState<'ar' | 'en'>('ar')
-  const [theme, setTheme] = React.useState<'light' | 'dark'>('light')
-  
+  const [language] = React.useState<'ar' | 'en'>('ar')
   const [habits, setHabits] = React.useState<Habit[]>([])
   const [activeHabitId, setActiveHabitId] = React.useState<string | null>(null)
 
@@ -100,16 +89,9 @@ export function RecoveryTrackerApp() {
 
   React.useEffect(() => {
     setMounted(true)
-    const savedLang = getFromStorage(STORAGE_KEYS.LANGUAGE) as 'ar' | 'en'
-    const savedTheme = getFromStorage(STORAGE_KEYS.THEME) as 'light' | 'dark'
     const savedHabits = getFromStorage(STORAGE_KEYS.HABITS)
     const savedActiveId = getFromStorage(STORAGE_KEYS.ACTIVE_HABIT_ID)
 
-    if (savedLang) setLanguage(savedLang)
-    if (savedTheme) {
-      setTheme(savedTheme)
-      document.documentElement.classList.toggle('dark', savedTheme === 'dark')
-    }
     if (savedHabits) {
       try {
         const parsed = JSON.parse(savedHabits)
@@ -193,7 +175,7 @@ export function RecoveryTrackerApp() {
   return (
     <div className="flex-1 flex flex-col items-center bg-slate-50 dark:bg-slate-950 relative h-full overflow-hidden select-none touch-none" dir={isAr ? 'rtl' : 'ltr'}>
       <header className="w-full h-16 flex items-center justify-between px-6 z-40 shrink-0">
-        <Button variant="ghost" size="icon" onClick={() => setIsAccountOpen(true)} className="rounded-full text-slate-400">
+        <Button variant="ghost" size="icon" className="rounded-full text-slate-400">
           <User className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-black text-slate-700 dark:text-white tracking-tighter">{t.title}</h1>
@@ -205,18 +187,18 @@ export function RecoveryTrackerApp() {
                   <MoreVertical className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="rounded-2xl w-48">
-                <DropdownMenuItem onClick={() => setIsClearDataOpen(true)} className="text-orange-500 font-bold">
+              <DropdownMenuContent align="end" className="rounded-2xl w-56">
+                <DropdownMenuItem onClick={() => setIsClearDataOpen(true)} className="text-orange-500 font-bold p-3">
                   <RefreshCw className="h-4 w-4 ml-2" /> {t.clearData}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="text-red-500 font-bold">
+                <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="text-red-500 font-bold p-3">
                   <Trash2 className="h-4 w-4 ml-2" /> {t.delete}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-          <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(true)} className="rounded-full text-slate-400">
+          <Button variant="ghost" size="icon" className="rounded-full text-slate-400">
             <Settings className="h-5 w-5" />
           </Button>
         </div>
@@ -236,7 +218,11 @@ export function RecoveryTrackerApp() {
               externalAccentColor={activeHabit.color}
               resetDates={activeHabit.resetDates.map(d => parseISO(d))}
               onOpenHistory={() => setIsHistoryOpen(true)}
-              onUpdateDate={(d) => handleUpdateActiveHabit({ startDate: d.toISOString(), resetDates: [...activeHabit.resetDates, d.toISOString()] })}
+              onUpdateDate={(d) => {
+                const currentResets = activeHabit.resetDates.map(rd => parseISO(rd));
+                const newResets = [...currentResets.filter(rd => rd.getTime() !== parseISO(activeHabit.startDate).getTime()), d].sort((a, b) => a.getTime() - b.getTime());
+                handleUpdateActiveHabit({ startDate: d.toISOString(), resetDates: newResets.map(rd => rd.toISOString()) });
+              }}
               onUpdateName={(name) => handleUpdateActiveHabit({ name })}
               onUpdateColor={(color) => handleUpdateActiveHabit({ color })}
               onReset={handleResetAction}
@@ -257,7 +243,10 @@ export function RecoveryTrackerApp() {
                 {habits.map((habit) => (
                   <button
                     key={habit.id}
-                    onClick={() => setActiveHabitId(habit.id)}
+                    onClick={() => {
+                      setActiveHabitId(habit.id);
+                      saveToStorage(STORAGE_KEYS.ACTIVE_HABIT_ID, habit.id);
+                    }}
                     className={`shrink-0 h-24 w-20 rounded-[1.5rem] flex flex-col items-center justify-center gap-2 border-2 transition-all active:scale-95 ${
                       activeHabitId === habit.id 
                         ? "bg-white border-slate-800 text-slate-800 shadow-2xl" 
@@ -304,10 +293,11 @@ export function RecoveryTrackerApp() {
             });
           }} 
           onRemoveReset={(date) => {
-             const newResets = activeHabit.resetDates.filter(d => !isSameDay(parseISO(d), date));
+             const newResets = activeHabit.resetDates.filter(d => parseISO(d).getTime() !== date.getTime());
              if (newResets.length === 0) return;
+             const lastReset = parseISO(newResets[newResets.length - 1]);
              handleUpdateActiveHabit({
-               startDate: parseISO(newResets[newResets.length - 1]).toISOString(),
+               startDate: lastReset.toISOString(),
                resetDates: newResets
              });
           }}
@@ -316,14 +306,13 @@ export function RecoveryTrackerApp() {
             handleUpdateActiveHabit({ urgeDates: newUrges });
           }}
           onRemoveUrge={(date) => {
-            const newUrges = (activeHabit.urgeDates || []).filter(d => !isSameDay(parseISO(d), date));
+            const newUrges = (activeHabit.urgeDates || []).filter(d => parseISO(d).getTime() !== date.getTime());
             handleUpdateActiveHabit({ urgeDates: newUrges });
           }}
           language={language}
         />
       )}
 
-      {/* حوار الإعداد ونافذة الحذف والتصفير */}
       <Dialog open={isSetupOpen} onOpenChange={(open) => { setIsSetupOpen(open); if(!open) setSetupStep('name'); }}>
         <DialogContent className="rounded-[2.5rem] p-8 max-w-[420px]">
           <DialogHeader><DialogTitle className="text-center font-black">{t.setupTitle}</DialogTitle></DialogHeader>
