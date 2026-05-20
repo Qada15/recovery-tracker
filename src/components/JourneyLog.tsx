@@ -216,7 +216,7 @@ export function JourneyLog({
                   </Button>
                 )}
                 <Button onClick={() => onReset(selectedDay)} variant="destructive" className="flex-1 h-12 rounded-2xl font-black shadow-lg animate-in zoom-in-95">
-                  <Trash2 className="ml-2 h-4 w-4" /> {isAr ? "تصفير" : "Relapse"}
+                  <Trash2 className="ml-2 h-4 w-4" /> {isAr ? "انتكاسة" : "Relapse"}
                 </Button>
               </>
             )
