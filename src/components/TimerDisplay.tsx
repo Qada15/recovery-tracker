@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { History, Flame, Trophy, RefreshCw, Settings2, Calendar as CalendarIcon, Sparkles, ChevronLeft } from "lucide-react"
+import { History, Flame, Trophy, RefreshCw, Settings2, Calendar as CalendarIcon, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -60,6 +60,7 @@ export function TimerDisplay({
 
   const isAr = language === 'ar'
 
+  // خوارزمية حساب الأرقام القياسية (أعلى رقم والرقم السابق)
   const stats = React.useMemo(() => {
     if (resetDates.length < 2) return { highest: null, previous: null }
     const streaks: number[] = []
@@ -114,9 +115,9 @@ export function TimerDisplay({
 
   return (
     <div className="w-full max-w-[480px] flex flex-col items-center">
-      {/* هالات الإحصائيات العلوية */}
+      {/* هالات الإحصائيات العلوية الملونة */}
       <div className="w-full flex justify-between gap-3 mb-4">
-        <div className="flex-1 bg-amber-100 dark:bg-amber-900/30 border-2 border-amber-200 dark:border-amber-800/50 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
+        <div className="flex-1 bg-amber-500/10 border-2 border-amber-500/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
           <Trophy className="h-4 w-4 text-amber-500 mb-1" />
           <span className="text-xl font-black text-amber-600 dark:text-amber-400 tabular-nums">
             {stats.highest !== null ? stats.highest : "—"}
@@ -125,7 +126,7 @@ export function TimerDisplay({
             {isAr ? "أعلى رقم قياسي" : "Highest Record"}
           </span>
         </div>
-        <div className="flex-1 bg-slate-100 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700/50 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
+        <div className="flex-1 bg-slate-500/10 border-2 border-slate-500/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
           <History className="h-4 w-4 text-slate-500 mb-1" />
           <span className="text-xl font-black text-slate-600 dark:text-slate-400 tabular-nums">
             {stats.previous !== null ? stats.previous : "—"}

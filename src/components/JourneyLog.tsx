@@ -49,6 +49,7 @@ export function JourneyLog({
   const today = startOfDay(new Date())
   const start = startOfDay(startDate)
 
+  // خوارزمية إحصائيات الشهر المعروض حالياً
   const monthStats = React.useMemo(() => {
     const monthStart = startOfMonth(currentMonth)
     const monthEnd = endOfMonth(currentMonth)
@@ -61,6 +62,7 @@ export function JourneyLog({
     daysInMonth.forEach(day => {
       const d = startOfDay(day)
       const isRelapseDay = resetDates.some(rd => isSameDay(startOfDay(rd), d)) || isSameDay(d, start)
+      
       if (isRelapseDay && (isBefore(d, today) || isSameDay(d, today))) {
         relapses++
       }
@@ -132,6 +134,7 @@ export function JourneyLog({
           </div>
         </div>
 
+        {/* قسم الإحصائيات الشهرية المستعاد */}
         <div className="w-full max-w-[340px] grid grid-cols-3 gap-2 mb-4 shrink-0">
           <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
             <Award className="h-4 w-4 text-emerald-500 mb-1" />

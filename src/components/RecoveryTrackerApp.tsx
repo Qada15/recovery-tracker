@@ -295,14 +295,35 @@ export function RecoveryTrackerApp() {
           urgeDates={(activeHabit.urgeDates || []).map(d => parseISO(d))}
           habitName={activeHabit.name}
           accentColor={activeHabit.color}
-          onReset={() => {}} 
-          onRemoveReset={() => {}}
-          onUrge={() => {}}
-          onRemoveUrge={() => {}}
+          onReset={(date) => {
+            const currentResets = activeHabit.resetDates.map(d => parseISO(d));
+            const newResets = [...currentResets, date].sort((a, b) => a.getTime() - b.getTime());
+            handleUpdateActiveHabit({
+              startDate: newResets[newResets.length - 1].toISOString(),
+              resetDates: newResets.map(d => d.toISOString())
+            });
+          }} 
+          onRemoveReset={(date) => {
+             const newResets = activeHabit.resetDates.filter(d => !isSameDay(parseISO(d), date));
+             if (newResets.length === 0) return;
+             handleUpdateActiveHabit({
+               startDate: parseISO(newResets[newResets.length - 1]).toISOString(),
+               resetDates: newResets
+             });
+          }}
+          onUrge={(date) => {
+            const newUrges = [...(activeHabit.urgeDates || []), date.toISOString()];
+            handleUpdateActiveHabit({ urgeDates: newUrges });
+          }}
+          onRemoveUrge={(date) => {
+            const newUrges = (activeHabit.urgeDates || []).filter(d => !isSameDay(parseISO(d), date));
+            handleUpdateActiveHabit({ urgeDates: newUrges });
+          }}
           language={language}
         />
       )}
 
+      {/* حوار الإعداد ونافذة الحذف والتصفير */}
       <Dialog open={isSetupOpen} onOpenChange={(open) => { setIsSetupOpen(open); if(!open) setSetupStep('name'); }}>
         <DialogContent className="rounded-[2.5rem] p-8 max-w-[420px]">
           <DialogHeader><DialogTitle className="text-center font-black">{t.setupTitle}</DialogTitle></DialogHeader>
@@ -326,18 +347,6 @@ export function RecoveryTrackerApp() {
         </DialogContent>
       </Dialog>
 
-      <SidePanel isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} side={isAr ? 'left' : 'right'} title={t.settings}>
-        <div className="space-y-6">
-          <div className="flex items-center justify-between p-6 bg-slate-50 rounded-[2rem]">
-            <Label className="font-black">{isAr ? "الوضع الليلي" : "Dark Mode"}</Label>
-            <Switch checked={theme === 'dark'} onCheckedChange={(checked) => { setTheme(checked ? 'dark' : 'light'); document.documentElement.classList.toggle('dark', checked); }} />
-          </div>
-          <Button variant="destructive" className="w-full h-16 rounded-[1.5rem] font-black shadow-lg" onClick={clearAllStorage}>
-             {isAr ? "حذف كافة البيانات" : "Delete All Data"}
-          </Button>
-        </div>
-      </SidePanel>
-      
       <AlertDialog open={isClearDataOpen} onOpenChange={setIsClearDataOpen}>
         <AlertDialogContent className="rounded-[2.5rem]">
           <AlertDialogHeader><AlertDialogTitle className="font-black">{t.clearData}</AlertDialogTitle><AlertDialogDescription>{t.confirmClear}</AlertDialogDescription></AlertDialogHeader>
