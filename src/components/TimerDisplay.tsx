@@ -2,15 +2,8 @@
 "use client"
 
 import * as React from "react"
-import { MoreVertical, Trash2, History, Flame, Trophy, RefreshCw, Settings2, Calendar as CalendarIcon, Sparkles } from "lucide-react"
+import { History, Flame, Trophy, RefreshCw, Settings2, Calendar as CalendarIcon, Sparkles, ChevronLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
 import {
   Dialog,
   DialogContent,
@@ -19,17 +12,8 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
-import { isAfter, isBefore, isSameDay, startOfDay, setHours, setMinutes, differenceInDays } from "date-fns"
+import { isAfter, startOfDay, setHours, setMinutes, differenceInDays } from "date-fns"
 import { CircularTimePicker } from "./CircularTimePicker"
-
-const COLORS = [
-  { name: 'Default', value: 'hsl(var(--accent))' },
-  { name: 'Blue', value: '#3b82f6' },
-  { name: 'Emerald', value: '#10b981' },
-  { name: 'Rose', value: '#f43f5e' },
-  { name: 'Amber', value: '#f59e0b' },
-  { name: 'Violet', value: '#8b5cf6' },
-]
 
 interface TimerDisplayProps {
   externalStartDate: Date
@@ -77,14 +61,18 @@ export function TimerDisplay({
   const isAr = language === 'ar'
 
   const stats = React.useMemo(() => {
-    if (resetDates.length < 2) return { highest: 0 }
+    if (resetDates.length < 2) return { highest: null, previous: null }
     const streaks: number[] = []
     const sortedResets = [...resetDates].sort((a, b) => a.getTime() - b.getTime())
+    
     for (let i = 0; i < sortedResets.length - 1; i++) {
       streaks.push(differenceInDays(sortedResets[i + 1], sortedResets[i]))
     }
-    const highest = streaks.length > 0 ? Math.max(...streaks) : 0
-    return { highest }
+    
+    const highest = Math.max(...streaks)
+    const previous = streaks[streaks.length - 1]
+    
+    return { highest, previous }
   }, [resetDates])
 
   React.useEffect(() => {
@@ -125,81 +113,102 @@ export function TimerDisplay({
   }
 
   return (
-    <div className="w-full max-w-[450px] flex flex-col items-center p-4">
-      {/* العداد الرئيسي المصمم كبطاقة */}
-      <div className="w-full bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-100 dark:border-slate-800 overflow-hidden flex flex-col">
-        
-        {/* الشريط العلوي للبطاقة */}
-        <div className="w-full h-12 px-6 flex items-center justify-between border-b border-slate-50 dark:border-slate-800 bg-slate-50/30">
-          <Trophy className="h-4 w-4 text-orange-400" />
-          <div 
-            className="flex items-center gap-2 cursor-pointer hover:opacity-70 transition-opacity"
-            onClick={onOpenHistory}
-          >
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
-              {isAr ? "الأعلى" : "Highest"}: {stats.highest} {isAr ? "يوم" : "Days"}
-            </span>
-            <History className="h-4 w-4 text-slate-300" />
-          </div>
+    <div className="w-full max-w-[480px] flex flex-col items-center">
+      {/* هالات الإحصائيات العلوية */}
+      <div className="w-full flex justify-between gap-3 mb-4">
+        <div className="flex-1 bg-amber-100 dark:bg-amber-900/30 border-2 border-amber-200 dark:border-amber-800/50 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
+          <Trophy className="h-4 w-4 text-amber-500 mb-1" />
+          <span className="text-xl font-black text-amber-600 dark:text-amber-400 tabular-nums">
+            {stats.highest !== null ? stats.highest : "—"}
+          </span>
+          <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">
+            {isAr ? "أعلى رقم قياسي" : "Highest Record"}
+          </span>
         </div>
-
-        {/* جسم البطاقة */}
-        <div className="p-8 flex flex-col items-center">
-          {/* اسم العادة والأيقونات المساعدة */}
-          <div className="w-full flex items-center justify-between mb-8">
-            <div className="flex gap-4">
-               <button onClick={() => setShowNameDialog(true)} className="p-1 hover:bg-slate-100 rounded-lg transition-colors">
-                  <Settings2 className="h-4 w-4 text-slate-400" />
-               </button>
-               <button onClick={() => setShowDateDialog(true)} className="p-1 hover:bg-slate-100 rounded-lg transition-colors">
-                  <CalendarIcon className="h-4 w-4 text-slate-400" />
-               </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">{externalHabitName}</h3>
-              <Sparkles className="h-5 w-5 text-orange-400" />
-            </div>
-          </div>
-
-          {/* العداد المركزي */}
-          <div className="flex flex-col items-center justify-center space-y-2 mb-10">
-            <div className="relative flex flex-col items-center">
-              <span className="text-8xl font-black text-orange-500 tabular-nums leading-none">
-                {elapsed.days}
-              </span>
-              <span className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mt-1">
-                {isAr ? "يوم" : "Day"}
-              </span>
-            </div>
-            <div className="bg-slate-50 dark:bg-slate-800/50 px-6 py-2 rounded-2xl">
-              <span className="text-sm font-black text-slate-600 dark:text-slate-300 tabular-nums">
-                {elapsed.hours} {isAr ? "ساعة" : "H"} : {elapsed.minutes} {isAr ? "دقيقة" : "M"}
-              </span>
-            </div>
-          </div>
-
-          {/* أزرار العمليات الكبيرة */}
-          <div className="w-full grid grid-cols-2 gap-4">
-            <Button 
-              onClick={onUrge}
-              variant="outline"
-              className="h-16 rounded-[1.5rem] border-2 border-orange-100 text-orange-500 font-black text-sm flex flex-col gap-1 shadow-sm hover:bg-orange-50/50"
-            >
-              <Flame className="h-4 w-4" />
-              {isAr ? "أشعر برغبة" : "Feel Urge"}
-            </Button>
-            <Button 
-              onClick={onReset}
-              className="h-16 rounded-[1.5rem] bg-red-500 hover:bg-red-600 text-white font-black text-sm flex flex-col gap-1 shadow-lg shadow-red-200 dark:shadow-none"
-            >
-              <RefreshCw className="h-4 w-4" />
-              {isAr ? "تعثرت" : "Relapsed"}
-            </Button>
-          </div>
+        <div className="flex-1 bg-slate-100 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700/50 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
+          <History className="h-4 w-4 text-slate-500 mb-1" />
+          <span className="text-xl font-black text-slate-600 dark:text-slate-400 tabular-nums">
+            {stats.previous !== null ? stats.previous : "—"}
+          </span>
+          <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">
+            {isAr ? "الرقم السابق" : "Previous Record"}
+          </span>
         </div>
       </div>
 
-      {/* حوارات التعديل */}
+      {/* العداد المستطيل الرئيسي */}
+      <div className="w-full bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-slate-800 p-6 flex flex-col items-center">
+        <div className="w-full flex items-center justify-between mb-6">
+          <div className="flex gap-3">
+             <button onClick={() => setShowNameDialog(true)} className="p-2 hover:bg-slate-50 rounded-xl transition-colors">
+                <Settings2 className="h-5 w-5 text-slate-400" />
+             </button>
+             <button onClick={() => setShowDateDialog(true)} className="p-2 hover:bg-slate-50 rounded-xl transition-colors">
+                <CalendarIcon className="h-5 w-5 text-slate-400" />
+             </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">{externalHabitName}</h3>
+            <Sparkles className="h-5 w-5 text-orange-400" />
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center justify-center mb-6">
+          <div className="relative flex flex-col items-center">
+            <span className="text-8xl font-black text-orange-500 tabular-nums leading-none">
+              {elapsed.days}
+            </span>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2">
+              {isAr ? "يوم" : "Day"}
+            </span>
+          </div>
+        </div>
+
+        <div className="w-full flex justify-center gap-4 py-3 bg-slate-50 dark:bg-slate-800/40 rounded-2xl mb-8">
+          <div className="text-center">
+            <span className="text-xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.hours}</span>
+            <p className="text-[8px] font-black uppercase opacity-40">{isAr ? "ساعة" : "H"}</p>
+          </div>
+          <span className="text-xl font-black text-slate-300">:</span>
+          <div className="text-center">
+            <span className="text-xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.minutes}</span>
+            <p className="text-[8px] font-black uppercase opacity-40">{isAr ? "دقيقة" : "M"}</p>
+          </div>
+          <span className="text-xl font-black text-slate-300">:</span>
+          <div className="text-center">
+            <span className="text-xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.seconds}</span>
+            <p className="text-[8px] font-black uppercase opacity-40">{isAr ? "ثانية" : "S"}</p>
+          </div>
+        </div>
+
+        <div className="w-full grid grid-cols-5 gap-3 mb-3">
+          <Button 
+            onClick={onUrge}
+            variant="outline"
+            className="col-span-3 h-14 rounded-2xl border-2 border-orange-100 text-orange-500 font-black text-sm flex items-center justify-center gap-2 shadow-sm"
+          >
+            <Flame className="h-5 w-5" />
+            {isAr ? "أشعر برغبة" : "Feel Urge"}
+          </Button>
+          <Button 
+            onClick={onReset}
+            variant="outline"
+            className="col-span-2 h-14 rounded-2xl border-2 border-red-100 text-red-500 font-black text-sm flex items-center justify-center gap-2 shadow-sm"
+          >
+            <RefreshCw className="h-5 w-5" />
+            {isAr ? "تصفير" : "Reset"}
+          </Button>
+        </div>
+
+        <Button 
+          onClick={onOpenHistory}
+          className="w-full h-16 rounded-[1.5rem] bg-slate-900 dark:bg-slate-800 text-white font-black text-lg flex items-center justify-center gap-3 shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
+        >
+          <History className="h-6 w-6" />
+          {isAr ? "سجل الرحلة" : "Journey Log"}
+        </Button>
+      </div>
+
       <Dialog open={showNameDialog} onOpenChange={setShowNameDialog}>
         <DialogContent className="rounded-[2.5rem] p-8 max-w-[380px]">
           <DialogHeader><DialogTitle className="text-center font-black">{isAr ? "تعديل الاسم" : "Edit Name"}</DialogTitle></DialogHeader>
@@ -213,7 +222,7 @@ export function TimerDisplay({
           <DialogHeader><DialogTitle className="text-center font-black">{isAr ? "تعديل الوقت" : "Edit Time"}</DialogTitle></DialogHeader>
           <div className="flex flex-col items-center min-h-[320px] justify-center">
             {setupStep === 'date' && (
-              <Calendar mode="single" selected={selectedDate} onSelect={handleDateSelect} disabled={{ after: new Date() }} className="rounded-3xl bg-white dark:bg-slate-800 border p-2 shadow-inner" />
+              <Calendar mode="single" selected={selectedDate} onSelect={handleDateSelect} disabled={{ after: new Date() }} className="rounded-3xl border p-2" />
             )}
             {setupStep === 'hour' && (
               <div className="w-full">

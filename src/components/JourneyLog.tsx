@@ -5,7 +5,7 @@ import * as React from "react"
 import { Calendar as CalendarIcon, Flame, Trash2, Settings2, X, Check, ChevronLeft, Award, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
-import { format, isAfter, isBefore, isSameDay, startOfDay, setHours, setMinutes, isSameMonth, eachDayOfInterval, startOfMonth, endOfMonth } from "date-fns"
+import { format, isAfter, isBefore, isSameDay, startOfDay, setHours, setMinutes, eachDayOfInterval, startOfMonth, endOfMonth } from "date-fns"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { CircularTimePicker } from "./CircularTimePicker"
 
@@ -49,11 +49,9 @@ export function JourneyLog({
   const today = startOfDay(new Date())
   const start = startOfDay(startDate)
 
-  // حساب الإحصائيات للشهر المعروض
   const monthStats = React.useMemo(() => {
     const monthStart = startOfMonth(currentMonth)
     const monthEnd = endOfMonth(currentMonth)
-    
     const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd })
     
     let clean = 0
@@ -62,36 +60,27 @@ export function JourneyLog({
 
     daysInMonth.forEach(day => {
       const d = startOfDay(day)
-      
-      // حساب الانتكاسات في هذا الشهر
       const isRelapseDay = resetDates.some(rd => isSameDay(startOfDay(rd), d)) || isSameDay(d, start)
       if (isRelapseDay && (isBefore(d, today) || isSameDay(d, today))) {
         relapses++
       }
-
-      // حساب الرغبات في هذا الشهر
       if (urgeDates.some(ud => isSameDay(startOfDay(ud), d))) {
         urges++
       }
-
-      // حساب الأيام النظيفة
       const isWithinJourney = (isAfter(d, start) || isSameDay(d, start)) && (isBefore(d, today) || isSameDay(d, today))
       if (isWithinJourney && !isRelapseDay) {
         clean++
       }
     })
-
     return { clean, relapses, urges }
   }, [currentMonth, resetDates, urgeDates, start, today])
 
   const getResetForDay = (date: Date) => {
     return resetDates.find(rd => isSameDay(startOfDay(rd), startOfDay(date)))
   }
-
   const getUrgeForDay = (date: Date) => {
     return urgeDates.find(ud => isSameDay(startOfDay(ud), startOfDay(date)))
   }
-
   const isRelapse = (date: Date) => !!getResetForDay(date) || isSameDay(startOfDay(date), start)
   const isHasUrge = (date: Date) => !!getUrgeForDay(date)
   const isClean = (date: Date) => {
@@ -120,9 +109,6 @@ export function JourneyLog({
     setShowTimePicker(false)
   }
 
-  const existingReset = selectedDay ? getResetForDay(selectedDay) : null
-  const existingUrge = selectedDay ? getUrgeForDay(selectedDay) : null
-
   if (!isOpen) return null
 
   return (
@@ -146,7 +132,6 @@ export function JourneyLog({
           </div>
         </div>
 
-        {/* كرت الإحصائيات الشهرية */}
         <div className="w-full max-w-[340px] grid grid-cols-3 gap-2 mb-4 shrink-0">
           <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
             <Award className="h-4 w-4 text-emerald-500 mb-1" />
@@ -184,38 +169,27 @@ export function JourneyLog({
 
         <div className="mt-6 flex gap-3 w-full max-w-[320px] shrink-0 h-14 pb-10">
           {selectedDay && (
-            existingReset ? (
+            getResetForDay(selectedDay) ? (
               <>
-                <Button 
-                  onClick={() => { onRemoveReset(selectedDay); }} 
-                  variant="outline" 
-                  className="flex-1 h-12 rounded-2xl font-black border-2 border-red-500 text-red-500 animate-in zoom-in-95"
-                >
+                <Button onClick={() => onRemoveReset(selectedDay)} variant="outline" className="flex-1 h-12 rounded-2xl font-black border-2 border-red-500 text-red-500">
                   <Trash2 className="ml-2 h-4 w-4" /> {isAr ? "حذف" : "Delete"}
                 </Button>
-                <Button 
-                  onClick={handleAdjustTime} 
-                  className="w-14 h-12 rounded-2xl font-black bg-slate-200 text-slate-700 animate-in zoom-in-95 flex items-center justify-center"
-                >
+                <Button onClick={handleAdjustTime} className="w-14 h-12 rounded-2xl font-black bg-slate-200 text-slate-700 flex items-center justify-center">
                   <Settings2 className="h-5 w-5" />
                 </Button>
               </>
             ) : (
               <>
-                {existingUrge ? (
-                  <Button onClick={() => onRemoveUrge(selectedDay)} variant="outline" className="flex-1 h-12 rounded-2xl font-black border-2 border-orange-500 text-orange-500 animate-in zoom-in-95">
+                {getUrgeForDay(selectedDay) ? (
+                  <Button onClick={() => onRemoveUrge(selectedDay)} variant="outline" className="flex-1 h-12 rounded-2xl font-black border-2 border-orange-500 text-orange-500">
                     <X className="ml-2 h-4 w-4" /> {isAr ? "حذف الرغبة" : "Clear Urge"}
                   </Button>
                 ) : (
-                  <Button 
-                    onClick={() => onUrge(selectedDay)} 
-                    disabled={isRelapse(selectedDay)}
-                    className="flex-1 h-12 rounded-2xl font-black bg-orange-500 hover:bg-orange-600 text-white shadow-lg animate-in zoom-in-95 disabled:opacity-30"
-                  >
+                  <Button onClick={() => onUrge(selectedDay)} disabled={isRelapse(selectedDay)} className="flex-1 h-12 rounded-2xl font-black bg-orange-500 text-white shadow-lg">
                     <Flame className="ml-2 h-4 w-4" /> {isAr ? "رغبة" : "Urge"}
                   </Button>
                 )}
-                <Button onClick={() => onReset(selectedDay)} variant="destructive" className="flex-1 h-12 rounded-2xl font-black shadow-lg animate-in zoom-in-95">
+                <Button onClick={() => onReset(selectedDay)} variant="destructive" className="flex-1 h-12 rounded-2xl font-black shadow-lg">
                   <AlertCircle className="ml-2 h-4 w-4" /> {isAr ? "انتكاسة" : "Relapse"}
                 </Button>
               </>
@@ -226,28 +200,12 @@ export function JourneyLog({
 
       <Dialog open={showTimePicker} onOpenChange={setShowTimePicker}>
         <DialogContent className="rounded-[2.5rem] p-6 max-w-[420px] z-[200]">
-          <DialogHeader>
-            <DialogTitle className="text-center font-black">
-              {pickerMode === 'hours' ? (isAr ? "ضبط الساعة" : "Set Hour") : (isAr ? "ضبط الدقيقة" : "Set Minute")}
-            </DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle className="text-center font-black">{pickerMode === 'hours' ? (isAr ? "ضبط الساعة" : "Set Hour") : (isAr ? "ضبط الدقيقة" : "Set Minute")}</DialogTitle></DialogHeader>
           <div className="flex flex-col items-center justify-center">
-            <CircularTimePicker 
-              mode={pickerMode} 
-              value={pickerMode === 'hours' ? tempHour : tempMinute} 
-              onChange={pickerMode === 'hours' ? setTempHour : setTempMinute} 
-              onComplete={() => {
-                if (pickerMode === 'hours') setPickerMode('minutes')
-              }} 
-            />
+            <CircularTimePicker mode={pickerMode} value={pickerMode === 'hours' ? tempHour : tempMinute} onChange={pickerMode === 'hours' ? setTempHour : setTempMinute} onComplete={() => pickerMode === 'hours' ? setPickerMode('minutes') : saveAdjustedTime()} />
             {pickerMode === 'minutes' && (
-              <Button onClick={saveAdjustedTime} className="w-full mt-4 h-12 rounded-xl font-black gap-2">
-                <Check className="h-4 w-4" /> {isAr ? "تأكيد الوقت" : "Confirm Time"}
-              </Button>
+              <Button onClick={saveAdjustedTime} className="w-full mt-4 h-12 rounded-xl font-black gap-2"><Check className="h-4 w-4" /> {isAr ? "تأكيد الوقت" : "Confirm Time"}</Button>
             )}
-            <Button variant="ghost" onClick={() => setPickerMode('hours')} className="mt-2 font-black opacity-40">
-              {pickerMode === 'minutes' && (isAr ? "العودة للساعة" : "Back to Hour")}
-            </Button>
           </div>
         </DialogContent>
       </Dialog>

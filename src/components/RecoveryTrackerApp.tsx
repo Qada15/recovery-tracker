@@ -2,23 +2,23 @@
 "use client"
 
 import * as React from "react"
-import { Settings, User, Languages, Moon, Sun, Trash2, Plus, Sparkles, Gamepad2, Coffee, Brain } from "lucide-react"
+import { Settings, User, Plus, Sparkles, MoreVertical, Trash2, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SidePanel } from "@/components/SidePanel"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
 import { saveToStorage, getFromStorage, STORAGE_KEYS, clearAllStorage, type Habit } from "@/lib/storage"
-import { isValid, parseISO, startOfDay, isBefore, isSameDay, setHours, setMinutes, isAfter } from "date-fns"
+import { parseISO, startOfDay, setHours, setMinutes } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 import {
   Dialog,
   DialogContent,
@@ -38,7 +38,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
 import { CircularTimePicker } from "./CircularTimePicker"
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 
 const TRANSLATIONS = {
   ar: {
@@ -51,8 +50,10 @@ const TRANSLATIONS = {
     setupTitle: "إعداد العداد",
     save: "حفظ",
     cancel: "إلغاء",
-    delete: "حذف نهائي",
+    delete: "حذف العداد نهائياً",
+    clearData: "حذف سجلات العداد",
     confirmDelete: "سيتم حذف كافة البيانات نهائياً.",
+    confirmClear: "سيتم تصفير السجل وحذف كافة الزلات والرغبات لهذا العداد.",
     urgeRecorded: "تم تسجيل رغبة",
     historyCleared: "تم تصفير السجل"
   },
@@ -66,8 +67,10 @@ const TRANSLATIONS = {
     setupTitle: "Setup Tracker",
     save: "Save",
     cancel: "Cancel",
-    delete: "Delete",
+    delete: "Delete Tracker Permanently",
+    clearData: "Clear Tracker Records",
     confirmDelete: "All data will be permanently deleted.",
+    confirmClear: "All relapses and urges for this tracker will be deleted.",
     urgeRecorded: "Urge Recorded",
     historyCleared: "History Cleared"
   }
@@ -81,6 +84,7 @@ export function RecoveryTrackerApp() {
   const [isHistoryOpen, setIsHistoryOpen] = React.useState(false)
   const [isSetupOpen, setIsSetupOpen] = React.useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
+  const [isClearDataOpen, setIsClearDataOpen] = React.useState(false)
   const [setupStep, setSetupStep] = React.useState<'name' | 'date' | 'hour' | 'minute'>('name')
 
   const [language, setLanguage] = React.useState<'ar' | 'en'>('ar')
@@ -119,7 +123,7 @@ export function RecoveryTrackerApp() {
     }
   }, [])
 
-  if (!mounted) return <div className="flex-1 bg-slate-50 h-screen w-screen" />
+  if (!mounted) return null
 
   const t = TRANSLATIONS[language]
   const isAr = language === 'ar'
@@ -166,6 +170,18 @@ export function RecoveryTrackerApp() {
     })
   }
 
+  const handleClearTrackerData = () => {
+    if (!activeHabit) return
+    const now = new Date()
+    handleUpdateActiveHabit({
+      startDate: now.toISOString(),
+      resetDates: [now.toISOString()],
+      urgeDates: []
+    })
+    setIsClearDataOpen(false)
+    toast({ title: t.historyCleared })
+  }
+
   const handleUrgeAction = () => {
     if (!activeHabit) return
     const now = new Date()
@@ -176,19 +192,39 @@ export function RecoveryTrackerApp() {
 
   return (
     <div className="flex-1 flex flex-col items-center bg-slate-50 dark:bg-slate-950 relative h-full overflow-hidden select-none touch-none" dir={isAr ? 'rtl' : 'ltr'}>
-      <header className="w-full h-16 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl flex items-center justify-between px-6 z-40 shrink-0">
+      <header className="w-full h-16 flex items-center justify-between px-6 z-40 shrink-0">
         <Button variant="ghost" size="icon" onClick={() => setIsAccountOpen(true)} className="rounded-full text-slate-400">
           <User className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-black text-slate-700 dark:text-white tracking-tighter">{t.title}</h1>
-        <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(true)} className="rounded-full text-slate-400">
-          <Settings className="h-5 w-5" />
-        </Button>
+        <div className="flex items-center gap-1">
+          {activeHabit && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full text-slate-400">
+                  <MoreVertical className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="rounded-2xl w-48">
+                <DropdownMenuItem onClick={() => setIsClearDataOpen(true)} className="text-orange-500 font-bold">
+                  <RefreshCw className="h-4 w-4 ml-2" /> {t.clearData}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="text-red-500 font-bold">
+                  <Trash2 className="h-4 w-4 ml-2" /> {t.delete}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(true)} className="rounded-full text-slate-400">
+            <Settings className="h-5 w-5" />
+          </Button>
+        </div>
       </header>
 
-      <main className="flex-1 w-full flex flex-col items-center p-6 overflow-hidden">
+      <main className="flex-1 w-full flex flex-col items-center p-6 pt-2 overflow-hidden">
         {activeHabit ? (
-          <div className="w-full flex flex-col items-center space-y-8 animate-in fade-in duration-500">
+          <div className="w-full flex flex-col items-center space-y-6 animate-in fade-in duration-500 h-full">
             <div className="text-center space-y-1">
               <h2 className="text-3xl font-black text-slate-800 dark:text-white tracking-tighter">{t.subtitle}</h2>
               <p className="text-sm font-bold text-slate-400">{t.motivation}</p>
@@ -206,12 +242,11 @@ export function RecoveryTrackerApp() {
               onReset={handleResetAction}
               onUrge={handleUrgeAction}
               onDelete={() => { updateHabits(habits.filter(h => h.id !== activeHabitId)); setActiveHabitId(habits[0]?.id || null); }}
-              onClearData={() => handleUpdateActiveHabit({ resetDates: [new Date().toISOString()], urgeDates: [] })}
+              onClearData={handleClearTrackerData}
               language={language}
             />
 
-            {/* شريط اختيار العدادات بتصميم الصورة */}
-            <div className="w-full flex flex-col items-center gap-4 pt-10">
+            <div className="w-full mt-auto pb-10">
               <div className="flex items-center gap-3 overflow-x-auto pb-4 custom-scrollbar px-4 w-full justify-center">
                 <button 
                   onClick={() => setIsSetupOpen(true)}
@@ -268,7 +303,6 @@ export function RecoveryTrackerApp() {
         />
       )}
 
-      {/* حوار الإعداد */}
       <Dialog open={isSetupOpen} onOpenChange={(open) => { setIsSetupOpen(open); if(!open) setSetupStep('name'); }}>
         <DialogContent className="rounded-[2.5rem] p-8 max-w-[420px]">
           <DialogHeader><DialogTitle className="text-center font-black">{t.setupTitle}</DialogTitle></DialogHeader>
@@ -292,23 +326,29 @@ export function RecoveryTrackerApp() {
         </DialogContent>
       </Dialog>
 
-      {/* الجوانب والإعدادات */}
       <SidePanel isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} side={isAr ? 'left' : 'right'} title={t.settings}>
         <div className="space-y-6">
           <div className="flex items-center justify-between p-6 bg-slate-50 rounded-[2rem]">
-            <Label className="font-black">{t.darkMode}</Label>
+            <Label className="font-black">{isAr ? "الوضع الليلي" : "Dark Mode"}</Label>
             <Switch checked={theme === 'dark'} onCheckedChange={(checked) => { setTheme(checked ? 'dark' : 'light'); document.documentElement.classList.toggle('dark', checked); }} />
           </div>
-          <Button variant="destructive" className="w-full h-16 rounded-[1.5rem] font-black shadow-lg" onClick={() => setIsDeleteDialogOpen(true)}>
+          <Button variant="destructive" className="w-full h-16 rounded-[1.5rem] font-black shadow-lg" onClick={clearAllStorage}>
              {isAr ? "حذف كافة البيانات" : "Delete All Data"}
           </Button>
         </div>
       </SidePanel>
       
+      <AlertDialog open={isClearDataOpen} onOpenChange={setIsClearDataOpen}>
+        <AlertDialogContent className="rounded-[2.5rem]">
+          <AlertDialogHeader><AlertDialogTitle className="font-black">{t.clearData}</AlertDialogTitle><AlertDialogDescription>{t.confirmClear}</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogCancel className="rounded-xl">{t.cancel}</AlertDialogCancel><AlertDialogAction onClick={handleClearTrackerData} className="bg-orange-500 rounded-xl">{t.save}</AlertDialogAction></AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent className="rounded-[2.5rem]">
           <AlertDialogHeader><AlertDialogTitle className="font-black">{isAr ? "تأكيد الحذف" : "Confirm Delete"}</AlertDialogTitle><AlertDialogDescription>{t.confirmDelete}</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter><AlertDialogCancel className="rounded-xl">{t.cancel}</AlertDialogCancel><AlertDialogAction onClick={clearAllStorage} className="bg-red-500 rounded-xl">{t.delete}</AlertDialogAction></AlertDialogFooter>
+          <AlertDialogFooter><AlertDialogCancel className="rounded-xl">{t.cancel}</AlertDialogCancel><AlertDialogAction onClick={() => { updateHabits(habits.filter(h => h.id !== activeHabitId)); setActiveHabitId(habits[0]?.id || null); setIsDeleteDialogOpen(false); }} className="bg-red-500 rounded-xl">{isAr ? "حذف" : "Delete"}</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
