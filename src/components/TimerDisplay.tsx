@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { MoreVertical, Trash2, History, Flame, Clock, Trophy, RotateCcw } from "lucide-react"
+import { MoreVertical, Trash2, History, Flame, Clock, Trophy, RotateCcw, Eraser } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -61,6 +61,7 @@ interface TimerDisplayProps {
   onReset: () => void
   onUrge: () => void
   onDelete: () => void
+  onClearData: () => void
   language: 'ar' | 'en'
 }
 
@@ -78,6 +79,7 @@ export function TimerDisplay({
   onReset,
   onUrge,
   onDelete,
+  onClearData,
   language
 }: TimerDisplayProps) {
   const { toast } = useToast()
@@ -181,7 +183,7 @@ export function TimerDisplay({
                 <MoreVertical className="h-4 w-4 text-muted-foreground/60" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align={isAr ? "start" : "end"} className="w-56 p-2 shadow-2xl rounded-2xl border-none">
+            <DropdownMenuContent align={isAr ? "start" : "end"} className="w-64 p-2 shadow-2xl rounded-2xl border-none">
               <DropdownMenuItem onSelect={() => setShowNameDialog(true)} className="font-bold py-2">
                 {isAr ? "تعديل الاسم" : "Edit Name"}
               </DropdownMenuItem>
@@ -195,9 +197,13 @@ export function TimerDisplay({
                 ))}
               </div>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={onClearData} className="font-bold py-2 text-orange-600">
+                <Eraser className="ml-2 h-4 w-4" />
+                {isAr ? "حذف بيانات العداد" : "Clear Tracker Data"}
+              </DropdownMenuItem>
               <DropdownMenuItem onSelect={onDelete} className="font-bold text-destructive focus:text-destructive py-2">
                 <Trash2 className="ml-2 h-4 w-4" />
-                {isAr ? "حذف العداد" : "Delete Tracker"}
+                {isAr ? "حذف العداد نهائياً" : "Delete Tracker"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

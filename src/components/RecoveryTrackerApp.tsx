@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { Settings, User, Languages, Moon, Sun, Trash2, Plus, Flame, Clock, LayoutGrid } from "lucide-react"
+import { Settings, User, Languages, Moon, Sun, Trash2, Plus, Flame, Clock, LayoutGrid, Eraser } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SidePanel } from "@/components/SidePanel"
 import { TimerDisplay } from "@/components/TimerDisplay"
@@ -66,7 +66,9 @@ const TRANSLATIONS = {
     cancel: "إلغاء",
     delete: "حذف نهائي",
     myTrackers: "عداداتي",
-    deleteHabitConfirm: "هل أنت متأكد من حذف هذا العداد؟ سيتم حذف كافة سجلاته بشكل نهائي."
+    deleteHabitConfirm: "هل أنت متأكد من حذف هذا العداد؟ سيتم حذف كافة سجلاته بشكل نهائي.",
+    clearDataTitle: "حذف بيانات العداد",
+    clearDataConfirm: "سيتم حذف كافة سجلات الانتكاسات والرغبات لهذا العداد والبدء من جديد. هل أنت متأكد؟"
   },
   en: {
     title: "Recovery Tracker",
@@ -93,7 +95,9 @@ const TRANSLATIONS = {
     cancel: "Cancel",
     delete: "Delete All",
     myTrackers: "My Trackers",
-    deleteHabitConfirm: "Are you sure you want to delete this tracker? All its records will be permanently removed."
+    deleteHabitConfirm: "Are you sure you want to delete this tracker? All its records will be permanently removed.",
+    clearDataTitle: "Clear Tracker Data",
+    clearDataConfirm: "All relapse and urge records for this tracker will be deleted and it will start fresh. Are you sure?"
   }
 }
 
@@ -106,6 +110,7 @@ export function RecoveryTrackerApp() {
   const [isSetupOpen, setIsSetupOpen] = React.useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
   const [isHabitDeleteDialogOpen, setIsHabitDeleteDialogOpen] = React.useState(false)
+  const [isClearDataDialogOpen, setIsClearDataDialogOpen] = React.useState(false)
   const [setupStep, setSetupStep] = React.useState<'name' | 'date' | 'hour' | 'minute'>('name')
 
   const [language, setLanguage] = React.useState<'ar' | 'en'>('ar')
@@ -216,7 +221,6 @@ export function RecoveryTrackerApp() {
     }
     newResets.sort((a, b) => a.getTime() - b.getTime())
 
-    // حذف أي رغبات في نفس اليوم عند حدوث انتكاسة
     const newUrges = (activeHabit.urgeDates || []).filter(ud => !isSameDay(parseISO(ud), startOfDate))
 
     const latestReset = newResets[newResets.length - 1]
@@ -246,7 +250,6 @@ export function RecoveryTrackerApp() {
     const dateToUrge = targetDate || new Date()
     const startOfDate = startOfDay(dateToUrge)
 
-    // التأكد من أن اليوم ليس انتكاسة
     const isRelapse = (activeHabit.resetDates || []).some(rd => isSameDay(startOfDay(parseISO(rd)), startOfDate)) || 
                      isSameDay(startOfDay(parseISO(activeHabit.startDate)), startOfDate)
     
@@ -277,6 +280,18 @@ export function RecoveryTrackerApp() {
     
     setIsHabitDeleteDialogOpen(false)
     toast({ title: isAr ? "تم حذف العداد بنجاح" : "Tracker deleted successfully" })
+  }
+
+  const handleClearHabitData = () => {
+    if (!activeHabit) return
+    const now = new Date().toISOString()
+    handleUpdateActiveHabit({
+      startDate: now,
+      resetDates: [now],
+      urgeDates: []
+    })
+    setIsClearDataDialogOpen(false)
+    toast({ title: isAr ? "تم تصفير سجل العداد" : "Tracker history cleared" })
   }
 
   const toggleTheme = (checked: boolean) => {
@@ -325,6 +340,7 @@ export function RecoveryTrackerApp() {
                 onReset={() => handleResetAction()}
                 onUrge={() => handleUrgeAction()}
                 onDelete={() => setIsHabitDeleteDialogOpen(true)}
+                onClearData={() => setIsClearDataDialogOpen(true)}
                 language={language}
               />
             </div>
@@ -421,6 +437,19 @@ export function RecoveryTrackerApp() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={isClearDataDialogOpen} onOpenChange={setIsClearDataDialogOpen}>
+        <AlertDialogContent className="rounded-[2.5rem]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-black text-center">{t.clearDataTitle}</AlertDialogTitle>
+            <AlertDialogDescription className="text-center font-bold">{t.clearDataConfirm}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="rounded-xl font-black">{t.cancel}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleClearHabitData} className="bg-orange-500 text-white rounded-xl font-black">{isAr ? "تصفير الآن" : "Clear Now"}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={isHabitDeleteDialogOpen} onOpenChange={setIsHabitDeleteDialogOpen}>
         <AlertDialogContent className="rounded-[2.5rem]">
