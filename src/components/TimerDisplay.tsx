@@ -54,7 +54,6 @@ export function TimerDisplay({
 
   const isAr = language === 'ar'
 
-  // خوارزمية حساب الأرقام القياسية (أعلى رقم والرقم السابق)
   const stats = React.useMemo(() => {
     if (resetDates.length < 2) return { highest: null, previous: null }
     const streaks: number[] = []
