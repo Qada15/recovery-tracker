@@ -1,8 +1,7 @@
-
 "use client"
 
 import * as React from "react"
-import { History, Flame, Trophy, RefreshCw, MoreVertical, Settings2, Calendar as CalendarIcon, Sparkles, Trash2, RotateCcw } from "lucide-react"
+import { History, Flame, Trophy, RefreshCw, MoreVertical, Settings2, Calendar as CalendarIcon, Sparkles, Trash2, RotateCcw, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -63,14 +62,15 @@ export function TimerDisplay({
 
   const isAr = language === 'ar'
 
-  // خوارزمية حساب الأرقام القياسية (Streaks)
+  // خوارزمية حساب الأرقام القياسية (Streaks Algorithm)
   const stats = React.useMemo(() => {
     if (resetDates.length < 2) return { highest: 0, previous: 0 }
     const streaks: number[] = []
     const sortedResets = [...resetDates].sort((a, b) => a.getTime() - b.getTime())
     
     for (let i = 0; i < sortedResets.length - 1; i++) {
-      streaks.push(differenceInDays(sortedResets[i + 1], sortedResets[i]))
+      const diff = differenceInDays(sortedResets[i + 1], sortedResets[i])
+      streaks.push(diff)
     }
     
     const highest = streaks.length > 0 ? Math.max(...streaks) : 0
@@ -111,7 +111,7 @@ export function TimerDisplay({
 
   return (
     <div className="w-full max-w-[480px] flex flex-col items-center">
-      {/* هالات الإحصائيات في الأعلى */}
+      {/* هالات الإحصائيات الملونة */}
       <div className="w-full flex justify-between gap-3 mb-4">
         <div className="flex-1 bg-amber-500/10 border-2 border-amber-500/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
           <Trophy className="h-4 w-4 text-amber-500 mb-1" />
@@ -193,26 +193,37 @@ export function TimerDisplay({
           </div>
         </div>
 
+        {/* شبكة الأزرار: زر الرغبة يظهر فقط بعد 24 ساعة */}
         <div className="w-full grid grid-cols-5 gap-3 mb-3">
-          {/* منطق: لا يظهر زر الرغبة إلا بعد 24 ساعة */}
-          {elapsed.days >= 1 && (
+          {elapsed.days >= 1 ? (
+            <>
+              <Button 
+                onClick={onUrge}
+                variant="outline"
+                className="col-span-3 h-12 rounded-2xl border-2 border-orange-100 text-orange-500 font-black text-sm flex items-center justify-center gap-2"
+              >
+                <Flame className="h-5 w-5" />
+                {isAr ? "أشعر برغبة" : "Feel Urge"}
+              </Button>
+              <Button 
+                onClick={onReset}
+                variant="outline"
+                className="col-span-2 h-12 rounded-2xl border-2 border-red-100 text-red-500 font-black text-sm flex items-center justify-center gap-2"
+              >
+                <RefreshCw className="h-5 w-5" />
+                {isAr ? "تصفير" : "Reset"}
+              </Button>
+            </>
+          ) : (
             <Button 
-              onClick={onUrge}
+              onClick={onReset}
               variant="outline"
-              className="col-span-3 h-12 rounded-2xl border-2 border-orange-100 text-orange-500 font-black text-sm flex items-center justify-center gap-2"
+              className="col-span-5 h-12 rounded-2xl border-2 border-red-100 text-red-500 font-black text-sm flex items-center justify-center gap-2"
             >
-              <Flame className="h-5 w-5" />
-              {isAr ? "أشعر برغبة" : "Feel Urge"}
+              <RefreshCw className="h-5 w-5" />
+              {isAr ? "تصفير" : "Reset"}
             </Button>
           )}
-          <Button 
-            onClick={onReset}
-            variant="outline"
-            className={`${elapsed.days >= 1 ? 'col-span-2' : 'col-span-5'} h-12 rounded-2xl border-2 border-red-100 text-red-500 font-black text-sm flex items-center justify-center gap-2`}
-          >
-            <RefreshCw className="h-5 w-5" />
-            {isAr ? "تصفير" : "Reset"}
-          </Button>
         </div>
 
         <Button 

@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -123,7 +122,6 @@ export function JourneyLog({
       </header>
 
       <main className="flex-1 flex flex-col items-center p-4 overflow-y-auto custom-scrollbar">
-        {/* تصميم الهالات في السجل أيضاً */}
         <div className="w-full max-w-[340px] grid grid-cols-3 gap-2 mb-4 shrink-0">
           <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
             <Award className="h-4 w-4 text-emerald-500 mb-1" />
@@ -181,7 +179,6 @@ export function JourneyLog({
                     <Flame className="ml-2 h-4 w-4" /> {isAr ? "رغبة" : "Urge"}
                   </Button>
                 )}
-                {/* هنا المسمى "انتكاسة" وبالأيقونة المنطقية AlertCircle */}
                 <Button onClick={() => onReset(selectedDay)} variant="destructive" className="flex-1 h-12 rounded-2xl font-black">
                   <AlertCircle className="ml-2 h-4 w-4" /> {isAr ? "انتكاسة" : "Relapse"}
                 </Button>
