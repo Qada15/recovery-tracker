@@ -38,11 +38,8 @@ const TRANSLATIONS = {
     setupTitle: "إعداد العداد",
     save: "حفظ",
     cancel: "إلغاء",
-    delete: "حذف العداد نهائيًا",
-    clearData: "حذف سجلات العداد",
-    confirmDelete: "سيتم حذف كافة البيانات نهائيًا.",
+    confirmDelete: "سيتم حذف كافة البيانات نهائياً.",
     confirmClear: "سيتم تصفير السجل وحذف كافة الزلات والرغبات لهذا العداد.",
-    urgeRecorded: "تم تسجيل رغبة",
     historyCleared: "تم تصفير السجل"
   },
   en: {
@@ -53,11 +50,8 @@ const TRANSLATIONS = {
     setupTitle: "Setup Tracker",
     save: "Save",
     cancel: "Cancel",
-    delete: "Delete Tracker Permanently",
-    clearData: "Clear Tracker Records",
     confirmDelete: "All data will be permanently deleted.",
     confirmClear: "All relapses and urges for this tracker will be deleted.",
-    urgeRecorded: "Urge Recorded",
     historyCleared: "History Cleared"
   }
 }
@@ -145,32 +139,11 @@ export function RecoveryTrackerApp() {
     })
   }
 
-  const handleClearTrackerData = () => {
-    if (!activeHabit) return
-    const now = new Date()
-    handleUpdateActiveHabit({
-      startDate: now.toISOString(),
-      resetDates: [now.toISOString()],
-      urgeDates: []
-    })
-    setIsClearDataOpen(false)
-    toast({ title: t.historyCleared })
-  }
-
-  const handleDeleteTracker = () => {
-    if (!activeHabitId) return
-    const newHabits = habits.filter(h => h.id !== activeHabitId)
-    updateHabits(newHabits)
-    setActiveHabitId(newHabits[0]?.id || null)
-    setIsDeleteDialogOpen(false)
-  }
-
   const handleUrgeAction = () => {
     if (!activeHabit) return
     const now = new Date()
     const newUrges = [...(activeHabit.urgeDates || []), now.toISOString()]
     handleUpdateActiveHabit({ urgeDates: newUrges })
-    toast({ title: t.urgeRecorded })
   }
 
   return (
@@ -187,7 +160,7 @@ export function RecoveryTrackerApp() {
 
       <main className="flex-1 w-full flex flex-col items-center p-6 pt-2 overflow-hidden">
         {activeHabit ? (
-          <div className="w-full flex flex-col items-center space-y-6 animate-in fade-in duration-500 h-full">
+          <div className="w-full flex flex-col items-center space-y-6 h-full">
             <div className="text-center space-y-1">
               <h2 className="text-3xl font-black text-slate-800 dark:text-white tracking-tighter">{t.subtitle}</h2>
               <p className="text-sm font-bold text-slate-400">{t.motivation}</p>
@@ -215,23 +188,15 @@ export function RecoveryTrackerApp() {
 
             <div className="w-full mt-auto pb-10">
               <div className="flex items-center gap-3 overflow-x-auto pb-4 custom-scrollbar px-4 w-full justify-center">
-                <button 
-                  onClick={() => setIsSetupOpen(true)}
-                  className="shrink-0 w-16 h-16 rounded-[1.5rem] bg-slate-800 text-white flex items-center justify-center shadow-xl active:scale-90 transition-transform"
-                >
+                <button onClick={() => setIsSetupOpen(true)} className="shrink-0 w-16 h-16 rounded-[1.5rem] bg-slate-800 text-white flex items-center justify-center shadow-xl">
                   <Plus className="h-6 w-6" />
                 </button>
                 {habits.map((habit) => (
                   <button
                     key={habit.id}
-                    onClick={() => {
-                      setActiveHabitId(habit.id);
-                      saveToStorage(STORAGE_KEYS.ACTIVE_HABIT_ID, habit.id);
-                    }}
-                    className={`shrink-0 h-24 w-20 rounded-[1.5rem] flex flex-col items-center justify-center gap-2 border-2 transition-all active:scale-95 ${
-                      activeHabitId === habit.id 
-                        ? "bg-white border-slate-800 text-slate-800 shadow-2xl" 
-                        : "bg-transparent border-transparent text-slate-400 opacity-60"
+                    onClick={() => { setActiveHabitId(habit.id); saveToStorage(STORAGE_KEYS.ACTIVE_HABIT_ID, habit.id); }}
+                    className={`shrink-0 h-24 w-20 rounded-[1.5rem] flex flex-col items-center justify-center gap-2 border-2 transition-all ${
+                      activeHabitId === habit.id ? "bg-white border-slate-800 text-slate-800 shadow-2xl" : "bg-transparent border-transparent text-slate-400 opacity-60"
                     }`}
                   >
                     <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
@@ -245,10 +210,7 @@ export function RecoveryTrackerApp() {
           </div>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center space-y-6">
-            <button 
-              onClick={() => setIsSetupOpen(true)}
-              className="w-32 h-32 rounded-[3rem] bg-slate-800 text-white shadow-[0_20px_50px_rgba(0,0,0,0.2)] flex items-center justify-center hover:scale-105 active:scale-90 transition-all"
-            >
+            <button onClick={() => setIsSetupOpen(true)} className="w-32 h-32 rounded-[3rem] bg-slate-800 text-white shadow-2xl flex items-center justify-center">
               <Plus className="h-12 w-12" />
             </button>
             <p className="text-slate-400 font-black uppercase tracking-widest text-xs">{t.addHabit}</p>
@@ -276,11 +238,7 @@ export function RecoveryTrackerApp() {
           onRemoveReset={(date) => {
              const newResets = activeHabit.resetDates.filter(d => parseISO(d).getTime() !== date.getTime());
              if (newResets.length === 0) return;
-             const lastReset = parseISO(newResets[newResets.length - 1]);
-             handleUpdateActiveHabit({
-               startDate: lastReset.toISOString(),
-               resetDates: newResets
-             });
+             handleUpdateActiveHabit({ startDate: parseISO(newResets[newResets.length - 1]).toISOString(), resetDates: newResets });
           }}
           onUrge={(date) => {
             const newUrges = [...(activeHabit.urgeDates || []), date.toISOString()];
@@ -294,40 +252,47 @@ export function RecoveryTrackerApp() {
         />
       )}
 
-      <Dialog open={isSetupOpen} onOpenChange={(open) => { setIsSetupOpen(open); if(!open) setSetupStep('name'); }}>
+      <Dialog open={isSetupOpen} onOpenChange={setIsSetupOpen}>
         <DialogContent className="rounded-[2.5rem] p-8 max-w-[420px]">
           <DialogHeader><DialogTitle className="text-center font-black">{t.setupTitle}</DialogTitle></DialogHeader>
           <div className="flex flex-col items-center min-h-[350px] justify-center">
             {setupStep === 'name' && (
               <div className="w-full space-y-6">
-                <Input value={tempName} onChange={(e) => setTempName(e.target.value)} placeholder={isAr ? "اسم العداد..." : "Habit name..."} className="h-16 rounded-[1.5rem] text-center font-bold text-lg border-2" />
-                <Button disabled={!tempName.trim()} onClick={() => setSetupStep('date')} className="w-full h-16 rounded-[1.5rem] font-black bg-slate-800 text-lg shadow-xl">{t.save}</Button>
+                <Input value={tempName} onChange={(e) => setTempName(e.target.value)} placeholder={isAr ? "اسم العداد..." : "Habit name..."} className="h-16 rounded-[1.5rem] text-center font-bold text-lg" />
+                <Button disabled={!tempName.trim()} onClick={() => setSetupStep('date')} className="w-full h-16 rounded-[1.5rem] font-black bg-slate-800 text-lg">{t.save}</Button>
               </div>
             )}
             {setupStep === 'date' && (
               <Calendar mode="single" selected={tempDate} onSelect={(date) => { if(date) { setTempDate(date); setSetupStep('hour'); } }} className="rounded-3xl border p-4" />
             )}
-            {setupStep === 'hour' && (
-              <CircularTimePicker mode="hours" value={tempHour} onChange={setTempHour} onComplete={() => setSetupStep('minute')} />
-            )}
-            {setupStep === 'minute' && (
-              <CircularTimePicker mode="minutes" value={tempMinute} onChange={setTempMinute} onComplete={handleFinishSetup} />
-            )}
+            {setupStep === 'hour' && <CircularTimePicker mode="hours" value={tempHour} onChange={setTempHour} onComplete={() => setSetupStep('minute')} />}
+            {setupStep === 'minute' && <CircularTimePicker mode="minutes" value={tempMinute} onChange={setTempMinute} onComplete={handleFinishSetup} />}
           </div>
         </DialogContent>
       </Dialog>
 
       <AlertDialog open={isClearDataOpen} onOpenChange={setIsClearDataOpen}>
         <AlertDialogContent className="rounded-[2.5rem]">
-          <AlertDialogHeader><AlertDialogTitle className="font-black">{t.clearData}</AlertDialogTitle><AlertDialogDescription>{t.confirmClear}</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter><AlertDialogCancel className="rounded-xl">{t.cancel}</AlertDialogCancel><AlertDialogAction onClick={handleClearTrackerData} className="bg-orange-500 rounded-xl">{t.save}</AlertDialogAction></AlertDialogFooter>
+          <AlertDialogHeader><AlertDialogTitle className="font-black">حذف سجلات العداد</AlertDialogTitle><AlertDialogDescription>{t.confirmClear}</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogCancel className="rounded-xl">{t.cancel}</AlertDialogCancel><AlertDialogAction onClick={() => {
+            if (!activeHabit) return;
+            const now = new Date();
+            handleUpdateActiveHabit({ startDate: now.toISOString(), resetDates: [now.toISOString()], urgeDates: [] });
+            setIsClearDataOpen(false);
+            toast({ title: t.historyCleared });
+          }} className="bg-orange-500 rounded-xl">{t.save}</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent className="rounded-[2.5rem]">
           <AlertDialogHeader><AlertDialogTitle className="font-black">{isAr ? "تأكيد الحذف" : "Confirm Delete"}</AlertDialogTitle><AlertDialogDescription>{t.confirmDelete}</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter><AlertDialogCancel className="rounded-xl">{t.cancel}</AlertDialogCancel><AlertDialogAction onClick={handleDeleteTracker} className="bg-red-500 rounded-xl">{isAr ? "حذف" : "Delete"}</AlertDialogAction></AlertDialogFooter>
+          <AlertDialogFooter><AlertDialogCancel className="rounded-xl">{t.cancel}</AlertDialogCancel><AlertDialogAction onClick={() => {
+            const newHabits = habits.filter(h => h.id !== activeHabitId);
+            updateHabits(newHabits);
+            setActiveHabitId(newHabits[0]?.id || null);
+            setIsDeleteDialogOpen(false);
+          }} className="bg-red-500 rounded-xl">{isAr ? "حذف" : "Delete"}</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>

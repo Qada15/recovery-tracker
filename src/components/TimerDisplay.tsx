@@ -63,7 +63,7 @@ export function TimerDisplay({
 
   const isAr = language === 'ar'
 
-  // خوارزمية حساب الأرقام القياسية
+  // خوارزمية حساب الأرقام القياسية (Streaks)
   const stats = React.useMemo(() => {
     if (resetDates.length < 2) return { highest: 0, previous: 0 }
     const streaks: number[] = []
@@ -165,7 +165,6 @@ export function TimerDisplay({
           </div>
         </div>
 
-        {/* عداد الأيام الضخم في المنتصف */}
         <div className="flex flex-col items-center justify-center mb-4">
           <div className="relative flex flex-col items-center">
             <span className="text-7xl font-black text-orange-500 tabular-nums leading-none">
@@ -177,7 +176,6 @@ export function TimerDisplay({
           </div>
         </div>
 
-        {/* تفاصيل الوقت في الأسفل */}
         <div className="w-full flex justify-center gap-4 py-3 bg-slate-50 dark:bg-slate-800/40 rounded-2xl mb-6">
           <div className="text-center">
             <span className="text-xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.hours}</span>
@@ -196,7 +194,7 @@ export function TimerDisplay({
         </div>
 
         <div className="w-full grid grid-cols-5 gap-3 mb-3">
-          {/* يظهر زر الرغبة فقط إذا أكمل المستخدم 24 ساعة */}
+          {/* منطق: لا يظهر زر الرغبة إلا بعد 24 ساعة */}
           {elapsed.days >= 1 && (
             <Button 
               onClick={onUrge}
@@ -226,7 +224,6 @@ export function TimerDisplay({
         </Button>
       </div>
 
-      {/* حوارات التعديل */}
       <Dialog open={showNameDialog} onOpenChange={setShowNameDialog}>
         <DialogContent className="rounded-[2.5rem] p-8 max-w-[380px]">
           <DialogHeader><DialogTitle className="text-center font-black">{isAr ? "تعديل الاسم" : "Edit Name"}</DialogTitle></DialogHeader>

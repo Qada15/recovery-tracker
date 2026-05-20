@@ -123,16 +123,7 @@ export function JourneyLog({
       </header>
 
       <main className="flex-1 flex flex-col items-center p-4 overflow-y-auto custom-scrollbar">
-        <div className="text-center mb-4 shrink-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-1">{habitName}</p>
-          <div className="flex items-center justify-center gap-2">
-            <CalendarIcon className="h-3 w-3" style={{ color: accentColor }} />
-            <span className="text-[11px] font-black opacity-70">
-              {isAr ? "بداية الالتزام" : "Journey Start"}: {format(startDate, 'yyyy/MM/dd HH:mm')}
-            </span>
-          </div>
-        </div>
-
+        {/* تصميم الهالات في السجل أيضاً */}
         <div className="w-full max-w-[340px] grid grid-cols-3 gap-2 mb-4 shrink-0">
           <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
             <Award className="h-4 w-4 text-emerald-500 mb-1" />
@@ -151,7 +142,7 @@ export function JourneyLog({
           </div>
         </div>
 
-        <div className="w-full max-w-[340px] bg-white dark:bg-slate-900 rounded-[2rem] border shadow-2xl p-2 flex items-center justify-center shrink-0">
+        <div className="w-full max-w-[340px] bg-white dark:bg-slate-900 rounded-[2rem] border shadow-2xl p-2 flex items-center justify-center">
           <Calendar 
             mode="single" 
             selected={selectedDay}
@@ -175,7 +166,7 @@ export function JourneyLog({
                 <Button onClick={() => onRemoveReset(selectedDay)} variant="outline" className="flex-1 h-12 rounded-2xl font-black border-2 border-red-500 text-red-500">
                   <Trash2 className="ml-2 h-4 w-4" /> {isAr ? "حذف" : "Delete"}
                 </Button>
-                <Button onClick={handleAdjustTime} className="w-14 h-12 rounded-2xl font-black bg-slate-200 text-slate-700 flex items-center justify-center">
+                <Button onClick={handleAdjustTime} className="w-14 h-12 rounded-2xl font-black bg-slate-200 text-slate-700">
                   <Settings2 className="h-5 w-5" />
                 </Button>
               </>
@@ -186,11 +177,12 @@ export function JourneyLog({
                     <X className="ml-2 h-4 w-4" /> {isAr ? "حذف الرغبة" : "Clear Urge"}
                   </Button>
                 ) : (
-                  <Button onClick={() => onUrge(selectedDay)} disabled={isRelapse(selectedDay)} className="flex-1 h-12 rounded-2xl font-black bg-orange-500 text-white shadow-lg">
+                  <Button onClick={() => onUrge(selectedDay)} disabled={isRelapse(selectedDay)} className="flex-1 h-12 rounded-2xl font-black bg-orange-500 text-white">
                     <Flame className="ml-2 h-4 w-4" /> {isAr ? "رغبة" : "Urge"}
                   </Button>
                 )}
-                <Button onClick={() => onReset(selectedDay)} variant="destructive" className="flex-1 h-12 rounded-2xl font-black shadow-lg">
+                {/* هنا المسمى "انتكاسة" وبالأيقونة المنطقية AlertCircle */}
+                <Button onClick={() => onReset(selectedDay)} variant="destructive" className="flex-1 h-12 rounded-2xl font-black">
                   <AlertCircle className="ml-2 h-4 w-4" /> {isAr ? "انتكاسة" : "Relapse"}
                 </Button>
               </>
@@ -201,13 +193,16 @@ export function JourneyLog({
 
       <Dialog open={showTimePicker} onOpenChange={setShowTimePicker}>
         <DialogContent className="rounded-[2.5rem] p-6 max-w-[420px] z-[200]">
-          <DialogHeader><DialogTitle className="text-center font-black">{pickerMode === 'hours' ? (isAr ? "ضبط الساعة" : "Set Hour") : (isAr ? "ضبط الدقيقة" : "Set Minute")}</DialogTitle></DialogHeader>
-          <div className="flex flex-col items-center justify-center">
-            <CircularTimePicker mode={pickerMode} value={pickerMode === 'hours' ? tempHour : tempMinute} onChange={pickerMode === 'hours' ? setTempHour : setTempMinute} onComplete={() => pickerMode === 'hours' ? setPickerMode('minutes') : saveAdjustedTime()} />
-            {pickerMode === 'minutes' && (
-              <Button onClick={saveAdjustedTime} className="w-full mt-4 h-12 rounded-xl font-black gap-2"><Check className="h-4 w-4" /> {isAr ? "تأكيد الوقت" : "Confirm Time"}</Button>
-            )}
-          </div>
+          <DialogHeader><DialogTitle className="text-center font-black">{isAr ? "ضبط الوقت" : "Set Time"}</DialogTitle></DialogHeader>
+          <CircularTimePicker 
+            mode={pickerMode} 
+            value={pickerMode === 'hours' ? tempHour : tempMinute} 
+            onChange={pickerMode === 'hours' ? setTempHour : setTempMinute} 
+            onComplete={() => pickerMode === 'hours' ? setPickerMode('minutes') : saveAdjustedTime()} 
+          />
+          {pickerMode === 'minutes' && (
+             <Button onClick={saveAdjustedTime} className="w-full mt-4 h-12 rounded-xl font-black">تأكيد الوقت</Button>
+          )}
         </DialogContent>
       </Dialog>
     </div>
