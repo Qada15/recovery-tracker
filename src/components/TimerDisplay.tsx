@@ -63,8 +63,9 @@ export function TimerDisplay({
 
   const isAr = language === 'ar'
 
+  // خوارزمية حساب الأرقام القياسية
   const stats = React.useMemo(() => {
-    if (resetDates.length < 2) return { highest: null, previous: null }
+    if (resetDates.length < 2) return { highest: 0, previous: 0 }
     const streaks: number[] = []
     const sortedResets = [...resetDates].sort((a, b) => a.getTime() - b.getTime())
     
@@ -72,8 +73,8 @@ export function TimerDisplay({
       streaks.push(differenceInDays(sortedResets[i + 1], sortedResets[i]))
     }
     
-    const highest = Math.max(...streaks)
-    const previous = streaks[streaks.length - 1]
+    const highest = streaks.length > 0 ? Math.max(...streaks) : 0
+    const previous = streaks.length > 0 ? streaks[streaks.length - 1] : 0
     
     return { highest, previous }
   }, [resetDates])
@@ -110,12 +111,12 @@ export function TimerDisplay({
 
   return (
     <div className="w-full max-w-[480px] flex flex-col items-center">
-      {/* هالات الإحصائيات */}
+      {/* هالات الإحصائيات في الأعلى */}
       <div className="w-full flex justify-between gap-3 mb-4">
         <div className="flex-1 bg-amber-500/10 border-2 border-amber-500/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
           <Trophy className="h-4 w-4 text-amber-500 mb-1" />
           <span className="text-xl font-black text-amber-600 dark:text-amber-400 tabular-nums">
-            {stats.highest !== null ? stats.highest : "—"}
+            {stats.highest}
           </span>
           <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">
             {isAr ? "أعلى رقم قياسي" : "Highest Record"}
@@ -124,7 +125,7 @@ export function TimerDisplay({
         <div className="flex-1 bg-slate-500/10 border-2 border-slate-500/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
           <History className="h-4 w-4 text-slate-500 mb-1" />
           <span className="text-xl font-black text-slate-600 dark:text-slate-400 tabular-nums">
-            {stats.previous !== null ? stats.previous : "—"}
+            {stats.previous}
           </span>
           <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">
             {isAr ? "الرقم السابق" : "Previous Record"}
@@ -164,7 +165,7 @@ export function TimerDisplay({
           </div>
         </div>
 
-        {/* عداد الأيام الضخم */}
+        {/* عداد الأيام الضخم في المنتصف */}
         <div className="flex flex-col items-center justify-center mb-4">
           <div className="relative flex flex-col items-center">
             <span className="text-7xl font-black text-orange-500 tabular-nums leading-none">
@@ -225,6 +226,7 @@ export function TimerDisplay({
         </Button>
       </div>
 
+      {/* حوارات التعديل */}
       <Dialog open={showNameDialog} onOpenChange={setShowNameDialog}>
         <DialogContent className="rounded-[2.5rem] p-8 max-w-[380px]">
           <DialogHeader><DialogTitle className="text-center font-black">{isAr ? "تعديل الاسم" : "Edit Name"}</DialogTitle></DialogHeader>
