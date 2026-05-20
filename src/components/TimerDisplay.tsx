@@ -262,7 +262,7 @@ export function TimerDisplay({
             </Button>
           )}
           <Button onClick={onReset} variant="destructive" className="flex-1 h-12 rounded-xl font-black shadow-md active:scale-95 transition-transform">
-            <Trash2 className="ml-2 h-4 w-4" /> {isAr ? "انتكاسة" : "Relapse"}
+            <Trash2 className="ml-2 h-4 w-4" /> {isAr ? "تصفير" : "Relapse"}
           </Button>
         </div>
 
