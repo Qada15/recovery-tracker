@@ -18,11 +18,11 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
-import { setHours, setMinutes, differenceInDays, startOfDay, isAfter, isBefore, isSameDay, max } from "date-fns"
+import { setHours, setMinutes, differenceInDays, startOfDay, isAfter, isBefore, isSameDay, max, eachDayOfInterval } from "date-fns"
 import { CircularTimePicker } from "./CircularTimePicker"
 
 // مكون مستقل للعداد لمنع إعادة رندرة المكون الرئيسي كل ثانية
-const LiveClock = ({ startDate, language }: { startDate: Date; language: 'ar' | 'en' }) => {
+const LiveClock = React.memo(({ startDate, language }: { startDate: Date; language: 'ar' | 'en' }) => {
   const [elapsed, setElapsed] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
   const isAr = language === 'ar'
 
@@ -72,13 +72,10 @@ const LiveClock = ({ startDate, language }: { startDate: Date; language: 'ar' | 
           <p className="text-[8px] font-black uppercase opacity-40">{isAr ? "ثانية" : "S"}</p>
         </div>
       </div>
-      
-      {/* تمرير عدد الأيام للأب عبر Context أو طريقة أخرى إذا لزم الأمر، 
-          لكن هنا نكتفي بالتحقق المباشر في المكون الأب عبر props */}
-      <input type="hidden" id="current-days-count" value={elapsed.days} />
     </>
   )
-}
+})
+LiveClock.displayName = "LiveClock"
 
 interface TimerDisplayProps {
   externalStartDate: Date
@@ -123,32 +120,36 @@ export function TimerDisplay({
   const isAr = language === 'ar'
   const today = React.useMemo(() => startOfDay(new Date()), [])
 
-  const latestResetDate = React.useMemo(() => {
-    if (resetDates.length === 0) return startOfDay(externalStartDate);
-    const dates = resetDates.map(d => startOfDay(d));
-    return max(dates);
-  }, [resetDates, externalStartDate]);
+  // حساب الأيام للحالة والظهور (أكثر من 24 ساعة)
+  const currentDays = Math.floor(Math.max(0, new Date().getTime() - externalStartDate.getTime()) / (1000 * 60 * 60 * 24))
 
-  const isRelapse = React.useCallback((date: Date) => {
-    const d = startOfDay(date);
-    return resetDates.some(rd => isSameDay(startOfDay(rd), d));
-  }, [resetDates]);
+  // تحسين الأداء عبر حساب مصفوفات التواريخ بدلاً من استخدام الدوال في التقويم
+  const { cleanDates, relapseDates, urgeModifierDates } = React.useMemo(() => {
+    const latestReset = resetDates.length === 0 ? startOfDay(externalStartDate) : max(resetDates.map(d => startOfDay(d)));
+    
+    // الأيام النظيفة: من بعد آخر انتكاسة إلى اليوم
+    let clean: Date[] = []
+    if (isBefore(latestReset, today) || isSameDay(latestReset, today)) {
+      try {
+        clean = eachDayOfInterval({ 
+          start: isSameDay(latestReset, today) ? today : new Date(latestReset.getTime() + 86400000), 
+          end: today 
+        })
+      } catch (e) { clean = [] }
+    }
 
-  const isClean = React.useCallback((date: Date) => {
-    const d = startOfDay(date);
-    return isAfter(d, latestResetDate) && (isBefore(d, today) || isSameDay(d, today)) && !isRelapse(d);
-  }, [latestResetDate, today, isRelapse]);
-
-  const isHasUrge = React.useCallback((date: Date) => {
-    const d = startOfDay(date);
-    return urgeDates.some(ud => isSameDay(startOfDay(ud), d));
-  }, [urgeDates]);
+    return {
+      cleanDates: clean,
+      relapseDates: resetDates,
+      urgeModifierDates: urgeDates
+    }
+  }, [resetDates, urgeDates, externalStartDate, today])
 
   const modifiers = React.useMemo(() => ({
-    relapse: isRelapse,
-    clean: isClean,
-    urge: isHasUrge
-  }), [isRelapse, isClean, isHasUrge]);
+    relapse: relapseDates,
+    clean: cleanDates,
+    urge: urgeModifierDates
+  }), [relapseDates, cleanDates, urgeModifierDates]);
 
   const modifiersClassNames = React.useMemo(() => ({
     relapse: "bg-red-500 text-white rounded-full font-black !opacity-100",
@@ -171,9 +172,6 @@ export function TimerDisplay({
     
     return { highest, previous }
   }, [resetDates])
-
-  // حساب الأيام للعرض في منطق الأزرار (أكثر من 24 ساعة)
-  const currentDays = Math.floor(Math.max(0, new Date().getTime() - externalStartDate.getTime()) / (1000 * 60 * 60 * 24))
 
   const handleUpdateName = () => {
     if (!tempHabitName.trim()) return
@@ -241,7 +239,6 @@ export function TimerDisplay({
           </div>
         </div>
 
-        {/* المكون المعزول للوقت */}
         <LiveClock startDate={externalStartDate} language={language} />
 
         <div className="w-full grid grid-cols-5 gap-3 mb-3">
