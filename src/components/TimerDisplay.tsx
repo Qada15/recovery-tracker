@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -18,10 +19,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
-import { setHours, setMinutes, differenceInDays, startOfDay, isAfter, isBefore, isSameDay, max, eachDayOfInterval } from "date-fns"
+import { setHours, setMinutes, differenceInDays, startOfDay, isAfter, isBefore, isSameDay, max } from "date-fns"
 import { CircularTimePicker } from "./CircularTimePicker"
 
-// مكون مستقل للعداد لمنع إعادة رندرة المكون الرئيسي كل ثانية
+// مكوّن العداد معزول تماماً لمنع إعادة رندرة التقويم الثقيل كل ثانية
 const LiveClock = React.memo(({ startDate, language }: { startDate: Date; language: 'ar' | 'en' }) => {
   const [elapsed, setElapsed] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
   const isAr = language === 'ar'
@@ -94,7 +95,7 @@ interface TimerDisplayProps {
   language: 'ar' | 'en'
 }
 
-export function TimerDisplay({ 
+export const TimerDisplay = React.memo(({ 
   externalStartDate, 
   externalHabitName, 
   resetDates,
@@ -107,7 +108,7 @@ export function TimerDisplay({
   onDelete,
   onClearData,
   language
-}: TimerDisplayProps) {
+}: TimerDisplayProps) => {
   const [showNameDialog, setShowNameDialog] = React.useState(false)
   const [showDateDialog, setShowDateDialog] = React.useState(false)
   const [tempHabitName, setTempHabitName] = React.useState(externalHabitName)
@@ -120,36 +121,21 @@ export function TimerDisplay({
   const isAr = language === 'ar'
   const today = React.useMemo(() => startOfDay(new Date()), [])
 
-  // حساب الأيام للحالة والظهور (أكثر من 24 ساعة)
   const currentDays = Math.floor(Math.max(0, new Date().getTime() - externalStartDate.getTime()) / (1000 * 60 * 60 * 24))
 
-  // تحسين الأداء عبر حساب مصفوفات التواريخ بدلاً من استخدام الدوال في التقويم
-  const { cleanDates, relapseDates, urgeModifierDates } = React.useMemo(() => {
-    const latestReset = resetDates.length === 0 ? startOfDay(externalStartDate) : max(resetDates.map(d => startOfDay(d)));
-    
-    // الأيام النظيفة: من بعد آخر انتكاسة إلى اليوم
-    let clean: Date[] = []
-    if (isBefore(latestReset, today) || isSameDay(latestReset, today)) {
-      try {
-        clean = eachDayOfInterval({ 
-          start: isSameDay(latestReset, today) ? today : new Date(latestReset.getTime() + 86400000), 
-          end: today 
-        })
-      } catch (e) { clean = [] }
-    }
-
-    return {
-      cleanDates: clean,
-      relapseDates: resetDates,
-      urgeModifierDates: urgeDates
-    }
-  }, [resetDates, urgeDates, externalStartDate, today])
+  // تحسين جذري: بدلاً من مصفوفة آلاف الأيام، نستخدم دالة فحص (Matcher)
+  const latestResetDate = React.useMemo(() => {
+    return resetDates.length === 0 ? startOfDay(externalStartDate) : max(resetDates.map(d => startOfDay(d)));
+  }, [resetDates, externalStartDate]);
 
   const modifiers = React.useMemo(() => ({
-    relapse: relapseDates,
-    clean: cleanDates,
-    urge: urgeModifierDates
-  }), [relapseDates, cleanDates, urgeModifierDates]);
+    relapse: resetDates,
+    urge: urgeDates,
+    clean: (date: Date) => {
+      const d = startOfDay(date);
+      return isAfter(d, latestResetDate) && (isBefore(d, today) || isSameDay(d, today));
+    }
+  }), [resetDates, urgeDates, latestResetDate, today]);
 
   const modifiersClassNames = React.useMemo(() => ({
     relapse: "bg-red-500 text-white rounded-full font-black !opacity-100",
@@ -167,10 +153,7 @@ export function TimerDisplay({
       streaks.push(diff)
     }
     
-    const highest = streaks.length > 0 ? Math.max(...streaks) : 0
-    const previous = streaks.length > 0 ? streaks[streaks.length - 1] : 0
-    
-    return { highest, previous }
+    return { highest: streaks.length > 0 ? Math.max(...streaks) : 0, previous: streaks.length > 0 ? streaks[streaks.length - 1] : 0 }
   }, [resetDates])
 
   const handleUpdateName = () => {
@@ -244,36 +227,24 @@ export function TimerDisplay({
         <div className="w-full grid grid-cols-5 gap-3 mb-3">
           {currentDays >= 1 ? (
             <>
-              <button 
-                onClick={onUrge}
-                className="col-span-3 h-14 rounded-2xl border-2 border-orange-100 text-orange-500 font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
-              >
+              <button onClick={onUrge} className="col-span-3 h-14 rounded-2xl border-2 border-orange-100 text-orange-500 font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
                 <Flame className="h-5 w-5" />
                 {isAr ? "أشعر برغبة" : "Feel Urge"}
               </button>
-              <button 
-                onClick={onReset}
-                className="col-span-2 h-14 rounded-2xl border-2 border-red-100 text-red-500 font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
-              >
+              <button onClick={onReset} className="col-span-2 h-14 rounded-2xl border-2 border-red-100 text-red-500 font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
                 <RefreshCw className="h-5 w-5" />
                 {isAr ? "تصفير" : "Reset"}
               </button>
             </>
           ) : (
-            <button 
-              onClick={onReset}
-              className="col-span-5 h-14 rounded-2xl border-2 border-red-100 text-red-500 font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
-            >
+            <button onClick={onReset} className="col-span-5 h-14 rounded-2xl border-2 border-red-100 text-red-500 font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
               <RefreshCw className="h-5 w-5" />
               {isAr ? "تصفير" : "Reset"}
             </button>
           )}
         </div>
 
-        <Button 
-          onClick={onOpenHistory}
-          className="w-full h-16 rounded-[1.5rem] bg-slate-900 dark:bg-slate-800 text-white font-black text-lg flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all"
-        >
+        <Button onClick={onOpenHistory} className="w-full h-16 rounded-[1.5rem] bg-slate-900 dark:bg-slate-800 text-white font-black text-lg flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all">
           <History className="h-6 w-6" />
           {isAr ? "سجل الرحلة" : "Journey Log"}
         </Button>
@@ -293,15 +264,7 @@ export function TimerDisplay({
           <div className="flex flex-col items-center min-h-[320px] justify-center">
             {setupStep === 'date' && (
               <div className="w-full flex flex-col items-center">
-                <Calendar 
-                  mode="single" 
-                  selected={selectedDate} 
-                  onSelect={(d) => { if(d) { setSelectedDate(d); setSetupStep('hour'); } }} 
-                  disabled={{ after: today }} 
-                  className="rounded-3xl border p-2" 
-                  modifiers={modifiers}
-                  modifiersClassNames={modifiersClassNames}
-                />
+                <Calendar mode="single" selected={selectedDate} onSelect={(d) => { if(d) { setSelectedDate(d); setSetupStep('hour'); } }} disabled={{ after: today }} className="rounded-3xl border p-2" modifiers={modifiers} modifiersClassNames={modifiersClassNames} />
                 <div className="flex gap-6 py-4 border-t w-full justify-center mt-2 opacity-60">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-emerald-500" />
@@ -331,4 +294,5 @@ export function TimerDisplay({
       </Dialog>
     </div>
   )
-}
+})
+TimerDisplay.displayName = "TimerDisplay"

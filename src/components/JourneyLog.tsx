@@ -1,10 +1,11 @@
+
 "use client"
 
 import * as React from "react"
 import { Flame, Trash2, Settings2, ChevronLeft, AlertCircle, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
-import { startOfDay, isAfter, isBefore, isSameDay, max, setHours, setMinutes, eachDayOfInterval } from "date-fns"
+import { startOfDay, isAfter, isBefore, isSameDay, max, setHours, setMinutes } from "date-fns"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { CircularTimePicker } from "./CircularTimePicker"
 
@@ -45,32 +46,19 @@ export function JourneyLog({
   const isAr = language === 'ar'
   const today = React.useMemo(() => startOfDay(new Date()), [])
 
-  // تحسين الأداء باستخدام مصفوفات التواريخ للتقويم
-  const { cleanDates, relapseDates, urgeModifierDates } = React.useMemo(() => {
-    const latestReset = resetDates.length === 0 ? startOfDay(startDate) : max(resetDates.map(d => startOfDay(d)));
-    
-    let clean: Date[] = []
-    if (isBefore(latestReset, today) || isSameDay(latestReset, today)) {
-      try {
-        clean = eachDayOfInterval({ 
-          start: isSameDay(latestReset, today) ? today : new Date(latestReset.getTime() + 86400000), 
-          end: today 
-        })
-      } catch (e) { clean = [] }
-    }
-
-    return {
-      cleanDates: clean,
-      relapseDates: resetDates,
-      urgeModifierDates: urgeDates
-    }
-  }, [resetDates, urgeDates, startDate, today])
+  // تحسين الأداء: استخدام دالة فحص Matcher بدلاً من المصفوفات الكبيرة
+  const latestResetDate = React.useMemo(() => {
+    return resetDates.length === 0 ? startOfDay(startDate) : max(resetDates.map(d => startOfDay(d)));
+  }, [resetDates, startDate]);
 
   const modifiers = React.useMemo(() => ({
-    relapse: relapseDates,
-    clean: cleanDates,
-    urge: urgeModifierDates
-  }), [relapseDates, cleanDates, urgeModifierDates]);
+    relapse: resetDates,
+    urge: urgeDates,
+    clean: (date: Date) => {
+      const d = startOfDay(date);
+      return isAfter(d, latestResetDate) && (isBefore(d, today) || isSameDay(d, today));
+    }
+  }), [resetDates, urgeDates, latestResetDate, today]);
 
   const modifiersClassNames = React.useMemo(() => ({
     relapse: "bg-red-500 text-white rounded-full font-black !opacity-100",
@@ -157,7 +145,7 @@ export function JourneyLog({
                     <X className="ml-2 h-4 w-4" /> {isAr ? "حذف الرغبة" : "Clear Urge"}
                   </Button>
                 ) : (
-                  <Button onClick={() => onUrge(selectedDay)} disabled={relapseDates.some(d => isSameDay(d, selectedDay))} className="flex-1 h-12 rounded-2xl font-black bg-orange-500 text-white">
+                  <Button onClick={() => onUrge(selectedDay)} disabled={resetDates.some(d => isSameDay(d, selectedDay))} className="flex-1 h-12 rounded-2xl font-black bg-orange-500 text-white">
                     <Flame className="ml-2 h-4 w-4" /> {isAr ? "رغبة" : "Urge"}
                   </Button>
                 )}
