@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -65,7 +64,6 @@ export function TimerDisplay({
 
   const isAr = language === 'ar'
   
-  // تثبيت تاريخ اليوم لمنع إعادة الرندرة المستمرة
   const today = React.useMemo(() => startOfDay(new Date()), [])
 
   const latestResetDate = React.useMemo(() => {
@@ -149,29 +147,9 @@ export function TimerDisplay({
 
   return (
     <div className="w-full max-w-[480px] flex flex-col items-center">
-      <div className="w-full flex justify-between gap-3 mb-4">
-        <div className="flex-1 bg-amber-500/10 border-2 border-amber-500/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
-          <Trophy className="h-4 w-4 text-amber-500 mb-1" />
-          <span className="text-xl font-black text-amber-600 dark:text-amber-400 tabular-nums">
-            {stats.highest}
-          </span>
-          <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">
-            {isAr ? "أعلى رقم قياسي" : "Highest Record"}
-          </span>
-        </div>
-        <div className="flex-1 bg-slate-500/10 border-2 border-slate-500/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
-          <History className="h-4 w-4 text-slate-500 mb-1" />
-          <span className="text-xl font-black text-slate-600 dark:text-slate-400 tabular-nums">
-            {stats.previous}
-          </span>
-          <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">
-            {isAr ? "الرقم السابق" : "Previous Record"}
-          </span>
-        </div>
-      </div>
-
       <div className="w-full bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-slate-800 p-6 flex flex-col items-center">
-        <div className="w-full flex items-center justify-between mb-4">
+        {/* Header Section */}
+        <div className="w-full flex items-center justify-between mb-6">
           <div className="flex gap-2">
              <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -202,18 +180,42 @@ export function TimerDisplay({
           </div>
         </div>
 
-        <div className="flex flex-col items-center justify-center mb-4">
+        {/* Stats Section Integrated Inside Card */}
+        <div className="w-full flex justify-between gap-3 mb-8">
+          <div className="flex-1 bg-amber-500/5 border border-amber-500/10 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
+            <Trophy className="h-4 w-4 text-amber-500 mb-1" />
+            <span className="text-xl font-black text-amber-600 dark:text-amber-400 tabular-nums leading-none">
+              {stats.highest}
+            </span>
+            <span className="text-[8px] font-black uppercase tracking-tighter opacity-40 mt-1">
+              {isAr ? "أعلى رقم قياسي" : "Highest Record"}
+            </span>
+          </div>
+          <div className="flex-1 bg-slate-500/5 border border-slate-500/10 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
+            <History className="h-4 w-4 text-slate-500 mb-1" />
+            <span className="text-xl font-black text-slate-600 dark:text-slate-400 tabular-nums leading-none">
+              {stats.previous}
+            </span>
+            <span className="text-[8px] font-black uppercase tracking-tighter opacity-40 mt-1">
+              {isAr ? "الرقم السابق" : "Previous Record"}
+            </span>
+          </div>
+        </div>
+
+        {/* Main Counter Section */}
+        <div className="flex flex-col items-center justify-center mb-6">
           <div className="relative flex flex-col items-center">
             <span className="text-7xl font-black text-orange-500 tabular-nums leading-none">
               {elapsed.days}
             </span>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2">
               {isAr ? "يوم" : "Day"}
             </span>
           </div>
         </div>
 
-        <div className="w-full flex justify-center gap-4 py-3 bg-slate-50 dark:bg-slate-800/40 rounded-2xl mb-6">
+        {/* Sub-timer grid */}
+        <div className="w-full flex justify-center gap-4 py-3 bg-slate-50 dark:bg-slate-800/40 rounded-2xl mb-8">
           <div className="text-center">
             <span className="text-xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.hours}</span>
             <p className="text-[8px] font-black uppercase opacity-40">{isAr ? "ساعة" : "H"}</p>
@@ -230,38 +232,37 @@ export function TimerDisplay({
           </div>
         </div>
 
+        {/* Action Buttons Row */}
         <div className="w-full grid grid-cols-5 gap-3 mb-3">
           {elapsed.days >= 1 ? (
             <>
-              <Button 
+              <button 
                 onClick={onUrge}
-                variant="outline"
-                className="col-span-3 h-12 rounded-2xl border-2 border-orange-100 text-orange-500 font-black text-sm flex items-center justify-center gap-2"
+                className="col-span-3 h-14 rounded-2xl border-2 border-orange-100 text-orange-500 font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
               >
                 <Flame className="h-5 w-5" />
                 {isAr ? "أشعر برغبة" : "Feel Urge"}
-              </Button>
-              <Button 
+              </button>
+              <button 
                 onClick={onReset}
-                variant="outline"
-                className="col-span-2 h-12 rounded-2xl border-2 border-red-100 text-red-500 font-black text-sm flex items-center justify-center gap-2"
+                className="col-span-2 h-14 rounded-2xl border-2 border-red-100 text-red-500 font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
               >
                 <RefreshCw className="h-5 w-5" />
                 {isAr ? "تصفير" : "Reset"}
-              </Button>
+              </button>
             </>
           ) : (
-            <Button 
+            <button 
               onClick={onReset}
-              variant="outline"
-              className="col-span-5 h-12 rounded-2xl border-2 border-red-100 text-red-500 font-black text-sm flex items-center justify-center gap-2"
+              className="col-span-5 h-14 rounded-2xl border-2 border-red-100 text-red-500 font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
             >
               <RefreshCw className="h-5 w-5" />
               {isAr ? "تصفير" : "Reset"}
-            </Button>
+            </button>
           )}
         </div>
 
+        {/* Big Journey Log Button */}
         <Button 
           onClick={onOpenHistory}
           className="w-full h-16 rounded-[1.5rem] bg-slate-900 dark:bg-slate-800 text-white font-black text-lg flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all"
@@ -271,6 +272,7 @@ export function TimerDisplay({
         </Button>
       </div>
 
+      {/* Name Edit Dialog */}
       <Dialog open={showNameDialog} onOpenChange={setShowNameDialog}>
         <DialogContent className="rounded-[2.5rem] p-8 max-w-[380px]">
           <DialogHeader><DialogTitle className="text-center font-black">{isAr ? "تعديل الاسم" : "Edit Name"}</DialogTitle></DialogHeader>
@@ -279,6 +281,7 @@ export function TimerDisplay({
         </DialogContent>
       </Dialog>
 
+      {/* Time Edit Dialog */}
       <Dialog open={showDateDialog} onOpenChange={(open) => { setShowDateDialog(open); if(!open) setSetupStep('date'); }}>
         <DialogContent className="rounded-[2.5rem] p-6 max-w-[400px]">
           <DialogHeader><DialogTitle className="text-center font-black">{isAr ? "تعديل الوقت" : "Edit Time"}</DialogTitle></DialogHeader>
