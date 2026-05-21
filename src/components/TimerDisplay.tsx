@@ -21,6 +21,65 @@ import { Calendar } from "@/components/ui/calendar"
 import { setHours, setMinutes, differenceInDays, startOfDay, isAfter, isBefore, isSameDay, max } from "date-fns"
 import { CircularTimePicker } from "./CircularTimePicker"
 
+// مكون مستقل للعداد لمنع إعادة رندرة المكون الرئيسي كل ثانية
+const LiveClock = ({ startDate, language }: { startDate: Date; language: 'ar' | 'en' }) => {
+  const [elapsed, setElapsed] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+  const isAr = language === 'ar'
+
+  React.useEffect(() => {
+    const updateTimer = () => {
+      const now = new Date().getTime()
+      const start = startDate.getTime()
+      const d = Math.max(0, now - start)
+      setElapsed({
+        seconds: Math.floor((d / 1000) % 60),
+        minutes: Math.floor((d / 1000 / 60) % 60),
+        hours: Math.floor((d / (1000 * 60 * 60)) % 24),
+        days: Math.floor(d / (1000 * 60 * 60 * 24))
+      })
+    }
+    updateTimer()
+    const interval = setInterval(updateTimer, 1000)
+    return () => clearInterval(interval)
+  }, [startDate])
+
+  return (
+    <>
+      <div className="flex flex-col items-center justify-center mb-6">
+        <div className="relative flex flex-col items-center">
+          <span className="text-7xl font-black text-orange-500 tabular-nums leading-none">
+            {elapsed.days}
+          </span>
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2">
+            {isAr ? "يوم" : "Day"}
+          </span>
+        </div>
+      </div>
+
+      <div className="w-full flex justify-center gap-4 py-3 bg-slate-50 dark:bg-slate-800/40 rounded-2xl mb-8">
+        <div className="text-center">
+          <span className="text-xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.hours}</span>
+          <p className="text-[8px] font-black uppercase opacity-40">{isAr ? "ساعة" : "H"}</p>
+        </div>
+        <span className="text-xl font-black text-slate-300">:</span>
+        <div className="text-center">
+          <span className="text-xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.minutes}</span>
+          <p className="text-[8px] font-black uppercase opacity-40">{isAr ? "دقيقة" : "M"}</p>
+        </div>
+        <span className="text-xl font-black text-slate-300">:</span>
+        <div className="text-center">
+          <span className="text-xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.seconds}</span>
+          <p className="text-[8px] font-black uppercase opacity-40">{isAr ? "ثانية" : "S"}</p>
+        </div>
+      </div>
+      
+      {/* تمرير عدد الأيام للأب عبر Context أو طريقة أخرى إذا لزم الأمر، 
+          لكن هنا نكتفي بالتحقق المباشر في المكون الأب عبر props */}
+      <input type="hidden" id="current-days-count" value={elapsed.days} />
+    </>
+  )
+}
+
 interface TimerDisplayProps {
   externalStartDate: Date
   externalHabitName: string
@@ -52,7 +111,6 @@ export function TimerDisplay({
   onClearData,
   language
 }: TimerDisplayProps) {
-  const [elapsed, setElapsed] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
   const [showNameDialog, setShowNameDialog] = React.useState(false)
   const [showDateDialog, setShowDateDialog] = React.useState(false)
   const [tempHabitName, setTempHabitName] = React.useState(externalHabitName)
@@ -63,7 +121,6 @@ export function TimerDisplay({
   const [selectedMinute, setSelectedMinute] = React.useState(externalStartDate.getMinutes())
 
   const isAr = language === 'ar'
-  
   const today = React.useMemo(() => startOfDay(new Date()), [])
 
   const latestResetDate = React.useMemo(() => {
@@ -88,9 +145,9 @@ export function TimerDisplay({
   }, [urgeDates]);
 
   const modifiers = React.useMemo(() => ({
-    relapse: (date: Date) => isRelapse(date),
-    clean: (date: Date) => isClean(date),
-    urge: (date: Date) => isHasUrge(date)
+    relapse: isRelapse,
+    clean: isClean,
+    urge: isHasUrge
   }), [isRelapse, isClean, isHasUrge]);
 
   const modifiersClassNames = React.useMemo(() => ({
@@ -115,22 +172,8 @@ export function TimerDisplay({
     return { highest, previous }
   }, [resetDates])
 
-  React.useEffect(() => {
-    const updateTimer = () => {
-      const start = externalStartDate.getTime()
-      const now = new Date().getTime()
-      const d = Math.max(0, now - start)
-      setElapsed({
-        seconds: Math.floor((d / 1000) % 60),
-        minutes: Math.floor((d / 1000 / 60) % 60),
-        hours: Math.floor((d / (1000 * 60 * 60)) % 24),
-        days: Math.floor(d / (1000 * 60 * 60 * 24))
-      })
-    }
-    updateTimer()
-    const interval = setInterval(updateTimer, 1000)
-    return () => clearInterval(interval)
-  }, [externalStartDate])
+  // حساب الأيام للعرض في منطق الأزرار (أكثر من 24 ساعة)
+  const currentDays = Math.floor(Math.max(0, new Date().getTime() - externalStartDate.getTime()) / (1000 * 60 * 60 * 24))
 
   const handleUpdateName = () => {
     if (!tempHabitName.trim()) return
@@ -148,39 +191,35 @@ export function TimerDisplay({
   return (
     <div className="w-full max-w-[480px] flex flex-col items-center">
       <div className="w-full bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-slate-800 p-6 flex flex-col items-center">
-        {/* Header Section */}
         <div className="w-full flex items-center justify-between mb-6">
-          <div className="flex gap-2">
-             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="p-2 hover:bg-slate-50 rounded-xl transition-colors">
-                  <MoreVertical className="h-5 w-5 text-slate-400" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="rounded-2xl w-56">
-                <DropdownMenuItem onClick={() => setShowNameDialog(true)} className="p-3 font-bold">
-                  <Settings2 className="h-4 w-4 ml-2" /> {isAr ? "تعديل الاسم" : "Edit Name"}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setShowDateDialog(true)} className="p-3 font-bold">
-                  <CalendarIcon className="h-4 w-4 ml-2" /> {isAr ? "تعديل وقت البداية" : "Edit Start Time"}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={onClearData} className="text-orange-500 font-bold p-3">
-                  <RotateCcw className="h-4 w-4 ml-2" /> {isAr ? "حذف سجلات العداد" : "Clear Records"}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={onDelete} className="text-red-500 font-bold p-3">
-                  <Trash2 className="h-4 w-4 ml-2" /> {isAr ? "حذف العداد نهائياً" : "Delete Permanently"}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-             </DropdownMenu>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="p-2 hover:bg-slate-50 rounded-xl transition-colors">
+                <MoreVertical className="h-5 w-5 text-slate-400" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="rounded-2xl w-56">
+              <DropdownMenuItem onClick={() => setShowNameDialog(true)} className="p-3 font-bold">
+                <Settings2 className="h-4 w-4 ml-2" /> {isAr ? "تعديل الاسم" : "Edit Name"}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowDateDialog(true)} className="p-3 font-bold">
+                <CalendarIcon className="h-4 w-4 ml-2" /> {isAr ? "تعديل وقت البداية" : "Edit Start Time"}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={onClearData} className="text-orange-500 font-bold p-3">
+                <RotateCcw className="h-4 w-4 ml-2" /> {isAr ? "حذف سجلات العداد" : "Clear Records"}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onDelete} className="text-red-500 font-bold p-3">
+                <Trash2 className="h-4 w-4 ml-2" /> {isAr ? "حذف العداد نهائياً" : "Delete Permanently"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <div className="flex items-center gap-2">
             <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">{externalHabitName}</h3>
             <Sparkles className="h-5 w-5 text-orange-400" />
           </div>
         </div>
 
-        {/* Stats Section Integrated Inside Card */}
         <div className="w-full flex justify-between gap-3 mb-8">
           <div className="flex-1 bg-amber-500/5 border border-amber-500/10 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
             <Trophy className="h-4 w-4 text-amber-500 mb-1" />
@@ -202,39 +241,11 @@ export function TimerDisplay({
           </div>
         </div>
 
-        {/* Main Counter Section */}
-        <div className="flex flex-col items-center justify-center mb-6">
-          <div className="relative flex flex-col items-center">
-            <span className="text-7xl font-black text-orange-500 tabular-nums leading-none">
-              {elapsed.days}
-            </span>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2">
-              {isAr ? "يوم" : "Day"}
-            </span>
-          </div>
-        </div>
+        {/* المكون المعزول للوقت */}
+        <LiveClock startDate={externalStartDate} language={language} />
 
-        {/* Sub-timer grid */}
-        <div className="w-full flex justify-center gap-4 py-3 bg-slate-50 dark:bg-slate-800/40 rounded-2xl mb-8">
-          <div className="text-center">
-            <span className="text-xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.hours}</span>
-            <p className="text-[8px] font-black uppercase opacity-40">{isAr ? "ساعة" : "H"}</p>
-          </div>
-          <span className="text-xl font-black text-slate-300">:</span>
-          <div className="text-center">
-            <span className="text-xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.minutes}</span>
-            <p className="text-[8px] font-black uppercase opacity-40">{isAr ? "دقيقة" : "M"}</p>
-          </div>
-          <span className="text-xl font-black text-slate-300">:</span>
-          <div className="text-center">
-            <span className="text-xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.seconds}</span>
-            <p className="text-[8px] font-black uppercase opacity-40">{isAr ? "ثانية" : "S"}</p>
-          </div>
-        </div>
-
-        {/* Action Buttons Row */}
         <div className="w-full grid grid-cols-5 gap-3 mb-3">
-          {elapsed.days >= 1 ? (
+          {currentDays >= 1 ? (
             <>
               <button 
                 onClick={onUrge}
@@ -262,7 +273,6 @@ export function TimerDisplay({
           )}
         </div>
 
-        {/* Big Journey Log Button */}
         <Button 
           onClick={onOpenHistory}
           className="w-full h-16 rounded-[1.5rem] bg-slate-900 dark:bg-slate-800 text-white font-black text-lg flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all"
@@ -272,7 +282,6 @@ export function TimerDisplay({
         </Button>
       </div>
 
-      {/* Name Edit Dialog */}
       <Dialog open={showNameDialog} onOpenChange={setShowNameDialog}>
         <DialogContent className="rounded-[2.5rem] p-8 max-w-[380px]">
           <DialogHeader><DialogTitle className="text-center font-black">{isAr ? "تعديل الاسم" : "Edit Name"}</DialogTitle></DialogHeader>
@@ -281,7 +290,6 @@ export function TimerDisplay({
         </DialogContent>
       </Dialog>
 
-      {/* Time Edit Dialog */}
       <Dialog open={showDateDialog} onOpenChange={(open) => { setShowDateDialog(open); if(!open) setSetupStep('date'); }}>
         <DialogContent className="rounded-[2.5rem] p-6 max-w-[400px]">
           <DialogHeader><DialogTitle className="text-center font-black">{isAr ? "تعديل الوقت" : "Edit Time"}</DialogTitle></DialogHeader>
