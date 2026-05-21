@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
 import { saveToStorage, getFromStorage, STORAGE_KEYS, type Habit } from "@/lib/storage"
-import { parseISO, setHours, setMinutes } from "date-fns"
+import { parseISO, setHours, setMinutes, isSameDay } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
@@ -94,7 +94,6 @@ export function RecoveryTrackerApp() {
 
   const activeHabit = React.useMemo(() => habits.find(h => h.id === activeHabitId), [habits, activeHabitId]);
 
-  // تثبيت مراجع التواريخ لمنع التجمد
   const activeHabitData = React.useMemo(() => {
     if (!activeHabit) return null;
     return {
@@ -185,7 +184,8 @@ export function RecoveryTrackerApp() {
               onOpenHistory={() => setIsHistoryOpen(true)}
               onUpdateDate={(d) => {
                 const currentResets = activeHabit.resetDates.map(rd => parseISO(rd));
-                const newResets = [...currentResets.filter(rd => rd.getTime() !== activeHabitData.startDate.getTime()), d].sort((a, b) => a.getTime() - b.getTime());
+                const filtered = currentResets.filter(rd => !isSameDay(rd, activeHabitData.startDate));
+                const newResets = [...filtered, d].sort((a, b) => a.getTime() - b.getTime());
                 handleUpdateActiveHabit({ startDate: d.toISOString(), resetDates: newResets.map(rd => rd.toISOString()) });
               }}
               onUpdateName={(name) => handleUpdateActiveHabit({ name })}
@@ -247,16 +247,20 @@ export function RecoveryTrackerApp() {
             });
           }} 
           onRemoveReset={(date) => {
-             const newResets = activeHabit.resetDates.filter(d => parseISO(d).getTime() !== date.getTime());
+             const newResets = activeHabit.resetDates.filter(d => !isSameDay(parseISO(d), date));
              if (newResets.length === 0) return;
-             handleUpdateActiveHabit({ startDate: parseISO(newResets[newResets.length - 1]).toISOString(), resetDates: newResets });
+             const sorted = newResets.map(d => parseISO(d)).sort((a, b) => a.getTime() - b.getTime());
+             handleUpdateActiveHabit({ 
+               startDate: sorted[sorted.length - 1].toISOString(), 
+               resetDates: sorted.map(d => d.toISOString()) 
+             });
           }}
           onUrge={(date) => {
             const newUrges = [...(activeHabit.urgeDates || []), date.toISOString()];
             handleUpdateActiveHabit({ urgeDates: newUrges });
           }}
           onRemoveUrge={(date) => {
-            const newUrges = (activeHabit.urgeDates || []).filter(d => parseISO(d).getTime() !== date.getTime());
+            const newUrges = (activeHabit.urgeDates || []).filter(d => !isSameDay(parseISO(d), date));
             handleUpdateActiveHabit({ urgeDates: newUrges });
           }}
           language={language}
