@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
 import { saveToStorage, getFromStorage, STORAGE_KEYS, type Habit } from "@/lib/storage"
-import { parseISO, setHours, setMinutes, isSameDay } from "date-fns"
+import { parseISO, setHours, setMinutes, isSameDay, startOfDay } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
@@ -181,6 +181,7 @@ export function RecoveryTrackerApp() {
               externalHabitName={activeHabit.name}
               externalAccentColor={activeHabit.color}
               resetDates={activeHabitData.resetDates}
+              urgeDates={activeHabitData.urgeDates}
               onOpenHistory={() => setIsHistoryOpen(true)}
               onUpdateDate={(d) => {
                 const currentResets = activeHabit.resetDates.map(rd => parseISO(rd));

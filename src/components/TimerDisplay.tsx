@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
-import { setHours, setMinutes, differenceInDays } from "date-fns"
+import { setHours, setMinutes, differenceInDays, startOfDay, isAfter, isBefore, isSameDay, max } from "date-fns"
 import { CircularTimePicker } from "./CircularTimePicker"
 
 interface TimerDisplayProps {
@@ -27,6 +27,7 @@ interface TimerDisplayProps {
   externalHabitName: string
   externalAccentColor: string
   resetDates: Date[]
+  urgeDates: Date[]
   onOpenHistory: () => void
   onUpdateDate: (date: Date) => void
   onUpdateName: (name: string) => void
@@ -42,6 +43,7 @@ export function TimerDisplay({
   externalStartDate, 
   externalHabitName, 
   resetDates,
+  urgeDates,
   onOpenHistory,
   onUpdateDate,
   onUpdateName,
@@ -62,6 +64,35 @@ export function TimerDisplay({
   const [selectedMinute, setSelectedMinute] = React.useState(externalStartDate.getMinutes())
 
   const isAr = language === 'ar'
+  const today = startOfDay(new Date())
+
+  // منطق التلوين المتزامن مع السجل
+  const latestResetDate = React.useMemo(() => {
+    if (resetDates.length === 0) return startOfDay(externalStartDate);
+    const dates = resetDates.map(d => startOfDay(d));
+    return max(dates);
+  }, [resetDates, externalStartDate]);
+
+  const isRelapse = React.useCallback((date: Date) => {
+    const d = startOfDay(date);
+    return resetDates.some(rd => isSameDay(startOfDay(rd), d));
+  }, [resetDates]);
+
+  const isClean = React.useCallback((date: Date) => {
+    const d = startOfDay(date);
+    return isAfter(d, latestResetDate) && (isBefore(d, today) || isSameDay(d, today)) && !isRelapse(d);
+  }, [latestResetDate, today, isRelapse]);
+
+  const isHasUrge = React.useCallback((date: Date) => {
+    const d = startOfDay(date);
+    return urgeDates.some(ud => isSameDay(startOfDay(ud), d));
+  }, [urgeDates]);
+
+  const modifiers = React.useMemo(() => ({
+    relapse: (date: Date) => isRelapse(date),
+    clean: (date: Date) => isClean(date),
+    urge: (date: Date) => isHasUrge(date)
+  }), [isRelapse, isClean, isHasUrge]);
 
   const stats = React.useMemo(() => {
     if (resetDates.length < 2) return { highest: 0, previous: 0 }
@@ -246,7 +277,31 @@ export function TimerDisplay({
           <DialogHeader><DialogTitle className="text-center font-black">{isAr ? "تعديل الوقت" : "Edit Time"}</DialogTitle></DialogHeader>
           <div className="flex flex-col items-center min-h-[320px] justify-center">
             {setupStep === 'date' && (
-              <Calendar mode="single" selected={selectedDate} onSelect={(d) => { if(d) { setSelectedDate(d); setSetupStep('hour'); } }} disabled={{ after: new Date() }} className="rounded-3xl border p-2" />
+              <div className="w-full flex flex-col items-center">
+                <Calendar 
+                  mode="single" 
+                  selected={selectedDate} 
+                  onSelect={(d) => { if(d) { setSelectedDate(d); setSetupStep('hour'); } }} 
+                  disabled={{ after: new Date() }} 
+                  className="rounded-3xl border p-2" 
+                  modifiers={modifiers}
+                  modifiersClassNames={{
+                    relapse: "bg-red-500 text-white rounded-full font-black !opacity-100",
+                    clean: "bg-emerald-500 text-white rounded-full font-black !opacity-100",
+                    urge: "urge-dot"
+                  }}
+                />
+                <div className="flex gap-6 py-4 border-t w-full justify-center mt-2 opacity-60">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                    <span className="text-[10px] font-black uppercase">{isAr ? "يوم نظيف" : "Clean"}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500" />
+                    <span className="text-[10px] font-black uppercase">{isAr ? "انتكاسة" : "Relapse"}</span>
+                  </div>
+                </div>
+              </div>
             )}
             {setupStep === 'hour' && (
               <div className="w-full">
