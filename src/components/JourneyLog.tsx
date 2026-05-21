@@ -9,6 +9,12 @@ import { startOfDay, isAfter, isBefore, isSameDay, max, setHours, setMinutes } f
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { CircularTimePicker } from "./CircularTimePicker"
 
+const MODIFIERS_STYLES = {
+  relapse: "bg-red-500 text-white rounded-full font-black !opacity-100",
+  clean: "bg-emerald-500 text-white rounded-full font-black !opacity-100",
+  urge: "urge-dot"
+}
+
 interface JourneyLogProps {
   isOpen: boolean
   onClose: () => void
@@ -24,7 +30,7 @@ interface JourneyLogProps {
   language: 'ar' | 'en'
 }
 
-export function JourneyLog({ 
+export const JourneyLog = React.memo(({ 
   isOpen, 
   onClose, 
   startDate, 
@@ -35,7 +41,7 @@ export function JourneyLog({
   onUrge,
   onRemoveUrge,
   language
-}: JourneyLogProps) {
+}: JourneyLogProps) => {
   const [selectedDay, setSelectedDay] = React.useState<Date | undefined>(undefined)
   const [currentMonth, setCurrentMonth] = React.useState<Date>(new Date())
   const [showTimePicker, setShowTimePicker] = React.useState(false)
@@ -43,10 +49,13 @@ export function JourneyLog({
   const [tempHour, setTempHour] = React.useState(12)
   const [tempMinute, setTempMinute] = React.useState(0)
   
-  const isAr = language === 'ar'
-  const today = React.useMemo(() => startOfDay(new Date()), [])
+  const [today, setToday] = React.useState<Date | null>(null)
+  React.useEffect(() => {
+    if (isOpen) setToday(startOfDay(new Date()))
+  }, [isOpen])
 
-  // تحسين الأداء: استخدام دالة فحص Matcher بدلاً من المصفوفات الكبيرة
+  const isAr = language === 'ar'
+
   const latestResetDate = React.useMemo(() => {
     return resetDates.length === 0 ? startOfDay(startDate) : max(resetDates.map(d => startOfDay(d)));
   }, [resetDates, startDate]);
@@ -55,25 +64,21 @@ export function JourneyLog({
     relapse: resetDates,
     urge: urgeDates,
     clean: (date: Date) => {
+      if (!today) return false;
       const d = startOfDay(date);
       return isAfter(d, latestResetDate) && (isBefore(d, today) || isSameDay(d, today));
     }
   }), [resetDates, urgeDates, latestResetDate, today]);
 
-  const modifiersClassNames = React.useMemo(() => ({
-    relapse: "bg-red-500 text-white rounded-full font-black !opacity-100",
-    clean: "bg-emerald-500 text-white rounded-full font-black !opacity-100",
-    urge: "urge-dot"
-  }), []);
-
-  const getResetForDay = (date: Date) => {
+  const getResetForDay = React.useCallback((date: Date) => {
     return resetDates.find(rd => isSameDay(startOfDay(rd), startOfDay(date)))
-  }
-  const getUrgeForDay = (date: Date) => {
-    return urgeDates.find(ud => isSameDay(startOfDay(ud), startOfDay(date)))
-  }
+  }, [resetDates])
 
-  const handleAdjustTime = (e: React.MouseEvent) => {
+  const getUrgeForDay = React.useCallback((date: Date) => {
+    return urgeDates.find(ud => isSameDay(startOfDay(ud), startOfDay(date)))
+  }, [urgeDates])
+
+  const handleAdjustTime = React.useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     if (!selectedDay) return
     const existingReset = getResetForDay(selectedDay) || selectedDay
@@ -81,14 +86,14 @@ export function JourneyLog({
     setTempMinute(existingReset.getMinutes())
     setPickerMode('hours')
     setShowTimePicker(true)
-  }
+  }, [selectedDay, getResetForDay])
 
-  const saveAdjustedTime = () => {
+  const saveAdjustedTime = React.useCallback(() => {
     if (!selectedDay) return
     const newDateTime = setMinutes(setHours(startOfDay(selectedDay), tempHour), tempMinute)
     onReset(newDateTime)
     setShowTimePicker(false)
-  }
+  }, [selectedDay, tempHour, tempMinute, onReset])
 
   if (!isOpen) return null
 
@@ -110,9 +115,9 @@ export function JourneyLog({
             onSelect={setSelectedDay}
             month={currentMonth}
             onMonthChange={setCurrentMonth}
-            disabled={[{ after: today }]} 
+            disabled={today ? [{ after: today }] : undefined} 
             modifiers={modifiers}
-            modifiersClassNames={modifiersClassNames}
+            modifiersClassNames={MODIFIERS_STYLES}
           />
 
           <div className="flex gap-6 py-4 border-t w-full justify-center mt-2 opacity-60">
@@ -174,4 +179,5 @@ export function JourneyLog({
       </Dialog>
     </div>
   )
-}
+})
+JourneyLog.displayName = "JourneyLog"

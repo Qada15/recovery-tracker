@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
 import { saveToStorage, getFromStorage, STORAGE_KEYS, type Habit } from "@/lib/storage"
-import { parseISO, setHours, setMinutes, isSameDay, startOfDay } from "date-fns"
+import { parseISO, setHours, setMinutes, isSameDay } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
@@ -103,17 +103,21 @@ export function RecoveryTrackerApp() {
     };
   }, [activeHabit]);
 
-  if (!mounted) return null
-
-  const t = TRANSLATIONS[language]
-  const isAr = language === 'ar'
-
-  const updateHabits = (newHabits: Habit[]) => {
+  const updateHabits = React.useCallback((newHabits: Habit[]) => {
     setHabits(newHabits)
     saveToStorage(STORAGE_KEYS.HABITS, JSON.stringify(newHabits))
-  }
+  }, [])
 
-  const handleFinishSetup = () => {
+  const handleUpdateActiveHabit = React.useCallback((updates: Partial<Habit>) => {
+    if (!activeHabitId) return
+    setHabits(prev => {
+      const newHabits = prev.map(h => h.id === activeHabitId ? { ...h, ...updates } : h)
+      saveToStorage(STORAGE_KEYS.HABITS, JSON.stringify(newHabits))
+      return newHabits
+    })
+  }, [activeHabitId])
+
+  const handleFinishSetup = React.useCallback(() => {
     const finalDate = setMinutes(setHours(tempDate, tempHour), tempMinute)
     const newHabit: Habit = {
       id: Math.random().toString(36).substr(2, 9),
@@ -130,15 +134,9 @@ export function RecoveryTrackerApp() {
     setIsSetupOpen(false)
     setSetupStep('name')
     setTempName("")
-  }
+  }, [habits, tempName, tempDate, tempHour, tempMinute, updateHabits])
 
-  const handleUpdateActiveHabit = (updates: Partial<Habit>) => {
-    if (!activeHabitId) return
-    const newHabits = habits.map(h => h.id === activeHabitId ? { ...h, ...updates } : h)
-    updateHabits(newHabits)
-  }
-
-  const handleResetAction = () => {
+  const handleResetAction = React.useCallback(() => {
     if (!activeHabit) return
     const now = new Date()
     const currentResets = activeHabit.resetDates.map(d => parseISO(d))
@@ -147,14 +145,19 @@ export function RecoveryTrackerApp() {
       startDate: now.toISOString(),
       resetDates: newResets.map(d => d.toISOString())
     })
-  }
+  }, [activeHabit, handleUpdateActiveHabit])
 
-  const handleUrgeAction = () => {
+  const handleUrgeAction = React.useCallback(() => {
     if (!activeHabit) return
     const now = new Date()
     const newUrges = [...(activeHabit.urgeDates || []), now.toISOString()]
     handleUpdateActiveHabit({ urgeDates: newUrges })
-  }
+  }, [activeHabit, handleUpdateActiveHabit])
+
+  if (!mounted) return null
+
+  const t = TRANSLATIONS[language]
+  const isAr = language === 'ar'
 
   return (
     <div className="flex-1 flex flex-col items-center bg-slate-50 dark:bg-slate-950 relative h-full overflow-hidden select-none touch-none" dir={isAr ? 'rtl' : 'ltr'}>

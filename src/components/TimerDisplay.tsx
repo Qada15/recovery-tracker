@@ -22,7 +22,12 @@ import { Calendar } from "@/components/ui/calendar"
 import { setHours, setMinutes, differenceInDays, startOfDay, isAfter, isBefore, isSameDay, max } from "date-fns"
 import { CircularTimePicker } from "./CircularTimePicker"
 
-// مكوّن العداد معزول تماماً لمنع إعادة رندرة التقويم الثقيل كل ثانية
+const MODIFIERS_STYLES = {
+  relapse: "bg-red-500 text-white rounded-full font-black !opacity-100",
+  clean: "bg-emerald-500 text-white rounded-full font-black !opacity-100",
+  urge: "urge-dot"
+}
+
 const LiveClock = React.memo(({ startDate, language }: { startDate: Date; language: 'ar' | 'en' }) => {
   const [elapsed, setElapsed] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
   const isAr = language === 'ar'
@@ -117,13 +122,15 @@ export const TimerDisplay = React.memo(({
   const [selectedDate, setSelectedDate] = React.useState<Date>(externalStartDate)
   const [selectedHour, setSelectedHour] = React.useState(externalStartDate.getHours())
   const [selectedMinute, setSelectedMinute] = React.useState(externalStartDate.getMinutes())
+  
+  const [today, setToday] = React.useState<Date | null>(null)
+  React.useEffect(() => {
+    setToday(startOfDay(new Date()))
+  }, [])
 
   const isAr = language === 'ar'
-  const today = React.useMemo(() => startOfDay(new Date()), [])
-
   const currentDays = Math.floor(Math.max(0, new Date().getTime() - externalStartDate.getTime()) / (1000 * 60 * 60 * 24))
 
-  // تحسين جذري: بدلاً من مصفوفة آلاف الأيام، نستخدم دالة فحص (Matcher)
   const latestResetDate = React.useMemo(() => {
     return resetDates.length === 0 ? startOfDay(externalStartDate) : max(resetDates.map(d => startOfDay(d)));
   }, [resetDates, externalStartDate]);
@@ -132,16 +139,11 @@ export const TimerDisplay = React.memo(({
     relapse: resetDates,
     urge: urgeDates,
     clean: (date: Date) => {
+      if (!today) return false;
       const d = startOfDay(date);
       return isAfter(d, latestResetDate) && (isBefore(d, today) || isSameDay(d, today));
     }
   }), [resetDates, urgeDates, latestResetDate, today]);
-
-  const modifiersClassNames = React.useMemo(() => ({
-    relapse: "bg-red-500 text-white rounded-full font-black !opacity-100",
-    clean: "bg-emerald-500 text-white rounded-full font-black !opacity-100",
-    urge: "urge-dot"
-  }), []);
 
   const stats = React.useMemo(() => {
     if (resetDates.length < 2) return { highest: 0, previous: 0 }
@@ -156,18 +158,18 @@ export const TimerDisplay = React.memo(({
     return { highest: streaks.length > 0 ? Math.max(...streaks) : 0, previous: streaks.length > 0 ? streaks[streaks.length - 1] : 0 }
   }, [resetDates])
 
-  const handleUpdateName = () => {
+  const handleUpdateName = React.useCallback(() => {
     if (!tempHabitName.trim()) return
     onUpdateName(tempHabitName)
     setShowNameDialog(false)
-  }
+  }, [tempHabitName, onUpdateName])
 
-  const handleSaveFullDate = () => {
+  const handleSaveFullDate = React.useCallback(() => {
     const finalDate = setMinutes(setHours(selectedDate, selectedHour), selectedMinute)
     onUpdateDate(finalDate)
     setShowDateDialog(false)
     setSetupStep('date')
-  }
+  }, [selectedDate, selectedHour, selectedMinute, onUpdateDate])
 
   return (
     <div className="w-full max-w-[480px] flex flex-col items-center">
@@ -264,7 +266,7 @@ export const TimerDisplay = React.memo(({
           <div className="flex flex-col items-center min-h-[320px] justify-center">
             {setupStep === 'date' && (
               <div className="w-full flex flex-col items-center">
-                <Calendar mode="single" selected={selectedDate} onSelect={(d) => { if(d) { setSelectedDate(d); setSetupStep('hour'); } }} disabled={{ after: today }} className="rounded-3xl border p-2" modifiers={modifiers} modifiersClassNames={modifiersClassNames} />
+                <Calendar mode="single" selected={selectedDate} onSelect={(d) => { if(d) { setSelectedDate(d); setSetupStep('hour'); } }} disabled={today ? { after: today } : undefined} className="rounded-3xl border p-2" modifiers={modifiers} modifiersClassNames={MODIFIERS_STYLES} />
                 <div className="flex gap-6 py-4 border-t w-full justify-center mt-2 opacity-60">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-emerald-500" />
