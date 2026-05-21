@@ -2,10 +2,10 @@
 "use client"
 
 import * as React from "react"
-import { Flame, Trash2, Settings2, X, ChevronLeft, AlertCircle } from "lucide-react"
+import { Flame, Trash2, Settings2, ChevronLeft, AlertCircle, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
-import { format, isAfter, isBefore, isSameDay, startOfDay, setHours, setMinutes, max } from "date-fns"
+import { startOfDay, isAfter, isBefore, isSameDay, max, setHours, setMinutes } from "date-fns"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { CircularTimePicker } from "./CircularTimePicker"
 
@@ -30,7 +30,6 @@ export function JourneyLog({
   startDate, 
   resetDates, 
   urgeDates,
-  habitName, 
   accentColor,
   onReset,
   onRemoveReset,
@@ -48,12 +47,36 @@ export function JourneyLog({
   const isAr = language === 'ar'
   const today = startOfDay(new Date())
 
-  // تحديد تاريخ آخر انتكاسة أو بداية
+  // تحديد تاريخ آخر انتكاسة (أو البداية إذا لم توجد انتكاسة)
   const latestResetDate = React.useMemo(() => {
     if (resetDates.length === 0) return startOfDay(startDate);
     const dates = resetDates.map(d => startOfDay(d));
     return max(dates);
   }, [resetDates, startDate]);
+
+  // دوال التحقق الموثقة
+  const isRelapse = React.useCallback((date: Date) => {
+    const d = startOfDay(date);
+    return resetDates.some(rd => isSameDay(startOfDay(rd), d));
+  }, [resetDates]);
+
+  const isClean = React.useCallback((date: Date) => {
+    const d = startOfDay(date);
+    // منطق التلوين المطلوب: من تاريخ آخر انتكاسة وحتى اليوم
+    return isAfter(d, latestResetDate) && (isBefore(d, today) || isSameDay(d, today)) && !isRelapse(d);
+  }, [latestResetDate, today, isRelapse]);
+
+  const isHasUrge = React.useCallback((date: Date) => {
+    const d = startOfDay(date);
+    return urgeDates.some(ud => isSameDay(startOfDay(ud), d));
+  }, [urgeDates]);
+
+  // محددات التقويم (تثبيت المرجع لمنع التجمد)
+  const modifiers = React.useMemo(() => ({
+    relapse: (date: Date) => isRelapse(date),
+    clean: (date: Date) => isClean(date),
+    urge: (date: Date) => isHasUrge(date)
+  }), [isRelapse, isClean, isHasUrge]);
 
   const getResetForDay = (date: Date) => {
     return resetDates.find(rd => isSameDay(startOfDay(rd), startOfDay(date)))
@@ -61,22 +84,6 @@ export function JourneyLog({
   const getUrgeForDay = (date: Date) => {
     return urgeDates.find(ud => isSameDay(startOfDay(ud), startOfDay(date)))
   }
-
-  // منطق التلوين المطلوب:
-  // 1. الأيام الحمراء: أي يوم موجود في سجل الانتكاسات
-  const isRelapse = (date: Date) => {
-    const d = startOfDay(date);
-    return resetDates.some(rd => isSameDay(startOfDay(rd), d));
-  }
-
-  // 2. الأيام الخضراء: من بعد آخر انتكاسة وحتى اليوم
-  const isClean = (date: Date) => {
-    const d = startOfDay(date);
-    return isAfter(d, latestResetDate) && (isBefore(d, today) || isSameDay(d, today)) && !isRelapse(d);
-  }
-
-  // 3. الرغبات: تظهر كنقطة تحت اليوم (فقط للأيام الخضراء أو اليوم الحالي)
-  const isHasUrge = (date: Date) => !!getUrgeForDay(date)
 
   const handleAdjustTime = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -108,16 +115,15 @@ export function JourneyLog({
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-center p-4">
-        {/* التقويم في المنتصف */}
         <div className="w-full max-w-[340px] bg-white dark:bg-slate-900 rounded-[2.5rem] border shadow-2xl p-2 flex flex-col items-center">
           <Calendar 
             mode="single" 
-            selected={undefined} // نلغي التحديد الافتراضي الأزرق
+            selected={undefined}
             onSelect={setSelectedDay}
             month={currentMonth}
             onMonthChange={setCurrentMonth}
             disabled={[{ after: today }]} 
-            modifiers={{ relapse: isRelapse, clean: isClean, urge: isHasUrge }}
+            modifiers={modifiers}
             modifiersClassNames={{
               relapse: "bg-red-500 text-white rounded-full font-black !opacity-100",
               clean: "bg-emerald-500 text-white rounded-full font-black !opacity-100",
@@ -125,7 +131,6 @@ export function JourneyLog({
             }}
           />
 
-          {/* دليل الألوان البسيط */}
           <div className="flex gap-6 py-4 border-t w-full justify-center mt-2 opacity-60">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-emerald-500" />
@@ -138,7 +143,6 @@ export function JourneyLog({
           </div>
         </div>
 
-        {/* أزرار التحكم في اليوم المحدد */}
         <div className="mt-8 flex gap-3 w-full max-w-[320px] shrink-0 h-14">
           {selectedDay && (
             getResetForDay(selectedDay) ? (

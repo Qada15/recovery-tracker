@@ -1,7 +1,8 @@
+
 "use client"
 
 import * as React from "react"
-import { History, Flame, Trophy, RefreshCw, MoreVertical, Settings2, Calendar as CalendarIcon, Sparkles, Trash2, RotateCcw, AlertCircle } from "lucide-react"
+import { History, Flame, Trophy, RefreshCw, MoreVertical, Settings2, Calendar as CalendarIcon, Sparkles, Trash2, RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -18,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
-import { isAfter, startOfDay, setHours, setMinutes, differenceInDays } from "date-fns"
+import { setHours, setMinutes, differenceInDays } from "date-fns"
 import { CircularTimePicker } from "./CircularTimePicker"
 
 interface TimerDisplayProps {
@@ -62,7 +63,6 @@ export function TimerDisplay({
 
   const isAr = language === 'ar'
 
-  // خوارزمية حساب الأرقام القياسية (Streaks Algorithm)
   const stats = React.useMemo(() => {
     if (resetDates.length < 2) return { highest: 0, previous: 0 }
     const streaks: number[] = []
@@ -111,7 +111,6 @@ export function TimerDisplay({
 
   return (
     <div className="w-full max-w-[480px] flex flex-col items-center">
-      {/* هالات الإحصائيات الملونة */}
       <div className="w-full flex justify-between gap-3 mb-4">
         <div className="flex-1 bg-amber-500/10 border-2 border-amber-500/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
           <Trophy className="h-4 w-4 text-amber-500 mb-1" />
@@ -193,7 +192,6 @@ export function TimerDisplay({
           </div>
         </div>
 
-        {/* شبكة الأزرار: زر الرغبة يظهر فقط بعد 24 ساعة */}
         <div className="w-full grid grid-cols-5 gap-3 mb-3">
           {elapsed.days >= 1 ? (
             <>

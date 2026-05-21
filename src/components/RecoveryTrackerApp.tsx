@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -91,11 +92,22 @@ export function RecoveryTrackerApp() {
     }
   }, [])
 
+  const activeHabit = React.useMemo(() => habits.find(h => h.id === activeHabitId), [habits, activeHabitId]);
+
+  // تثبيت مراجع التواريخ لمنع التجمد
+  const activeHabitData = React.useMemo(() => {
+    if (!activeHabit) return null;
+    return {
+      startDate: parseISO(activeHabit.startDate),
+      resetDates: activeHabit.resetDates.map(d => parseISO(d)),
+      urgeDates: (activeHabit.urgeDates || []).map(d => parseISO(d))
+    };
+  }, [activeHabit]);
+
   if (!mounted) return null
 
   const t = TRANSLATIONS[language]
   const isAr = language === 'ar'
-  const activeHabit = habits.find(h => h.id === activeHabitId)
 
   const updateHabits = (newHabits: Habit[]) => {
     setHabits(newHabits)
@@ -158,7 +170,7 @@ export function RecoveryTrackerApp() {
       </header>
 
       <main className="flex-1 w-full flex flex-col items-center p-6 pt-2 overflow-hidden">
-        {activeHabit ? (
+        {activeHabit && activeHabitData ? (
           <div className="w-full flex flex-col items-center space-y-6 h-full">
             <div className="text-center space-y-1">
               <h2 className="text-3xl font-black text-slate-800 dark:text-white tracking-tighter">{t.subtitle}</h2>
@@ -166,14 +178,14 @@ export function RecoveryTrackerApp() {
             </div>
 
             <TimerDisplay 
-              externalStartDate={parseISO(activeHabit.startDate)} 
+              externalStartDate={activeHabitData.startDate} 
               externalHabitName={activeHabit.name}
               externalAccentColor={activeHabit.color}
-              resetDates={activeHabit.resetDates.map(d => parseISO(d))}
+              resetDates={activeHabitData.resetDates}
               onOpenHistory={() => setIsHistoryOpen(true)}
               onUpdateDate={(d) => {
                 const currentResets = activeHabit.resetDates.map(rd => parseISO(rd));
-                const newResets = [...currentResets.filter(rd => rd.getTime() !== parseISO(activeHabit.startDate).getTime()), d].sort((a, b) => a.getTime() - b.getTime());
+                const newResets = [...currentResets.filter(rd => rd.getTime() !== activeHabitData.startDate.getTime()), d].sort((a, b) => a.getTime() - b.getTime());
                 handleUpdateActiveHabit({ startDate: d.toISOString(), resetDates: newResets.map(rd => rd.toISOString()) });
               }}
               onUpdateName={(name) => handleUpdateActiveHabit({ name })}
@@ -217,13 +229,13 @@ export function RecoveryTrackerApp() {
         )}
       </main>
 
-      {activeHabit && (
+      {activeHabit && activeHabitData && (
         <JourneyLog 
           isOpen={isHistoryOpen} 
           onClose={() => setIsHistoryOpen(false)} 
-          startDate={parseISO(activeHabit.startDate)}
-          resetDates={activeHabit.resetDates.map(d => parseISO(d))}
-          urgeDates={(activeHabit.urgeDates || []).map(d => parseISO(d))}
+          startDate={activeHabitData.startDate}
+          resetDates={activeHabitData.resetDates}
+          urgeDates={activeHabitData.urgeDates}
           habitName={activeHabit.name}
           accentColor={activeHabit.color}
           onReset={(date) => {
