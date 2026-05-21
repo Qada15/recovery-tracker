@@ -64,9 +64,10 @@ export function TimerDisplay({
   const [selectedMinute, setSelectedMinute] = React.useState(externalStartDate.getMinutes())
 
   const isAr = language === 'ar'
-  const today = startOfDay(new Date())
+  
+  // تثبيت تاريخ اليوم لمنع إعادة الرندرة المستمرة
+  const today = React.useMemo(() => startOfDay(new Date()), [])
 
-  // منطق التلوين المتزامن مع السجل
   const latestResetDate = React.useMemo(() => {
     if (resetDates.length === 0) return startOfDay(externalStartDate);
     const dates = resetDates.map(d => startOfDay(d));
@@ -93,6 +94,12 @@ export function TimerDisplay({
     clean: (date: Date) => isClean(date),
     urge: (date: Date) => isHasUrge(date)
   }), [isRelapse, isClean, isHasUrge]);
+
+  const modifiersClassNames = React.useMemo(() => ({
+    relapse: "bg-red-500 text-white rounded-full font-black !opacity-100",
+    clean: "bg-emerald-500 text-white rounded-full font-black !opacity-100",
+    urge: "urge-dot"
+  }), []);
 
   const stats = React.useMemo(() => {
     if (resetDates.length < 2) return { highest: 0, previous: 0 }
@@ -282,14 +289,10 @@ export function TimerDisplay({
                   mode="single" 
                   selected={selectedDate} 
                   onSelect={(d) => { if(d) { setSelectedDate(d); setSetupStep('hour'); } }} 
-                  disabled={{ after: new Date() }} 
+                  disabled={{ after: today }} 
                   className="rounded-3xl border p-2" 
                   modifiers={modifiers}
-                  modifiersClassNames={{
-                    relapse: "bg-red-500 text-white rounded-full font-black !opacity-100",
-                    clean: "bg-emerald-500 text-white rounded-full font-black !opacity-100",
-                    urge: "urge-dot"
-                  }}
+                  modifiersClassNames={modifiersClassNames}
                 />
                 <div className="flex gap-6 py-4 border-t w-full justify-center mt-2 opacity-60">
                   <div className="flex items-center gap-2">

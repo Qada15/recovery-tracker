@@ -30,7 +30,6 @@ export function JourneyLog({
   startDate, 
   resetDates, 
   urgeDates,
-  accentColor,
   onReset,
   onRemoveReset,
   onUrge,
@@ -45,16 +44,16 @@ export function JourneyLog({
   const [tempMinute, setTempMinute] = React.useState(0)
   
   const isAr = language === 'ar'
-  const today = startOfDay(new Date())
+  
+  // تثبيت تاريخ اليوم لمنع إعادة الرندرة المستمرة
+  const today = React.useMemo(() => startOfDay(new Date()), [])
 
-  // تحديد تاريخ آخر انتكاسة (أو البداية إذا لم توجد انتكاسة)
   const latestResetDate = React.useMemo(() => {
     if (resetDates.length === 0) return startOfDay(startDate);
     const dates = resetDates.map(d => startOfDay(d));
     return max(dates);
   }, [resetDates, startDate]);
 
-  // دوال التحقق الموثقة
   const isRelapse = React.useCallback((date: Date) => {
     const d = startOfDay(date);
     return resetDates.some(rd => isSameDay(startOfDay(rd), d));
@@ -62,7 +61,6 @@ export function JourneyLog({
 
   const isClean = React.useCallback((date: Date) => {
     const d = startOfDay(date);
-    // منطق التلوين المطلوب: من تاريخ آخر انتكاسة وحتى اليوم
     return isAfter(d, latestResetDate) && (isBefore(d, today) || isSameDay(d, today)) && !isRelapse(d);
   }, [latestResetDate, today, isRelapse]);
 
@@ -71,12 +69,17 @@ export function JourneyLog({
     return urgeDates.some(ud => isSameDay(startOfDay(ud), d));
   }, [urgeDates]);
 
-  // محددات التقويم (تثبيت المرجع لمنع التجمد)
   const modifiers = React.useMemo(() => ({
     relapse: (date: Date) => isRelapse(date),
     clean: (date: Date) => isClean(date),
     urge: (date: Date) => isHasUrge(date)
   }), [isRelapse, isClean, isHasUrge]);
+
+  const modifiersClassNames = React.useMemo(() => ({
+    relapse: "bg-red-500 text-white rounded-full font-black !opacity-100",
+    clean: "bg-emerald-500 text-white rounded-full font-black !opacity-100",
+    urge: "urge-dot"
+  }), []);
 
   const getResetForDay = (date: Date) => {
     return resetDates.find(rd => isSameDay(startOfDay(rd), startOfDay(date)))
@@ -114,21 +117,17 @@ export function JourneyLog({
         <div className="w-10" />
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-center p-4">
+      <main className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden">
         <div className="w-full max-w-[340px] bg-white dark:bg-slate-900 rounded-[2.5rem] border shadow-2xl p-2 flex flex-col items-center">
           <Calendar 
             mode="single" 
-            selected={undefined}
+            selected={selectedDay}
             onSelect={setSelectedDay}
             month={currentMonth}
             onMonthChange={setCurrentMonth}
             disabled={[{ after: today }]} 
             modifiers={modifiers}
-            modifiersClassNames={{
-              relapse: "bg-red-500 text-white rounded-full font-black !opacity-100",
-              clean: "bg-emerald-500 text-white rounded-full font-black !opacity-100",
-              urge: "urge-dot"
-            }}
+            modifiersClassNames={modifiersClassNames}
           />
 
           <div className="flex gap-6 py-4 border-t w-full justify-center mt-2 opacity-60">
