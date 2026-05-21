@@ -1,10 +1,11 @@
+
 "use client"
 
 import * as React from "react"
-import { Calendar as CalendarIcon, Flame, Trash2, Settings2, X, Check, ChevronLeft, Award, AlertCircle } from "lucide-react"
+import { Flame, Trash2, Settings2, X, ChevronLeft, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
-import { format, isAfter, isBefore, isSameDay, startOfDay, setHours, setMinutes, eachDayOfInterval, startOfMonth, endOfMonth } from "date-fns"
+import { format, isAfter, isBefore, isSameDay, startOfDay, setHours, setMinutes, max } from "date-fns"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { CircularTimePicker } from "./CircularTimePicker"
 
@@ -46,34 +47,13 @@ export function JourneyLog({
   
   const isAr = language === 'ar'
   const today = startOfDay(new Date())
-  const start = startOfDay(startDate)
 
-  const monthStats = React.useMemo(() => {
-    const monthStart = startOfMonth(currentMonth)
-    const monthEnd = endOfMonth(currentMonth)
-    const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd })
-    
-    let clean = 0
-    let relapses = 0
-    let urges = 0
-
-    daysInMonth.forEach(day => {
-      const d = startOfDay(day)
-      const isRelapseDay = resetDates.some(rd => isSameDay(startOfDay(rd), d)) || isSameDay(d, start)
-      
-      if (isRelapseDay && (isBefore(d, today) || isSameDay(d, today))) {
-        relapses++
-      }
-      if (urgeDates.some(ud => isSameDay(startOfDay(ud), d))) {
-        urges++
-      }
-      const isWithinJourney = (isAfter(d, start) || isSameDay(d, start)) && (isBefore(d, today) || isSameDay(d, today))
-      if (isWithinJourney && !isRelapseDay) {
-        clean++
-      }
-    })
-    return { clean, relapses, urges }
-  }, [currentMonth, resetDates, urgeDates, start, today])
+  // تحديد تاريخ آخر انتكاسة أو بداية
+  const latestResetDate = React.useMemo(() => {
+    if (resetDates.length === 0) return startOfDay(startDate);
+    const dates = resetDates.map(d => startOfDay(d));
+    return max(dates);
+  }, [resetDates, startDate]);
 
   const getResetForDay = (date: Date) => {
     return resetDates.find(rd => isSameDay(startOfDay(rd), startOfDay(date)))
@@ -81,16 +61,22 @@ export function JourneyLog({
   const getUrgeForDay = (date: Date) => {
     return urgeDates.find(ud => isSameDay(startOfDay(ud), startOfDay(date)))
   }
-  const isRelapse = (date: Date) => !!getResetForDay(date) || isSameDay(startOfDay(date), start)
-  const isHasUrge = (date: Date) => !!getUrgeForDay(date)
-  const isClean = (date: Date) => {
-    const d = startOfDay(date)
-    return isAfter(d, start) && (isBefore(d, today) || isSameDay(d, today)) && !isRelapse(d)
+
+  // منطق التلوين المطلوب:
+  // 1. الأيام الحمراء: أي يوم موجود في سجل الانتكاسات
+  const isRelapse = (date: Date) => {
+    const d = startOfDay(date);
+    return resetDates.some(rd => isSameDay(startOfDay(rd), d));
   }
 
-  const handleSelect = (date: Date | undefined) => {
-    setSelectedDay(date)
+  // 2. الأيام الخضراء: من بعد آخر انتكاسة وحتى اليوم
+  const isClean = (date: Date) => {
+    const d = startOfDay(date);
+    return isAfter(d, latestResetDate) && (isBefore(d, today) || isSameDay(d, today)) && !isRelapse(d);
   }
+
+  // 3. الرغبات: تظهر كنقطة تحت اليوم (فقط للأيام الخضراء أو اليوم الحالي)
+  const isHasUrge = (date: Date) => !!getUrgeForDay(date)
 
   const handleAdjustTime = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -113,7 +99,7 @@ export function JourneyLog({
 
   return (
     <div className="fixed inset-0 z-[100] bg-background flex flex-col animate-in fade-in slide-in-from-bottom-5 duration-300 overflow-hidden" dir={isAr ? 'rtl' : 'ltr'}>
-      <header className="w-full h-14 border-b flex items-center justify-between px-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shrink-0">
+      <header className="w-full h-14 border-b flex items-center justify-between px-4 bg-white dark:bg-slate-900 shrink-0">
         <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full">
           <ChevronLeft className={`h-6 w-6 ${isAr ? 'rotate-180' : ''}`} />
         </Button>
@@ -121,43 +107,39 @@ export function JourneyLog({
         <div className="w-10" />
       </header>
 
-      <main className="flex-1 flex flex-col items-center p-4 overflow-y-auto custom-scrollbar">
-        <div className="w-full max-w-[340px] grid grid-cols-3 gap-2 mb-4 shrink-0">
-          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
-            <Award className="h-4 w-4 text-emerald-500 mb-1" />
-            <span className="text-lg font-black text-emerald-600">{monthStats.clean}</span>
-            <span className="text-[8px] font-black uppercase opacity-60">{isAr ? "أيام نظيفة" : "Clean Days"}</span>
-          </div>
-          <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
-            <AlertCircle className="h-4 w-4 text-red-500 mb-1" />
-            <span className="text-lg font-black text-red-600">{monthStats.relapses}</span>
-            <span className="text-[8px] font-black uppercase opacity-60">{isAr ? "انتكاسات" : "Relapses"}</span>
-          </div>
-          <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
-            <Flame className="h-4 w-4 text-orange-500 mb-1" />
-            <span className="text-lg font-black text-orange-600">{monthStats.urges}</span>
-            <span className="text-[8px] font-black uppercase opacity-60">{isAr ? "رغبات" : "Urges"}</span>
-          </div>
-        </div>
-
-        <div className="w-full max-w-[340px] bg-white dark:bg-slate-900 rounded-[2rem] border shadow-2xl p-2 flex items-center justify-center">
+      <main className="flex-1 flex flex-col items-center justify-center p-4">
+        {/* التقويم في المنتصف */}
+        <div className="w-full max-w-[340px] bg-white dark:bg-slate-900 rounded-[2.5rem] border shadow-2xl p-2 flex flex-col items-center">
           <Calendar 
             mode="single" 
-            selected={selectedDay}
-            onSelect={handleSelect}
+            selected={undefined} // نلغي التحديد الافتراضي الأزرق
+            onSelect={setSelectedDay}
             month={currentMonth}
             onMonthChange={setCurrentMonth}
             disabled={[{ after: today }]} 
             modifiers={{ relapse: isRelapse, clean: isClean, urge: isHasUrge }}
             modifiersClassNames={{
-              relapse: "bg-red-500 text-white rounded-full font-black scale-110",
-              clean: "bg-emerald-500 text-white rounded-full font-black opacity-90",
+              relapse: "bg-red-500 text-white rounded-full font-black !opacity-100",
+              clean: "bg-emerald-500 text-white rounded-full font-black !opacity-100",
               urge: "urge-dot"
             }}
           />
+
+          {/* دليل الألوان البسيط */}
+          <div className="flex gap-6 py-4 border-t w-full justify-center mt-2 opacity-60">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-emerald-500" />
+              <span className="text-[10px] font-black uppercase">{isAr ? "يوم نظيف" : "Clean"}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-red-500" />
+              <span className="text-[10px] font-black uppercase">{isAr ? "انتكاسة" : "Relapse"}</span>
+            </div>
+          </div>
         </div>
 
-        <div className="mt-6 flex gap-3 w-full max-w-[320px] shrink-0 h-14 pb-10">
+        {/* أزرار التحكم في اليوم المحدد */}
+        <div className="mt-8 flex gap-3 w-full max-w-[320px] shrink-0 h-14">
           {selectedDay && (
             getResetForDay(selectedDay) ? (
               <>
@@ -179,7 +161,7 @@ export function JourneyLog({
                     <Flame className="ml-2 h-4 w-4" /> {isAr ? "رغبة" : "Urge"}
                   </Button>
                 )}
-                <Button onClick={() => onReset(selectedDay)} variant="destructive" className="flex-1 h-12 rounded-2xl font-black">
+                <Button onClick={() => onReset(selectedDay)} variant="destructive" className="flex-1 h-12 rounded-2xl font-black bg-red-500">
                   <AlertCircle className="ml-2 h-4 w-4" /> {isAr ? "انتكاسة" : "Relapse"}
                 </Button>
               </>
