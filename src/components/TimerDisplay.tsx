@@ -117,7 +117,6 @@ export const TimerDisplay = React.memo(({
   const [showNameDialog, setShowNameDialog] = React.useState(false)
   const [showDateDialog, setShowDateDialog] = React.useState(false)
   const [tempHabitName, setTempHabitName] = React.useState(externalHabitName)
-  
   const [setupStep, setSetupStep] = React.useState<'date' | 'hour' | 'minute'>('date')
   const [selectedDate, setSelectedDate] = React.useState<Date>(externalStartDate)
   const [selectedHour, setSelectedHour] = React.useState(externalStartDate.getHours())
@@ -135,28 +134,21 @@ export const TimerDisplay = React.memo(({
     return resetDates.length === 0 ? startOfDay(externalStartDate) : max(resetDates.map(d => startOfDay(d)));
   }, [resetDates, externalStartDate]);
 
-  const modifiers = React.useMemo(() => ({
-    relapse: resetDates,
-    urge: urgeDates,
-    clean: (date: Date) => {
-      if (!today) return false;
-      const d = startOfDay(date);
-      return isAfter(d, latestResetDate) && (isBefore(d, today) || isSameDay(d, today));
-    }
-  }), [resetDates, urgeDates, latestResetDate, today]);
-
   const stats = React.useMemo(() => {
     if (resetDates.length < 2) return { highest: 0, previous: 0 }
     const streaks: number[] = []
     const sortedResets = [...resetDates].sort((a, b) => a.getTime() - b.getTime())
-    
     for (let i = 0; i < sortedResets.length - 1; i++) {
-      const diff = differenceInDays(sortedResets[i + 1], sortedResets[i])
-      streaks.push(diff)
+      streaks.push(differenceInDays(sortedResets[i + 1], sortedResets[i]))
     }
-    
     return { highest: streaks.length > 0 ? Math.max(...streaks) : 0, previous: streaks.length > 0 ? streaks[streaks.length - 1] : 0 }
   }, [resetDates])
+
+  const isCleanMatcher = React.useCallback((date: Date) => {
+    if (!today) return false;
+    const d = startOfDay(date);
+    return isAfter(d, latestResetDate) && (isBefore(d, today) || isSameDay(d, today));
+  }, [today, latestResetDate]);
 
   const handleUpdateName = React.useCallback(() => {
     if (!tempHabitName.trim()) return
@@ -206,21 +198,13 @@ export const TimerDisplay = React.memo(({
         <div className="w-full flex justify-between gap-3 mb-8">
           <div className="flex-1 bg-amber-500/5 border border-amber-500/10 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
             <Trophy className="h-4 w-4 text-amber-500 mb-1" />
-            <span className="text-xl font-black text-amber-600 dark:text-amber-400 tabular-nums leading-none">
-              {stats.highest}
-            </span>
-            <span className="text-[8px] font-black uppercase tracking-tighter opacity-40 mt-1">
-              {isAr ? "أعلى رقم قياسي" : "Highest Record"}
-            </span>
+            <span className="text-xl font-black text-amber-600 dark:text-amber-400 tabular-nums leading-none">{stats.highest}</span>
+            <span className="text-[8px] font-black uppercase tracking-tighter opacity-40 mt-1">{isAr ? "أعلى رقم قياسي" : "Highest Record"}</span>
           </div>
           <div className="flex-1 bg-slate-500/5 border border-slate-500/10 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
             <History className="h-4 w-4 text-slate-500 mb-1" />
-            <span className="text-xl font-black text-slate-600 dark:text-slate-400 tabular-nums leading-none">
-              {stats.previous}
-            </span>
-            <span className="text-[8px] font-black uppercase tracking-tighter opacity-40 mt-1">
-              {isAr ? "الرقم السابق" : "Previous Record"}
-            </span>
+            <span className="text-xl font-black text-slate-600 dark:text-slate-400 tabular-nums leading-none">{stats.previous}</span>
+            <span className="text-[8px] font-black uppercase tracking-tighter opacity-40 mt-1">{isAr ? "الرقم السابق" : "Previous Record"}</span>
           </div>
         </div>
 
@@ -230,25 +214,21 @@ export const TimerDisplay = React.memo(({
           {currentDays >= 1 ? (
             <>
               <button onClick={onUrge} className="col-span-3 h-14 rounded-2xl border-2 border-orange-100 text-orange-500 font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
-                <Flame className="h-5 w-5" />
-                {isAr ? "أشعر برغبة" : "Feel Urge"}
+                <Flame className="h-5 w-5" /> {isAr ? "أشعر برغبة" : "Feel Urge"}
               </button>
               <button onClick={onReset} className="col-span-2 h-14 rounded-2xl border-2 border-red-100 text-red-500 font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
-                <RefreshCw className="h-5 w-5" />
-                {isAr ? "تصفير" : "Reset"}
+                <RefreshCw className="h-5 w-5" /> {isAr ? "تصفير" : "Reset"}
               </button>
             </>
           ) : (
             <button onClick={onReset} className="col-span-5 h-14 rounded-2xl border-2 border-red-100 text-red-500 font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
-              <RefreshCw className="h-5 w-5" />
-              {isAr ? "تصفير" : "Reset"}
+              <RefreshCw className="h-5 w-5" /> {isAr ? "تصفير" : "Reset"}
             </button>
           )}
         </div>
 
         <Button onClick={onOpenHistory} className="w-full h-16 rounded-[1.5rem] bg-slate-900 dark:bg-slate-800 text-white font-black text-lg flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all">
-          <History className="h-6 w-6" />
-          {isAr ? "سجل الرحلة" : "Journey Log"}
+          <History className="h-6 w-6" /> {isAr ? "سجل الرحلة" : "Journey Log"}
         </Button>
       </div>
 
@@ -266,7 +246,7 @@ export const TimerDisplay = React.memo(({
           <div className="flex flex-col items-center min-h-[320px] justify-center">
             {setupStep === 'date' && (
               <div className="w-full flex flex-col items-center">
-                <Calendar mode="single" selected={selectedDate} onSelect={(d) => { if(d) { setSelectedDate(d); setSetupStep('hour'); } }} disabled={today ? { after: today } : undefined} className="rounded-3xl border p-2" modifiers={modifiers} modifiersClassNames={MODIFIERS_STYLES} />
+                <Calendar mode="single" selected={selectedDate} onSelect={(d) => { if(d) { setSelectedDate(d); setSetupStep('hour'); } }} disabled={today ? { after: today } : undefined} className="rounded-3xl border p-2" modifiers={{ relapse: resetDates, urge: urgeDates, clean: isCleanMatcher }} modifiersClassNames={MODIFIERS_STYLES} />
                 <div className="flex gap-6 py-4 border-t w-full justify-center mt-2 opacity-60">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-emerald-500" />

@@ -60,15 +60,11 @@ export const JourneyLog = React.memo(({
     return resetDates.length === 0 ? startOfDay(startDate) : max(resetDates.map(d => startOfDay(d)));
   }, [resetDates, startDate]);
 
-  const modifiers = React.useMemo(() => ({
-    relapse: resetDates,
-    urge: urgeDates,
-    clean: (date: Date) => {
-      if (!today) return false;
-      const d = startOfDay(date);
-      return isAfter(d, latestResetDate) && (isBefore(d, today) || isSameDay(d, today));
-    }
-  }), [resetDates, urgeDates, latestResetDate, today]);
+  const isCleanMatcher = React.useCallback((date: Date) => {
+    if (!today) return false;
+    const d = startOfDay(date);
+    return isAfter(d, latestResetDate) && (isBefore(d, today) || isSameDay(d, today));
+  }, [today, latestResetDate]);
 
   const getResetForDay = React.useCallback((date: Date) => {
     return resetDates.find(rd => isSameDay(startOfDay(rd), startOfDay(date)))
@@ -116,7 +112,7 @@ export const JourneyLog = React.memo(({
             month={currentMonth}
             onMonthChange={setCurrentMonth}
             disabled={today ? [{ after: today }] : undefined} 
-            modifiers={modifiers}
+            modifiers={{ relapse: resetDates, urge: urgeDates, clean: isCleanMatcher }}
             modifiersClassNames={MODIFIERS_STYLES}
           />
 
