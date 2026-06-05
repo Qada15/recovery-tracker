@@ -58,6 +58,7 @@ const TRANSLATIONS = {
 
 export function RecoveryTrackerApp() {
   const { toast } = useToast()
+  const [mounted, setMounted] = React.useState(false)
   const [isHistoryOpen, setIsHistoryOpen] = React.useState(false)
   const [isSetupOpen, setIsSetupOpen] = React.useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
@@ -72,9 +73,13 @@ export function RecoveryTrackerApp() {
   const [tempDate, setTempDate] = React.useState<Date | null>(null)
   const [tempHour, setTempHour] = React.useState(12)
   const [tempMinute, setTempMinute] = React.useState(0)
+  
+  const [today, setToday] = React.useState<Date | null>(null)
 
   React.useEffect(() => {
+    setMounted(true)
     const now = new Date()
+    setToday(startOfDay(now))
     setTempDate(now)
     setTempHour(now.getHours())
     setTempMinute(now.getMinutes())
@@ -160,6 +165,8 @@ export function RecoveryTrackerApp() {
 
   const t = TRANSLATIONS[language]
   const isAr = language === 'ar'
+
+  if (!mounted) return null;
 
   return (
     <div className="flex-1 flex flex-col items-center bg-slate-50 dark:bg-slate-950 relative h-full overflow-hidden select-none touch-none" dir={isAr ? 'rtl' : 'ltr'}>
@@ -284,7 +291,13 @@ export function RecoveryTrackerApp() {
               </div>
             )}
             {setupStep === 'date' && (
-              <Calendar mode="single" selected={tempDate || undefined} onSelect={(date) => { if(date) { setTempDate(date); setSetupStep('hour'); } }} className="rounded-3xl border p-4" />
+              <Calendar 
+                mode="single" 
+                selected={tempDate || undefined} 
+                onSelect={(date) => { if(date) { setTempDate(date); setSetupStep('hour'); } }} 
+                className="rounded-3xl border p-4" 
+                disabled={today ? { after: today } : undefined}
+              />
             )}
             {setupStep === 'hour' && <CircularTimePicker mode="hours" value={tempHour} onChange={setTempHour} onComplete={() => setSetupStep('minute')} />}
             {setupStep === 'minute' && <CircularTimePicker mode="minutes" value={tempMinute} onChange={setTempMinute} onComplete={handleFinishSetup} />}
