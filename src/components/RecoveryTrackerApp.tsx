@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { Settings, User, Plus, Sparkles, Globe, Trash2, Info } from "lucide-react"
+import { Settings, User, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
 import { CircularTimePicker } from "./CircularTimePicker"
+import { Switch } from "@/components/ui/switch"
 import {
   Dialog,
   DialogContent,
@@ -44,6 +45,8 @@ const TRANSLATIONS = {
     historyCleared: "تم تصفير السجل",
     settings: "الإعدادات",
     language: "اللغة",
+    theme: "المظهر",
+    darkMode: "الوضع المظلم",
     factoryReset: "مسح كافة البيانات",
     resetWarning: "سيؤدي هذا إلى حذف جميع العدادات والبيانات المسجلة نهائياً ولا يمكن التراجع عن هذه الخطوة.",
     about: "عن التطبيق",
@@ -62,6 +65,8 @@ const TRANSLATIONS = {
     historyCleared: "History Cleared",
     settings: "Settings",
     language: "Language",
+    theme: "Theme",
+    darkMode: "Dark Mode",
     factoryReset: "Factory Reset",
     resetWarning: "This will permanently delete all habits and records. This action cannot be undone.",
     about: "About",
@@ -81,6 +86,7 @@ export function RecoveryTrackerApp() {
   const [setupStep, setSetupStep] = React.useState<'name' | 'date' | 'hour' | 'minute'>('name')
 
   const [language, setLanguage] = React.useState<'ar' | 'en'>('ar')
+  const [theme, setTheme] = React.useState<'light' | 'dark'>('light')
   const [habits, setHabits] = React.useState<Habit[]>([])
   const [activeHabitId, setActiveHabitId] = React.useState<string | null>(null)
 
@@ -95,15 +101,20 @@ export function RecoveryTrackerApp() {
     setMounted(true)
     const now = new Date()
     setToday(startOfDay(now))
-    setTempDate(now)
-    setTempHour(now.getHours())
-    setTempMinute(now.getMinutes())
     
     const savedHabits = getFromStorage(STORAGE_KEYS.HABITS)
     const savedActiveId = getFromStorage(STORAGE_KEYS.ACTIVE_HABIT_ID)
     const savedLang = getFromStorage(STORAGE_KEYS.LANGUAGE) as 'ar' | 'en'
+    const savedTheme = getFromStorage(STORAGE_KEYS.THEME) as 'light' | 'dark'
 
     if (savedLang) setLanguage(savedLang)
+    if (savedTheme) {
+      setTheme(savedTheme)
+      document.documentElement.classList.toggle('dark', savedTheme === 'dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      setTheme('dark')
+      document.documentElement.classList.add('dark')
+    }
 
     if (savedHabits) {
       try {
@@ -167,6 +178,13 @@ export function RecoveryTrackerApp() {
     const newLang = language === 'ar' ? 'en' : 'ar'
     setLanguage(newLang)
     saveToStorage(STORAGE_KEYS.LANGUAGE, newLang)
+  }
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light'
+    setTheme(newTheme)
+    saveToStorage(STORAGE_KEYS.THEME, newTheme)
+    document.documentElement.classList.toggle('dark', newTheme === 'dark')
   }
 
   const t = TRANSLATIONS[language]
@@ -238,10 +256,10 @@ export function RecoveryTrackerApp() {
                     key={habit.id}
                     onClick={() => { setActiveHabitId(habit.id); saveToStorage(STORAGE_KEYS.ACTIVE_HABIT_ID, habit.id); }}
                     className={`shrink-0 h-24 w-20 rounded-[1.5rem] flex flex-col items-center justify-center gap-2 border-2 transition-all ${
-                      activeHabitId === habit.id ? "bg-white border-slate-800 text-slate-800 shadow-2xl" : "bg-transparent border-transparent text-slate-400 opacity-60"
+                      activeHabitId === habit.id ? "bg-white dark:bg-slate-900 border-slate-800 dark:border-white text-slate-800 dark:text-white shadow-2xl" : "bg-transparent border-transparent text-slate-400 opacity-60"
                     }`}
                   >
-                    <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
                        <Sparkles className="h-5 w-5" style={{ color: habit.color }} />
                     </div>
                     <span className="text-[10px] font-black uppercase tracking-tighter">{habit.name}</span>
@@ -252,7 +270,7 @@ export function RecoveryTrackerApp() {
           </div>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center space-y-6">
-            <button onClick={() => setIsSetupOpen(true)} className="w-32 h-32 rounded-[3rem] bg-slate-800 text-white shadow-2xl flex items-center justify-center">
+            <button onClick={() => setIsSetupOpen(true)} className="w-32 h-32 rounded-[3rem] bg-slate-800 dark:bg-slate-900 text-white shadow-2xl flex items-center justify-center">
               <Plus className="h-12 w-12" />
             </button>
             <p className="text-slate-400 font-black uppercase tracking-widest text-xs">{t.addHabit}</p>
@@ -318,6 +336,17 @@ export function RecoveryTrackerApp() {
           </div>
 
           <div className="space-y-4">
+            <h3 className="text-xs font-black uppercase tracking-widest opacity-30">{t.theme}</h3>
+            <div className="w-full h-14 rounded-2xl border bg-card flex items-center justify-between px-6">
+              <div className="flex items-center gap-3">
+                {theme === 'dark' ? <Moon className="h-5 w-5 text-slate-400" /> : <Sun className="h-5 w-5 text-orange-500" />}
+                <span className="font-black">{t.darkMode}</span>
+              </div>
+              <Switch checked={theme === 'dark'} onCheckedChange={toggleTheme} />
+            </div>
+          </div>
+
+          <div className="space-y-4">
             <h3 className="text-xs font-black uppercase tracking-widest opacity-30">{t.factoryReset}</h3>
             <Button 
               variant="destructive" 
@@ -331,7 +360,7 @@ export function RecoveryTrackerApp() {
 
           <div className="pt-8 border-t">
             <div className="flex items-center gap-4 opacity-40">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                 <Info className="h-5 w-5" />
               </div>
               <div>
@@ -350,7 +379,13 @@ export function RecoveryTrackerApp() {
             {setupStep === 'name' && (
               <div className="w-full space-y-6">
                 <Input value={tempName} onChange={(e) => setTempName(e.target.value)} placeholder={isAr ? "اسم العداد..." : "Habit name..."} className="h-16 rounded-[1.5rem] text-center font-bold text-lg" />
-                <Button disabled={!tempName.trim()} onClick={() => setSetupStep('date')} className="w-full h-16 rounded-[1.5rem] font-black bg-slate-800 text-lg">{t.save}</Button>
+                <Button disabled={!tempName.trim()} onClick={() => {
+                  const now = new Date();
+                  setTempDate(now);
+                  setTempHour(now.getHours());
+                  setTempMinute(now.getMinutes());
+                  setSetupStep('date');
+                }} className="w-full h-16 rounded-[1.5rem] font-black bg-slate-800 text-lg">{t.save}</Button>
               </div>
             )}
             {setupStep === 'date' && (
