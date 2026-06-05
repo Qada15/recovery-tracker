@@ -2,11 +2,12 @@
 "use client"
 
 import * as React from "react"
-import { Settings, User, Plus, Sparkles } from "lucide-react"
+import { Settings, User, Plus, Sparkles, Globe, Trash2, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
-import { saveToStorage, getFromStorage, STORAGE_KEYS, type Habit } from "@/lib/storage"
+import { SidePanel } from "@/components/SidePanel"
+import { saveToStorage, getFromStorage, STORAGE_KEYS, clearAllStorage, type Habit } from "@/lib/storage"
 import { parseISO, setHours, setMinutes, isSameDay, startOfDay } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
@@ -40,7 +41,13 @@ const TRANSLATIONS = {
     cancel: "إلغاء",
     confirmDelete: "سيتم حذف كافة البيانات نهائياً.",
     confirmClear: "سيتم تصفير السجل وحذف كافة الزلات والرغبات لهذا العداد.",
-    historyCleared: "تم تصفير السجل"
+    historyCleared: "تم تصفير السجل",
+    settings: "الإعدادات",
+    language: "اللغة",
+    factoryReset: "مسح كافة البيانات",
+    resetWarning: "سيؤدي هذا إلى حذف جميع العدادات والبيانات المسجلة نهائياً ولا يمكن التراجع عن هذه الخطوة.",
+    about: "عن التطبيق",
+    version: "الإصدار 1.0.0"
   },
   en: {
     title: "Recovery",
@@ -52,7 +59,13 @@ const TRANSLATIONS = {
     cancel: "Cancel",
     confirmDelete: "All data will be permanently deleted.",
     confirmClear: "All relapses and urges for this tracker will be deleted.",
-    historyCleared: "History Cleared"
+    historyCleared: "History Cleared",
+    settings: "Settings",
+    language: "Language",
+    factoryReset: "Factory Reset",
+    resetWarning: "This will permanently delete all habits and records. This action cannot be undone.",
+    about: "About",
+    version: "Version 1.0.0"
   }
 }
 
@@ -61,11 +74,13 @@ export function RecoveryTrackerApp() {
   const [mounted, setMounted] = React.useState(false)
   const [isHistoryOpen, setIsHistoryOpen] = React.useState(false)
   const [isSetupOpen, setIsSetupOpen] = React.useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
   const [isClearDataOpen, setIsClearDataOpen] = React.useState(false)
+  const [isFactoryResetOpen, setIsFactoryResetOpen] = React.useState(false)
   const [setupStep, setSetupStep] = React.useState<'name' | 'date' | 'hour' | 'minute'>('name')
 
-  const [language] = React.useState<'ar' | 'en'>('ar')
+  const [language, setLanguage] = React.useState<'ar' | 'en'>('ar')
   const [habits, setHabits] = React.useState<Habit[]>([])
   const [activeHabitId, setActiveHabitId] = React.useState<string | null>(null)
 
@@ -86,6 +101,9 @@ export function RecoveryTrackerApp() {
     
     const savedHabits = getFromStorage(STORAGE_KEYS.HABITS)
     const savedActiveId = getFromStorage(STORAGE_KEYS.ACTIVE_HABIT_ID)
+    const savedLang = getFromStorage(STORAGE_KEYS.LANGUAGE) as 'ar' | 'en'
+
+    if (savedLang) setLanguage(savedLang)
 
     if (savedHabits) {
       try {
@@ -145,23 +163,11 @@ export function RecoveryTrackerApp() {
     setTempName("")
   }, [habits, tempName, tempDate, tempHour, tempMinute, updateHabits])
 
-  const handleResetAction = React.useCallback(() => {
-    if (!activeHabit) return
-    const now = new Date()
-    const currentResets = activeHabit.resetDates.map(d => parseISO(d))
-    const newResets = [...currentResets, now].sort((a, b) => a.getTime() - b.getTime())
-    handleUpdateActiveHabit({
-      startDate: now.toISOString(),
-      resetDates: newResets.map(d => d.toISOString())
-    })
-  }, [activeHabit, handleUpdateActiveHabit])
-
-  const handleUrgeAction = React.useCallback(() => {
-    if (!activeHabit) return
-    const now = new Date()
-    const newUrges = [...(activeHabit.urgeDates || []), now.toISOString()]
-    handleUpdateActiveHabit({ urgeDates: newUrges })
-  }, [activeHabit, handleUpdateActiveHabit])
+  const toggleLanguage = () => {
+    const newLang = language === 'ar' ? 'en' : 'ar'
+    setLanguage(newLang)
+    saveToStorage(STORAGE_KEYS.LANGUAGE, newLang)
+  }
 
   const t = TRANSLATIONS[language]
   const isAr = language === 'ar'
@@ -175,7 +181,7 @@ export function RecoveryTrackerApp() {
           <User className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-black text-slate-700 dark:text-white tracking-tighter">{t.title}</h1>
-        <Button variant="ghost" size="icon" className="rounded-full text-slate-400">
+        <Button variant="ghost" size="icon" className="rounded-full text-slate-400" onClick={() => setIsSettingsOpen(true)}>
           <Settings className="h-5 w-5" />
         </Button>
       </header>
@@ -203,8 +209,20 @@ export function RecoveryTrackerApp() {
               }}
               onUpdateName={(name) => handleUpdateActiveHabit({ name })}
               onUpdateColor={(color) => handleUpdateActiveHabit({ color })}
-              onReset={handleResetAction}
-              onUrge={handleUrgeAction}
+              onReset={() => {
+                const now = new Date()
+                const currentResets = activeHabit.resetDates.map(d => parseISO(d))
+                const newResets = [...currentResets, now].sort((a, b) => a.getTime() - b.getTime())
+                handleUpdateActiveHabit({
+                  startDate: now.toISOString(),
+                  resetDates: newResets.map(d => d.toISOString())
+                })
+              }}
+              onUrge={() => {
+                const now = new Date()
+                const newUrges = [...(activeHabit.urgeDates || []), now.toISOString()]
+                handleUpdateActiveHabit({ urgeDates: newUrges })
+              }}
               onDelete={() => setIsDeleteDialogOpen(true)}
               onClearData={() => setIsClearDataOpen(true)}
               language={language}
@@ -280,6 +298,51 @@ export function RecoveryTrackerApp() {
         />
       )}
 
+      <SidePanel
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        side={isAr ? "left" : "right"}
+        title={t.settings}
+      >
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <h3 className="text-xs font-black uppercase tracking-widest opacity-30">{t.language}</h3>
+            <Button 
+              variant="outline" 
+              className="w-full h-14 rounded-2xl font-black justify-between px-6"
+              onClick={toggleLanguage}
+            >
+              <Globe className="h-5 w-5 opacity-40" />
+              <span>{language === 'ar' ? "English" : "العربية"}</span>
+            </Button>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-xs font-black uppercase tracking-widest opacity-30">{t.factoryReset}</h3>
+            <Button 
+              variant="destructive" 
+              className="w-full h-14 rounded-2xl font-black justify-between px-6 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border-none"
+              onClick={() => setIsFactoryResetOpen(true)}
+            >
+              <Trash2 className="h-5 w-5" />
+              <span>{t.factoryReset}</span>
+            </Button>
+          </div>
+
+          <div className="pt-8 border-t">
+            <div className="flex items-center gap-4 opacity-40">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
+                <Info className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-black">{t.about}</p>
+                <p className="text-[10px] font-bold uppercase">{t.version}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </SidePanel>
+
       <Dialog open={isSetupOpen} onOpenChange={setIsSetupOpen}>
         <DialogContent className="rounded-[2.5rem] p-8 max-w-[420px]">
           <DialogHeader><DialogTitle className="text-center font-black">{t.setupTitle}</DialogTitle></DialogHeader>
@@ -307,7 +370,7 @@ export function RecoveryTrackerApp() {
 
       <AlertDialog open={isClearDataOpen} onOpenChange={setIsClearDataOpen}>
         <AlertDialogContent className="rounded-[2.5rem]">
-          <AlertDialogHeader><AlertDialogTitle className="font-black">حذف سجلات العداد</AlertDialogTitle><AlertDialogDescription>{t.confirmClear}</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogHeader><AlertDialogTitle className="font-black">{isAr ? "حذف سجلات العداد" : "Clear Habit History"}</AlertDialogTitle><AlertDialogDescription>{t.confirmClear}</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter><AlertDialogCancel className="rounded-xl">{t.cancel}</AlertDialogCancel><AlertDialogAction onClick={() => {
             if (!activeHabit) return;
             const now = new Date();
@@ -327,6 +390,19 @@ export function RecoveryTrackerApp() {
             setActiveHabitId(newHabits[0]?.id || null);
             setIsDeleteDialogOpen(false);
           }} className="bg-red-500 rounded-xl">{isAr ? "حذف" : "Delete"}</AlertDialogAction></AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isFactoryResetOpen} onOpenChange={setIsFactoryResetOpen}>
+        <AlertDialogContent className="rounded-[2.5rem]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-black text-red-500">{t.factoryReset}</AlertDialogTitle>
+            <AlertDialogDescription>{t.resetWarning}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">{t.cancel}</AlertDialogCancel>
+            <AlertDialogAction onClick={clearAllStorage} className="bg-red-500 rounded-xl">{isAr ? "تأكيد المسح الشامل" : "Confirm Full Reset"}</AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
