@@ -128,7 +128,12 @@ export const TimerDisplay = React.memo(({
   }, [])
 
   const isAr = language === 'ar'
-  const currentDays = Math.floor(Math.max(0, new Date().getTime() - externalStartDate.getTime()) / (1000 * 60 * 60 * 24))
+  
+  // تأمين حساب عدد الأيام لتفادي أخطاء الـ Hydration
+  const currentDays = React.useMemo(() => {
+    if (!today) return 0;
+    return Math.floor(Math.max(0, new Date().getTime() - externalStartDate.getTime()) / (1000 * 60 * 60 * 24))
+  }, [today, externalStartDate])
 
   const latestResetDate = React.useMemo(() => {
     return resetDates.length === 0 ? startOfDay(externalStartDate) : max(resetDates.map(d => startOfDay(d)));

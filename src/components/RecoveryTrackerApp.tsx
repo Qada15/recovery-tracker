@@ -71,11 +71,16 @@ export function RecoveryTrackerApp() {
 
   const [tempName, setTempName] = React.useState("")
   const [tempDate, setTempDate] = React.useState<Date>(new Date())
-  const [tempHour, setTempHour] = React.useState(new Date().getHours())
-  const [tempMinute, setTempMinute] = React.useState(new Date().getMinutes())
+  const [tempHour, setTempHour] = React.useState(12)
+  const [tempMinute, setTempMinute] = React.useState(0)
 
   React.useEffect(() => {
     setMounted(true)
+    const now = new Date()
+    setTempDate(now)
+    setTempHour(now.getHours())
+    setTempMinute(now.getMinutes())
+    
     const savedHabits = getFromStorage(STORAGE_KEYS.HABITS)
     const savedActiveId = getFromStorage(STORAGE_KEYS.ACTIVE_HABIT_ID)
 
