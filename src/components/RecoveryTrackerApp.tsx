@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -111,9 +110,6 @@ export function RecoveryTrackerApp() {
     if (savedTheme) {
       setTheme(savedTheme)
       document.documentElement.classList.toggle('dark', savedTheme === 'dark')
-    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setTheme('dark')
-      document.documentElement.classList.add('dark')
     }
 
     if (savedHabits) {
@@ -140,11 +136,6 @@ export function RecoveryTrackerApp() {
     };
   }, [activeHabit]);
 
-  const updateHabits = React.useCallback((newHabits: Habit[]) => {
-    setHabits(newHabits)
-    saveToStorage(STORAGE_KEYS.HABITS, JSON.stringify(newHabits))
-  }, [])
-
   const handleUpdateActiveHabit = React.useCallback((updates: Partial<Habit>) => {
     if (!activeHabitId) return
     setHabits(prev => {
@@ -166,13 +157,14 @@ export function RecoveryTrackerApp() {
       color: 'hsl(var(--accent))'
     }
     const newHabits = [...habits, newHabit]
-    updateHabits(newHabits)
+    setHabits(newHabits)
+    saveToStorage(STORAGE_KEYS.HABITS, JSON.stringify(newHabits))
     setActiveHabitId(newHabit.id)
     saveToStorage(STORAGE_KEYS.ACTIVE_HABIT_ID, newHabit.id)
     setIsSetupOpen(false)
     setSetupStep('name')
     setTempName("")
-  }, [habits, tempName, tempDate, tempHour, tempMinute, updateHabits])
+  }, [habits, tempName, tempDate, tempHour, tempMinute])
 
   const toggleLanguage = () => {
     const newLang = language === 'ar' ? 'en' : 'ar'
@@ -193,76 +185,78 @@ export function RecoveryTrackerApp() {
   if (!mounted) return null;
 
   return (
-    <div className="flex-1 flex flex-col items-center bg-slate-50 dark:bg-slate-950 relative h-full overflow-hidden select-none touch-none" dir={isAr ? 'rtl' : 'ltr'}>
-      <header className="w-full h-16 flex items-center justify-between px-6 z-40 shrink-0">
+    <div className="h-screen w-screen bg-slate-50 dark:bg-slate-950 flex flex-col overflow-hidden fixed inset-0" dir={isAr ? 'rtl' : 'ltr'}>
+      <header className="h-14 flex items-center justify-between px-6 z-40 shrink-0">
         <Button variant="ghost" size="icon" className="rounded-full text-slate-400">
           <User className="h-5 w-5" />
         </Button>
-        <h1 className="text-xl font-black text-slate-700 dark:text-white tracking-tighter">{t.title}</h1>
+        <h1 className="text-lg font-black text-slate-700 dark:text-white tracking-tighter">{t.title}</h1>
         <Button variant="ghost" size="icon" className="rounded-full text-slate-400" onClick={() => setIsSettingsOpen(true)}>
           <Settings className="h-5 w-5" />
         </Button>
       </header>
 
-      <main className="flex-1 w-full flex flex-col items-center p-6 pt-2 overflow-hidden">
+      <main className="flex-1 w-full flex flex-col items-center px-4 py-2 overflow-hidden">
         {activeHabit && activeHabitData ? (
-          <div className="w-full flex flex-col items-center space-y-6 h-full">
-            <div className="text-center space-y-1">
-              <h2 className="text-3xl font-black text-slate-800 dark:text-white tracking-tighter">{t.subtitle}</h2>
-              <p className="text-sm font-bold text-slate-400">{t.motivation}</p>
+          <div className="w-full flex flex-col items-center h-full max-w-[480px]">
+            <div className="text-center space-y-0.5 mb-4 shrink-0">
+              <h2 className="text-2xl font-black text-slate-800 dark:text-white tracking-tighter">{t.subtitle}</h2>
+              <p className="text-[10px] font-bold text-slate-400">{t.motivation}</p>
             </div>
 
-            <TimerDisplay 
-              externalStartDate={activeHabitData.startDate} 
-              externalHabitName={activeHabit.name}
-              externalAccentColor={activeHabit.color}
-              resetDates={activeHabitData.resetDates}
-              urgeDates={activeHabitData.urgeDates}
-              onOpenHistory={() => setIsHistoryOpen(true)}
-              onUpdateDate={(d) => {
-                const currentResets = activeHabit.resetDates.map(rd => parseISO(rd));
-                const filtered = currentResets.filter(rd => !isSameDay(rd, activeHabitData.startDate));
-                const newResets = [...filtered, d].sort((a, b) => a.getTime() - b.getTime());
-                handleUpdateActiveHabit({ startDate: d.toISOString(), resetDates: newResets.map(rd => rd.toISOString()) });
-              }}
-              onUpdateName={(name) => handleUpdateActiveHabit({ name })}
-              onUpdateColor={(color) => handleUpdateActiveHabit({ color })}
-              onReset={() => {
-                const now = new Date()
-                const currentResets = activeHabit.resetDates.map(d => parseISO(d))
-                const newResets = [...currentResets, now].sort((a, b) => a.getTime() - b.getTime())
-                handleUpdateActiveHabit({
-                  startDate: now.toISOString(),
-                  resetDates: newResets.map(d => d.toISOString())
-                })
-              }}
-              onUrge={() => {
-                const now = new Date()
-                const newUrges = [...(activeHabit.urgeDates || []), now.toISOString()]
-                handleUpdateActiveHabit({ urgeDates: newUrges })
-              }}
-              onDelete={() => setIsDeleteDialogOpen(true)}
-              onClearData={() => setIsClearDataOpen(true)}
-              language={language}
-            />
+            <div className="flex-1 w-full flex flex-col justify-center overflow-hidden">
+              <TimerDisplay 
+                externalStartDate={activeHabitData.startDate} 
+                externalHabitName={activeHabit.name}
+                externalAccentColor={activeHabit.color}
+                resetDates={activeHabitData.resetDates}
+                urgeDates={activeHabitData.urgeDates}
+                onOpenHistory={() => setIsHistoryOpen(true)}
+                onUpdateDate={(d) => {
+                  const currentResets = activeHabit.resetDates.map(rd => parseISO(rd));
+                  const filtered = currentResets.filter(rd => !isSameDay(rd, activeHabitData.startDate));
+                  const newResets = [...filtered, d].sort((a, b) => a.getTime() - b.getTime());
+                  handleUpdateActiveHabit({ startDate: d.toISOString(), resetDates: newResets.map(rd => rd.toISOString()) });
+                }}
+                onUpdateName={(name) => handleUpdateActiveHabit({ name })}
+                onUpdateColor={(color) => handleUpdateActiveHabit({ color })}
+                onReset={() => {
+                  const now = new Date()
+                  const currentResets = activeHabit.resetDates.map(d => parseISO(d))
+                  const newResets = [...currentResets, now].sort((a, b) => a.getTime() - b.getTime())
+                  handleUpdateActiveHabit({
+                    startDate: now.toISOString(),
+                    resetDates: newResets.map(d => d.toISOString())
+                  })
+                }}
+                onUrge={() => {
+                  const now = new Date()
+                  const newUrges = [...(activeHabit.urgeDates || []), now.toISOString()]
+                  handleUpdateActiveHabit({ urgeDates: newUrges })
+                }}
+                onDelete={() => setIsDeleteDialogOpen(true)}
+                onClearData={() => setIsClearDataOpen(true)}
+                language={language}
+              />
+            </div>
 
-            <div className="w-full mt-auto pb-10">
-              <div className="flex items-center gap-3 overflow-x-auto pb-4 custom-scrollbar px-4 w-full justify-center">
-                <button onClick={() => setIsSetupOpen(true)} className="shrink-0 w-16 h-16 rounded-[1.5rem] bg-slate-800 text-white flex items-center justify-center shadow-xl">
-                  <Plus className="h-6 w-6" />
+            <div className="w-full py-6 shrink-0">
+              <div className="flex items-center gap-3 overflow-x-auto pb-2 custom-scrollbar px-4 w-full justify-center">
+                <button onClick={() => setIsSetupOpen(true)} className="shrink-0 w-14 h-14 rounded-[1.2rem] bg-slate-800 text-white flex items-center justify-center shadow-lg active:scale-95 transition-transform">
+                  <Plus className="h-5 w-5" />
                 </button>
                 {habits.map((habit) => (
                   <button
                     key={habit.id}
                     onClick={() => { setActiveHabitId(habit.id); saveToStorage(STORAGE_KEYS.ACTIVE_HABIT_ID, habit.id); }}
-                    className={`shrink-0 h-24 w-20 rounded-[1.5rem] flex flex-col items-center justify-center gap-2 border-2 transition-all ${
-                      activeHabitId === habit.id ? "bg-white dark:bg-slate-900 border-slate-800 dark:border-white text-slate-800 dark:text-white shadow-2xl" : "bg-transparent border-transparent text-slate-400 opacity-60"
+                    className={`shrink-0 h-20 w-16 rounded-[1.2rem] flex flex-col items-center justify-center gap-1 border-2 transition-all ${
+                      activeHabitId === habit.id ? "bg-white dark:bg-slate-900 border-slate-800 dark:border-white text-slate-800 dark:text-white shadow-xl" : "bg-transparent border-transparent text-slate-400 opacity-60"
                     }`}
                   >
-                    <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
-                       <Sparkles className="h-5 w-5" style={{ color: habit.color }} />
+                    <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
+                       <Sparkles className="h-4 w-4" style={{ color: habit.color }} />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-tighter">{habit.name}</span>
+                    <span className="text-[8px] font-black uppercase tracking-tighter truncate w-full px-1 text-center">{habit.name}</span>
                   </button>
                 ))}
               </div>
@@ -270,10 +264,10 @@ export function RecoveryTrackerApp() {
           </div>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center space-y-6">
-            <button onClick={() => setIsSetupOpen(true)} className="w-32 h-32 rounded-[3rem] bg-slate-800 dark:bg-slate-900 text-white shadow-2xl flex items-center justify-center">
-              <Plus className="h-12 w-12" />
+            <button onClick={() => setIsSetupOpen(true)} className="w-28 h-28 rounded-[2.5rem] bg-slate-800 dark:bg-slate-900 text-white shadow-2xl flex items-center justify-center active:scale-95 transition-transform">
+              <Plus className="h-10 w-10" />
             </button>
-            <p className="text-slate-400 font-black uppercase tracking-widest text-xs">{t.addHabit}</p>
+            <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">{t.addHabit}</p>
           </div>
         )}
       </main>
@@ -324,7 +318,7 @@ export function RecoveryTrackerApp() {
       >
         <div className="space-y-6">
           <div className="space-y-4">
-            <h3 className="text-xs font-black uppercase tracking-widest opacity-30">{t.language}</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30">{t.language}</h3>
             <Button 
               variant="outline" 
               className="w-full h-14 rounded-2xl font-black justify-between px-6"
@@ -336,7 +330,7 @@ export function RecoveryTrackerApp() {
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-xs font-black uppercase tracking-widest opacity-30">{t.theme}</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30">{t.theme}</h3>
             <div className="w-full h-14 rounded-2xl border bg-card flex items-center justify-between px-6">
               <div className="flex items-center gap-3">
                 {theme === 'dark' ? <Moon className="h-5 w-5 text-slate-400" /> : <Sun className="h-5 w-5 text-orange-500" />}
@@ -347,7 +341,7 @@ export function RecoveryTrackerApp() {
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-xs font-black uppercase tracking-widest opacity-30">{t.factoryReset}</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30">{t.factoryReset}</h3>
             <Button 
               variant="destructive" 
               className="w-full h-14 rounded-2xl font-black justify-between px-6 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border-none"
@@ -373,9 +367,9 @@ export function RecoveryTrackerApp() {
       </SidePanel>
 
       <Dialog open={isSetupOpen} onOpenChange={setIsSetupOpen}>
-        <DialogContent className="rounded-[2.5rem] p-8 max-w-[420px]">
+        <DialogContent className="rounded-[2.5rem] p-6 max-w-[380px] max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader><DialogTitle className="text-center font-black">{t.setupTitle}</DialogTitle></DialogHeader>
-          <div className="flex flex-col items-center min-h-[350px] justify-center">
+          <div className="flex-1 flex flex-col items-center justify-center overflow-hidden py-4">
             {setupStep === 'name' && (
               <div className="w-full space-y-6">
                 <Input value={tempName} onChange={(e) => setTempName(e.target.value)} placeholder={isAr ? "اسم العداد..." : "Habit name..."} className="h-16 rounded-[1.5rem] text-center font-bold text-lg" />
@@ -389,13 +383,15 @@ export function RecoveryTrackerApp() {
               </div>
             )}
             {setupStep === 'date' && (
-              <Calendar 
-                mode="single" 
-                selected={tempDate || undefined} 
-                onSelect={(date) => { if(date) { setTempDate(date); setSetupStep('hour'); } }} 
-                className="rounded-3xl border p-4" 
-                disabled={today ? { after: today } : undefined}
-              />
+              <div className="w-full flex flex-col items-center">
+                <Calendar 
+                  mode="single" 
+                  selected={tempDate || undefined} 
+                  onSelect={(date) => { if(date) { setTempDate(date); setSetupStep('hour'); } }} 
+                  className="rounded-3xl border p-2 scale-90" 
+                  disabled={today ? { after: today } : undefined}
+                />
+              </div>
             )}
             {setupStep === 'hour' && <CircularTimePicker mode="hours" value={tempHour} onChange={setTempHour} onComplete={() => setSetupStep('minute')} />}
             {setupStep === 'minute' && <CircularTimePicker mode="minutes" value={tempMinute} onChange={setTempMinute} onComplete={handleFinishSetup} />}
@@ -404,7 +400,7 @@ export function RecoveryTrackerApp() {
       </Dialog>
 
       <AlertDialog open={isClearDataOpen} onOpenChange={setIsClearDataOpen}>
-        <AlertDialogContent className="rounded-[2.5rem]">
+        <AlertDialogContent className="rounded-[2.5rem] max-w-[340px]">
           <AlertDialogHeader><AlertDialogTitle className="font-black">{isAr ? "حذف سجلات العداد" : "Clear Habit History"}</AlertDialogTitle><AlertDialogDescription>{t.confirmClear}</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter><AlertDialogCancel className="rounded-xl">{t.cancel}</AlertDialogCancel><AlertDialogAction onClick={() => {
             if (!activeHabit) return;
@@ -417,11 +413,12 @@ export function RecoveryTrackerApp() {
       </AlertDialog>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="rounded-[2.5rem]">
+        <AlertDialogContent className="rounded-[2.5rem] max-w-[340px]">
           <AlertDialogHeader><AlertDialogTitle className="font-black">{isAr ? "تأكيد الحذف" : "Confirm Delete"}</AlertDialogTitle><AlertDialogDescription>{t.confirmDelete}</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter><AlertDialogCancel className="rounded-xl">{t.cancel}</AlertDialogCancel><AlertDialogAction onClick={() => {
             const newHabits = habits.filter(h => h.id !== activeHabitId);
-            updateHabits(newHabits);
+            setHabits(newHabits);
+            saveToStorage(STORAGE_KEYS.HABITS, JSON.stringify(newHabits));
             setActiveHabitId(newHabits[0]?.id || null);
             setIsDeleteDialogOpen(false);
           }} className="bg-red-500 rounded-xl">{isAr ? "حذف" : "Delete"}</AlertDialogAction></AlertDialogFooter>
@@ -429,7 +426,7 @@ export function RecoveryTrackerApp() {
       </AlertDialog>
 
       <AlertDialog open={isFactoryResetOpen} onOpenChange={setIsFactoryResetOpen}>
-        <AlertDialogContent className="rounded-[2.5rem]">
+        <AlertDialogContent className="rounded-[2.5rem] max-w-[340px]">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-black text-red-500">{t.factoryReset}</AlertDialogTitle>
             <AlertDialogDescription>{t.resetWarning}</AlertDialogDescription>

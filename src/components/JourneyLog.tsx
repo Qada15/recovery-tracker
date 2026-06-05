@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -64,19 +63,25 @@ export const JourneyLog = React.memo(({
     return resetDates.length === 0 ? startOfDay(startDate) : max(resetDates.map(d => startOfDay(d)));
   }, [resetDates, startDate]);
 
-  const isRelapseMatcher = React.useMemo(() => resetDates, [resetDates])
-  const isUrgeMatcher = React.useMemo(() => urgeDates, [urgeDates])
-  const isCleanMatcher = React.useCallback((date: Date) => {
-    if (!today) return false;
-    const d = startOfDay(date);
-    return isAfter(d, latestResetDate) && (isBefore(d, today) || isSameDay(d, today));
+  const relapseDatesList = React.useMemo(() => resetDates, [resetDates])
+  const urgeDatesList = React.useMemo(() => urgeDates, [urgeDates])
+  const cleanDatesList = React.useMemo(() => {
+    if (!today) return [];
+    const dates: Date[] = [];
+    let d = new Date(latestResetDate);
+    d.setDate(d.getDate() + 1);
+    while (isBefore(d, today) || isSameDay(d, today)) {
+      dates.push(new Date(d));
+      d.setDate(d.getDate() + 1);
+    }
+    return dates;
   }, [today, latestResetDate]);
 
   const modifiers = React.useMemo(() => ({
-    relapse: isRelapseMatcher,
-    urge: isUrgeMatcher,
-    clean: isCleanMatcher
-  }), [isRelapseMatcher, isUrgeMatcher, isCleanMatcher])
+    relapse: relapseDatesList,
+    urge: urgeDatesList,
+    clean: cleanDatesList
+  }), [relapseDatesList, urgeDatesList, cleanDatesList])
 
   const getResetForDay = React.useCallback((date: Date) => {
     return resetDates.find(rd => isSameDay(startOfDay(rd), startOfDay(date)))
@@ -116,38 +121,40 @@ export const JourneyLog = React.memo(({
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden">
-        <div className="w-full max-w-[340px] bg-white dark:bg-slate-900 rounded-[2.5rem] border shadow-2xl p-2 flex flex-col items-center">
-          <Calendar 
-            mode="single" 
-            selected={selectedDay}
-            onSelect={setSelectedDay}
-            month={currentMonth}
-            onMonthChange={setCurrentMonth}
-            disabled={[{ after: today }]} 
-            modifiers={modifiers}
-            modifiersClassNames={MODIFIERS_STYLES}
-          />
+        <div className="w-full max-w-[340px] bg-white dark:bg-slate-900 rounded-[2.5rem] border shadow-2xl p-2 flex flex-col items-center shrink-0">
+          <div className="scale-90">
+            <Calendar 
+              mode="single" 
+              selected={selectedDay}
+              onSelect={setSelectedDay}
+              month={currentMonth}
+              onMonthChange={setCurrentMonth}
+              disabled={[{ after: today }]} 
+              modifiers={modifiers}
+              modifiersClassNames={MODIFIERS_STYLES}
+            />
+          </div>
 
-          <div className="flex gap-6 py-4 border-t w-full justify-center mt-2 opacity-60">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-emerald-500" />
-              <span className="text-[10px] font-black uppercase">{isAr ? "يوم نظيف" : "Clean"}</span>
+          <div className="flex gap-4 py-2 border-t w-full justify-center mt-1 opacity-60">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+              <span className="text-[8px] font-black uppercase">{isAr ? "يوم نظيف" : "Clean"}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-500" />
-              <span className="text-[10px] font-black uppercase">{isAr ? "انتكاسة" : "Relapse"}</span>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+              <span className="text-[8px] font-black uppercase">{isAr ? "انتكاسة" : "Relapse"}</span>
             </div>
           </div>
         </div>
 
-        <div className="mt-8 flex gap-3 w-full max-w-[320px] shrink-0 h-14">
+        <div className="mt-6 flex gap-3 w-full max-w-[320px] shrink-0 h-12">
           {selectedDay && (
             getResetForDay(selectedDay) ? (
               <>
                 <Button onClick={() => onRemoveReset(selectedDay)} variant="outline" className="flex-1 h-12 rounded-2xl font-black border-2 border-red-500 text-red-500">
                   <Trash2 className="ml-2 h-4 w-4" /> {isAr ? "حذف" : "Delete"}
                 </Button>
-                <Button onClick={handleAdjustTime} className="w-14 h-12 rounded-2xl font-black bg-slate-200 text-slate-700">
+                <Button onClick={handleAdjustTime} className="w-12 h-12 rounded-2xl font-black bg-slate-200 text-slate-700">
                   <Settings2 className="h-5 w-5" />
                 </Button>
               </>

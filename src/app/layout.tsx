@@ -1,4 +1,3 @@
-
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
@@ -39,7 +38,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#ffffff" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
-      <body suppressHydrationWarning className="font-body antialiased bg-background text-foreground overflow-hidden h-screen w-screen flex flex-col">
+      <body suppressHydrationWarning className="font-body antialiased bg-background text-foreground h-full w-full flex flex-col overflow-hidden fixed inset-0">
         {children}
       </body>
     </html>
