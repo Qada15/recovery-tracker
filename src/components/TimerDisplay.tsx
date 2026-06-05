@@ -129,7 +129,6 @@ export const TimerDisplay = React.memo(({
 
   const isAr = language === 'ar'
   
-  // تأمين حساب عدد الأيام لتفادي أخطاء الـ Hydration
   const currentDays = React.useMemo(() => {
     if (!today) return 0;
     return Math.floor(Math.max(0, new Date().getTime() - externalStartDate.getTime()) / (1000 * 60 * 60 * 24))
@@ -149,11 +148,19 @@ export const TimerDisplay = React.memo(({
     return { highest: streaks.length > 0 ? Math.max(...streaks) : 0, previous: streaks.length > 0 ? streaks[streaks.length - 1] : 0 }
   }, [resetDates])
 
+  const isRelapseMatcher = React.useMemo(() => resetDates, [resetDates])
+  const isUrgeMatcher = React.useMemo(() => urgeDates, [urgeDates])
   const isCleanMatcher = React.useCallback((date: Date) => {
     if (!today) return false;
     const d = startOfDay(date);
     return isAfter(d, latestResetDate) && (isBefore(d, today) || isSameDay(d, today));
   }, [today, latestResetDate]);
+
+  const modifiers = React.useMemo(() => ({
+    relapse: isRelapseMatcher,
+    urge: isUrgeMatcher,
+    clean: isCleanMatcher
+  }), [isRelapseMatcher, isUrgeMatcher, isCleanMatcher])
 
   const handleUpdateName = React.useCallback(() => {
     if (!tempHabitName.trim()) return
@@ -251,7 +258,7 @@ export const TimerDisplay = React.memo(({
           <div className="flex flex-col items-center min-h-[320px] justify-center">
             {setupStep === 'date' && (
               <div className="w-full flex flex-col items-center">
-                <Calendar mode="single" selected={selectedDate} onSelect={(d) => { if(d) { setSelectedDate(d); setSetupStep('hour'); } }} disabled={today ? { after: today } : undefined} className="rounded-3xl border p-2" modifiers={{ relapse: resetDates, urge: urgeDates, clean: isCleanMatcher }} modifiersClassNames={MODIFIERS_STYLES} />
+                <Calendar mode="single" selected={selectedDate} onSelect={(d) => { if(d) { setSelectedDate(d); setSetupStep('hour'); } }} disabled={today ? { after: today } : undefined} className="rounded-3xl border p-2" modifiers={modifiers} modifiersClassNames={MODIFIERS_STYLES} />
                 <div className="flex gap-6 py-4 border-t w-full justify-center mt-2 opacity-60">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-emerald-500" />

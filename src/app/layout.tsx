@@ -35,7 +35,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#ffffff" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
-      <body className="font-body antialiased bg-background text-foreground overflow-hidden h-screen w-screen flex flex-col">
+      <body suppressHydrationWarning className="font-body antialiased bg-background text-foreground overflow-hidden h-screen w-screen flex flex-col">
         {children}
       </body>
     </html>

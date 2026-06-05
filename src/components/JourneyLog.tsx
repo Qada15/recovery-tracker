@@ -43,7 +43,7 @@ export const JourneyLog = React.memo(({
   language
 }: JourneyLogProps) => {
   const [selectedDay, setSelectedDay] = React.useState<Date | undefined>(undefined)
-  const [currentMonth, setCurrentMonth] = React.useState<Date>(new Date())
+  const [currentMonth, setCurrentMonth] = React.useState<Date | null>(null)
   const [showTimePicker, setShowTimePicker] = React.useState(false)
   const [pickerMode, setPickerMode] = React.useState<'hours' | 'minutes'>('hours')
   const [tempHour, setTempHour] = React.useState(12)
@@ -51,7 +51,11 @@ export const JourneyLog = React.memo(({
   
   const [today, setToday] = React.useState<Date | null>(null)
   React.useEffect(() => {
-    if (isOpen) setToday(startOfDay(new Date()))
+    if (isOpen) {
+      const now = new Date()
+      setToday(startOfDay(now))
+      setCurrentMonth(now)
+    }
   }, [isOpen])
 
   const isAr = language === 'ar'
@@ -60,11 +64,19 @@ export const JourneyLog = React.memo(({
     return resetDates.length === 0 ? startOfDay(startDate) : max(resetDates.map(d => startOfDay(d)));
   }, [resetDates, startDate]);
 
+  const isRelapseMatcher = React.useMemo(() => resetDates, [resetDates])
+  const isUrgeMatcher = React.useMemo(() => urgeDates, [urgeDates])
   const isCleanMatcher = React.useCallback((date: Date) => {
     if (!today) return false;
     const d = startOfDay(date);
     return isAfter(d, latestResetDate) && (isBefore(d, today) || isSameDay(d, today));
   }, [today, latestResetDate]);
+
+  const modifiers = React.useMemo(() => ({
+    relapse: isRelapseMatcher,
+    urge: isUrgeMatcher,
+    clean: isCleanMatcher
+  }), [isRelapseMatcher, isUrgeMatcher, isCleanMatcher])
 
   const getResetForDay = React.useCallback((date: Date) => {
     return resetDates.find(rd => isSameDay(startOfDay(rd), startOfDay(date)))
@@ -91,7 +103,7 @@ export const JourneyLog = React.memo(({
     setShowTimePicker(false)
   }, [selectedDay, tempHour, tempMinute, onReset])
 
-  if (!isOpen) return null
+  if (!isOpen || !today || !currentMonth) return null
 
   return (
     <div className="fixed inset-0 z-[100] bg-background flex flex-col animate-in fade-in slide-in-from-bottom-5 duration-300 overflow-hidden" dir={isAr ? 'rtl' : 'ltr'}>
@@ -111,8 +123,8 @@ export const JourneyLog = React.memo(({
             onSelect={setSelectedDay}
             month={currentMonth}
             onMonthChange={setCurrentMonth}
-            disabled={today ? [{ after: today }] : undefined} 
-            modifiers={{ relapse: resetDates, urge: urgeDates, clean: isCleanMatcher }}
+            disabled={[{ after: today }]} 
+            modifiers={modifiers}
             modifiersClassNames={MODIFIERS_STYLES}
           />
 

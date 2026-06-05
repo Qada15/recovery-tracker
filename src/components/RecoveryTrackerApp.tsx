@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
 import { saveToStorage, getFromStorage, STORAGE_KEYS, type Habit } from "@/lib/storage"
-import { parseISO, setHours, setMinutes, isSameDay } from "date-fns"
+import { parseISO, setHours, setMinutes, isSameDay, startOfDay } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
@@ -70,7 +70,7 @@ export function RecoveryTrackerApp() {
   const [activeHabitId, setActiveHabitId] = React.useState<string | null>(null)
 
   const [tempName, setTempName] = React.useState("")
-  const [tempDate, setTempDate] = React.useState<Date>(new Date())
+  const [tempDate, setTempDate] = React.useState<Date | null>(null)
   const [tempHour, setTempHour] = React.useState(12)
   const [tempMinute, setTempMinute] = React.useState(0)
 
@@ -123,6 +123,7 @@ export function RecoveryTrackerApp() {
   }, [activeHabitId])
 
   const handleFinishSetup = React.useCallback(() => {
+    if (!tempDate) return
     const finalDate = setMinutes(setHours(tempDate, tempHour), tempMinute)
     const newHabit: Habit = {
       id: Math.random().toString(36).substr(2, 9),
@@ -287,7 +288,7 @@ export function RecoveryTrackerApp() {
               </div>
             )}
             {setupStep === 'date' && (
-              <Calendar mode="single" selected={tempDate} onSelect={(date) => { if(date) { setTempDate(date); setSetupStep('hour'); } }} className="rounded-3xl border p-4" />
+              <Calendar mode="single" selected={tempDate || undefined} onSelect={(date) => { if(date) { setTempDate(date); setSetupStep('hour'); } }} className="rounded-3xl border p-4" />
             )}
             {setupStep === 'hour' && <CircularTimePicker mode="hours" value={tempHour} onChange={setTempHour} onComplete={() => setSetupStep('minute')} />}
             {setupStep === 'minute' && <CircularTimePicker mode="minutes" value={tempMinute} onChange={setTempMinute} onComplete={handleFinishSetup} />}
