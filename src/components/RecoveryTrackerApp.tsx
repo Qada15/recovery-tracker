@@ -58,7 +58,6 @@ const TRANSLATIONS = {
 
 export function RecoveryTrackerApp() {
   const { toast } = useToast()
-  const [mounted, setMounted] = React.useState(false)
   const [isHistoryOpen, setIsHistoryOpen] = React.useState(false)
   const [isSetupOpen, setIsSetupOpen] = React.useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
@@ -75,7 +74,6 @@ export function RecoveryTrackerApp() {
   const [tempMinute, setTempMinute] = React.useState(0)
 
   React.useEffect(() => {
-    setMounted(true)
     const now = new Date()
     setTempDate(now)
     setTempHour(now.getHours())
@@ -124,7 +122,7 @@ export function RecoveryTrackerApp() {
 
   const handleFinishSetup = React.useCallback(() => {
     if (!tempDate) return
-    const finalDate = setMinutes(setHours(tempDate, tempHour), tempMinute)
+    const finalDate = setMinutes(setHours(startOfDay(tempDate), tempHour), tempMinute)
     const newHabit: Habit = {
       id: Math.random().toString(36).substr(2, 9),
       name: tempName,
@@ -159,8 +157,6 @@ export function RecoveryTrackerApp() {
     const newUrges = [...(activeHabit.urgeDates || []), now.toISOString()]
     handleUpdateActiveHabit({ urgeDates: newUrges })
   }, [activeHabit, handleUpdateActiveHabit])
-
-  if (!mounted) return null
 
   const t = TRANSLATIONS[language]
   const isAr = language === 'ar'
