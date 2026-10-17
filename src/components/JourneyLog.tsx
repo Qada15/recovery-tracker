@@ -7,14 +7,15 @@ import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { startOfDay, isBefore, isSameDay, max, isAfter, differenceInDays } from "date-fns"
 
-// علامات الحالة: خلفية خفيفة فقط. النقطة تظهر فقط عند التحديد عبر الـ modifiers.
+// علامات الحالة: خلفية خفيفة فقط. النقطة تظهر فقط عند التحديد عبر الـ selected modifiers.
 const MODIFIERS_STYLES = {
   relapse: "bg-red-500/10 text-red-600 rounded-full font-black relative !opacity-100",
   clean: "bg-emerald-500/10 text-emerald-600 rounded-full font-black relative !opacity-100",
-  selectedRelapse: "after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-red-300 after:rounded-full z-20",
-  selectedClean: "after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-emerald-300 after:rounded-full z-20",
-  outsideRelapse: "opacity-20 grayscale",
-  outsideClean: "opacity-20 grayscale"
+  selectedRelapse: "after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-red-500 after:rounded-full z-20",
+  selectedClean: "after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-emerald-500 after:rounded-full z-20",
+  outsideRelapse: "opacity-30 grayscale",
+  outsideClean: "opacity-30 grayscale",
+  selectedOutsideRelapse: "after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-slate-400 after:rounded-full z-20"
 }
 
 interface JourneyLogProps {
@@ -51,15 +52,24 @@ export const JourneyLog = React.memo(({
   const stats = React.useMemo(() => {
     if (!today) return { highest: 0, previous: 0 }
     
-    const allEvents = [startOfDay(startDate), ...resetDates.map(d => startOfDay(d))].sort((a, b) => a.getTime() - b.getTime())
+    // توحيد التواريخ لضمان عدم وجود تكرار وحساب دقيق للفترات
+    const uniqueEvents = Array.from(new Set([
+      startOfDay(startDate).getTime(),
+      ...resetDates.map(d => startOfDay(d).getTime())
+    ])).sort((a, b) => a - b).map(t => new Date(t))
+
+    if (uniqueEvents.length === 0) return { highest: 0, previous: 0 }
+
     const streaks: number[] = []
     
-    for (let i = 0; i < allEvents.length - 1; i++) {
-      const diff = differenceInDays(allEvents[i + 1], allEvents[i])
+    // حساب الفترات النظيفة بين الانتكاسات المسجلة
+    for (let i = 0; i < uniqueEvents.length - 1; i++) {
+      const diff = differenceInDays(uniqueEvents[i + 1], uniqueEvents[i])
+      // الأيام الحمراء لا تحسب (0)، الأيام النظيفة هي ما بين اليومين
       streaks.push(Math.max(0, diff - 1))
     }
     
-    const latestReset = allEvents[allEvents.length - 1]
+    const latestReset = uniqueEvents[uniqueEvents.length - 1]
     const isTodayRelapse = resetDates.some(rd => isSameDay(startOfDay(rd), today))
     const currentStreak = isTodayRelapse ? 0 : differenceInDays(today, latestReset)
     
@@ -94,10 +104,11 @@ export const JourneyLog = React.memo(({
   const modifiers = React.useMemo(() => ({
     relapse: (date: Date) => isDateInCurrentMonth(date) && isRelapse(date),
     clean: (date: Date) => isDateInCurrentMonth(date) && isClean(date),
-    selectedRelapse: (date: Date) => selectedDay && isSameDay(date, selectedDay) && isRelapse(date),
-    selectedClean: (date: Date) => selectedDay && isSameDay(date, selectedDay) && isClean(date),
+    selectedRelapse: (date: Date) => selectedDay && isSameDay(date, selectedDay) && isRelapse(date) && isDateInCurrentMonth(date),
+    selectedClean: (date: Date) => selectedDay && isSameDay(date, selectedDay) && isClean(date) && isDateInCurrentMonth(date),
     outsideRelapse: (date: Date) => !isDateInCurrentMonth(date) && isRelapse(date),
-    outsideClean: (date: Date) => !isDateInCurrentMonth(date) && isClean(date)
+    outsideClean: (date: Date) => !isDateInCurrentMonth(date) && isClean(date),
+    selectedOutsideRelapse: (date: Date) => selectedDay && isSameDay(date, selectedDay) && !isDateInCurrentMonth(date) && (isRelapse(date) || isClean(date))
   }), [isDateInCurrentMonth, isRelapse, isClean, selectedDay])
 
   const isAr = language === 'ar'
@@ -117,12 +128,12 @@ export const JourneyLog = React.memo(({
         <div className="w-10" />
       </header>
 
-      <main className="flex-1 flex flex-col items-center p-4 overflow-hidden bg-slate-50/50 dark:bg-slate-950/50 space-y-4">
-        <div className="w-full max-w-[420px] grid grid-cols-2 gap-3 shrink-0">
+      <main className="flex-1 flex flex-col items-center justify-between p-4 overflow-hidden bg-slate-50/50 dark:bg-slate-950/50">
+        <div className="w-full max-w-[420px] grid grid-cols-2 gap-3 mb-2">
           <div className="bg-amber-500/5 border-2 border-amber-500/20 rounded-[1.5rem] p-3 flex flex-col items-center justify-center text-center shadow-sm">
             <Trophy className="h-5 w-5 text-amber-500 mb-1" />
             <span className="text-3xl font-black text-amber-600 dark:text-amber-400 tabular-nums leading-none">{stats.highest}</span>
-            <span className="text-[8px] font-black uppercase tracking-widest opacity-60 mt-1">{isAr ? "أعلى رقم تاريخي" : "Historical Best"}</span>
+            <span className="text-[8px] font-black uppercase tracking-widest opacity-60 mt-1">{isAr ? "أعلى رقم تحقّق" : "Highest Peak"}</span>
           </div>
           <div className="bg-slate-500/5 border-2 border-slate-500/20 rounded-[1.5rem] p-3 flex flex-col items-center justify-center text-center shadow-sm">
             <HistoryIcon className="h-5 w-5 text-slate-500 mb-1" />
@@ -132,7 +143,7 @@ export const JourneyLog = React.memo(({
         </div>
 
         <div className="flex-1 w-full max-w-[460px] flex items-center justify-center overflow-hidden">
-          <div className="w-full bg-white dark:bg-slate-900 rounded-[2.5rem] border-2 shadow-2xl p-4 flex flex-col items-center justify-center overflow-hidden">
+          <div className="w-full h-full bg-white dark:bg-slate-900 rounded-[2.5rem] border-2 shadow-2xl p-2 flex flex-col items-center justify-center overflow-hidden">
             <Calendar 
               mode="single" 
               selected={selectedDay}
@@ -145,20 +156,20 @@ export const JourneyLog = React.memo(({
               className="scale-90 origin-center"
               showOutsideDays={true}
             />
-            <div className="flex gap-6 py-2 border-t w-full justify-center mt-1 opacity-60">
+            <div className="flex gap-6 py-1 border-t w-full justify-center mt-1 opacity-40 shrink-0">
               <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/30" />
+                <div className="w-2 h-2 rounded-full bg-emerald-500/30" />
                 <span className="text-[8px] font-black uppercase tracking-widest">{isAr ? "نظيف" : "Clean"}</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-red-500/30" />
+                <div className="w-2 h-2 rounded-full bg-red-500/30" />
                 <span className="text-[8px] font-black uppercase tracking-widest">{isAr ? "انتكاسة" : "Relapse"}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="w-full max-w-[460px] shrink-0 h-16 flex gap-3">
+        <div className="w-full max-w-[460px] shrink-0 h-14 mt-4 flex gap-3">
           {selectedDay && (
             isRelapse(selectedDay) ? (
               <Button onClick={() => onRemoveReset(selectedDay)} variant="outline" className="flex-1 h-full rounded-2xl font-black border-2 border-red-500 text-red-500 text-lg shadow-sm">
