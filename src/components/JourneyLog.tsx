@@ -49,41 +49,44 @@ export const JourneyLog = React.memo(({
     }
   }, [])
 
-  const latestResetDate = React.useMemo(() => {
-    if (resetDates.length === 0) return startOfDay(startDate)
-    return max(resetDates.map(d => startOfDay(d)))
-  }, [resetDates, startDate])
-
   const stats = React.useMemo(() => {
     if (!today || resetDates.length === 0) return { highest: 0, previous: 0 }
     
     const streaks: number[] = []
     const sortedResets = [...resetDates].map(d => startOfDay(d)).sort((a, b) => a.getTime() - b.getTime())
     
-    // حساب الفترات بين الانتكاسات المسجلة
+    // حساب الفترات النظيفة بين الانتكاسات
+    // القاعدة: اليوم الأحمر لا يُحسب (0)، لذا الأيام النظيفة هي الفرق مطروحاً منه 1
     for (let i = 0; i < sortedResets.length - 1; i++) {
-      streaks.push(differenceInDays(sortedResets[i + 1], sortedResets[i]))
+      const diff = differenceInDays(sortedResets[i + 1], sortedResets[i])
+      streaks.push(Math.max(0, diff - 1))
     }
     
     // حساب الفترة الحالية (من آخر انتكاسة حتى اليوم)
-    const currentStreak = differenceInDays(today, sortedResets[sortedResets.length - 1])
+    // إذا كان اليوم هو يوم انتكاسة، الرقم الحالي هو 0
+    const isTodayRelapse = sortedResets.some(rd => isSameDay(rd, today))
+    const currentStreak = isTodayRelapse ? 0 : differenceInDays(today, sortedResets[sortedResets.length - 1])
     
-    // الرقم الأعلى هو أقصى قيمة بين الفترات السابقة والفترة الحالية
     const allStreaks = [...streaks, currentStreak]
     const highest = allStreaks.length > 0 ? Math.max(...allStreaks) : 0
-    
-    // الرقم السابق هو آخر فترة مكتملة قبل الحالية
     const previous = streaks.length > 0 ? streaks[streaks.length - 1] : 0
     
     return { highest, previous }
   }, [resetDates, today])
+
+  const latestResetDate = React.useMemo(() => {
+    if (resetDates.length === 0) return startOfDay(startDate)
+    return max(resetDates.map(d => startOfDay(d)))
+  }, [resetDates, startDate])
 
   const modifiers = React.useMemo(() => ({
     relapse: resetDates,
     clean: (date: Date) => {
       if (!today) return false
       const day = startOfDay(date)
-      return isAfter(day, latestResetDate) && (isBefore(day, today) || isSameDay(day, today))
+      // اليوم يكون نظيفاً إذا كان بعد آخر انتكاسة وليس هو نفسه يوم انتكاسة
+      const isRelapse = resetDates.some(rd => isSameDay(startOfDay(rd), day))
+      return !isRelapse && isAfter(day, latestResetDate) && (isBefore(day, today) || isSameDay(day, today))
     }
   }), [resetDates, latestResetDate, today])
 
@@ -117,30 +120,30 @@ export const JourneyLog = React.memo(({
       className={`fixed inset-0 z-[100] bg-background flex flex-col transition-all duration-300 ${isOpen ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'}`} 
       dir={isAr ? 'rtl' : 'ltr'}
     >
-      <header className="w-full h-16 border-b flex items-center justify-between px-6 bg-white dark:bg-slate-900 shrink-0">
-        <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full h-12 w-12">
-          <ChevronLeft className={`h-8 w-8 ${isAr ? 'rotate-180' : ''}`} />
+      <header className="w-full h-20 border-b flex items-center justify-between px-8 bg-white dark:bg-slate-900 shrink-0 shadow-sm">
+        <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full h-14 w-14">
+          <ChevronLeft className={`h-10 w-10 ${isAr ? 'rotate-180' : ''}`} />
         </Button>
-        <h2 className="text-lg font-black uppercase tracking-tighter">{isAr ? "سجل الرحلة" : "Journey Log"}</h2>
-        <div className="w-12" />
+        <h2 className="text-2xl font-black uppercase tracking-tighter">{isAr ? "سجل الرحلة" : "Journey Log"}</h2>
+        <div className="w-14" />
       </header>
 
-      <main className="flex-1 flex flex-col items-center p-6 overflow-y-auto custom-scrollbar">
+      <main className="flex-1 flex flex-col items-center p-8 overflow-y-auto custom-scrollbar bg-slate-50/50 dark:bg-slate-950/50">
         {/* Stats Section */}
-        <div className="w-full max-w-[480px] grid grid-cols-2 gap-4 mb-8 shrink-0">
-          <div className="bg-amber-500/5 border-2 border-amber-500/20 rounded-[2rem] p-6 flex flex-col items-center justify-center text-center shadow-sm">
-            <Trophy className="h-6 w-6 text-amber-500 mb-2" />
-            <span className="text-4xl font-black text-amber-600 dark:text-amber-400 tabular-nums leading-none">{stats.highest}</span>
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-60 mt-2">{isAr ? "أعلى رقم (أيام)" : "Highest Streak"}</span>
+        <div className="w-full max-w-[540px] grid grid-cols-2 gap-6 mb-10 shrink-0">
+          <div className="bg-amber-500/10 border-4 border-amber-500/20 rounded-[3rem] p-8 flex flex-col items-center justify-center text-center shadow-md">
+            <Trophy className="h-8 w-8 text-amber-500 mb-3" />
+            <span className="text-6xl font-black text-amber-600 dark:text-amber-400 tabular-nums leading-none">{stats.highest}</span>
+            <span className="text-xs font-black uppercase tracking-widest opacity-60 mt-4">{isAr ? "أعلى رقم (أيام)" : "Highest Streak"}</span>
           </div>
-          <div className="bg-slate-500/5 border-2 border-slate-500/20 rounded-[2rem] p-6 flex flex-col items-center justify-center text-center shadow-sm">
-            <HistoryIcon className="h-6 w-6 text-slate-500 mb-2" />
-            <span className="text-4xl font-black text-slate-600 dark:text-slate-400 tabular-nums leading-none">{stats.previous}</span>
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-60 mt-2">{isAr ? "الرقم السابق" : "Previous"}</span>
+          <div className="bg-slate-500/10 border-4 border-slate-500/20 rounded-[3rem] p-8 flex flex-col items-center justify-center text-center shadow-md">
+            <HistoryIcon className="h-8 w-8 text-slate-500 mb-3" />
+            <span className="text-6xl font-black text-slate-600 dark:text-slate-400 tabular-nums leading-none">{stats.previous}</span>
+            <span className="text-xs font-black uppercase tracking-widest opacity-60 mt-4">{isAr ? "الرقم السابق" : "Previous"}</span>
           </div>
         </div>
 
-        <div className="w-full max-w-[480px] bg-white dark:bg-slate-900 rounded-[3rem] border-2 shadow-2xl p-4 flex flex-col items-center shrink-0">
+        <div className="w-full max-w-[540px] bg-white dark:bg-slate-900 rounded-[4rem] border-4 shadow-2xl p-6 flex flex-col items-center shrink-0">
           <div className="w-full">
             <Calendar 
               mode="single" 
@@ -151,36 +154,36 @@ export const JourneyLog = React.memo(({
               disabled={[{ after: today }]} 
               modifiers={modifiers}
               modifiersClassNames={MODIFIERS_STYLES}
-              className="scale-105"
+              className="scale-110"
             />
           </div>
 
-          <div className="flex gap-6 py-4 border-t w-full justify-center mt-4 opacity-60">
-            <div className="flex items-center gap-2.5">
-              <div className="w-3 h-3 rounded-full bg-emerald-500" />
-              <span className="text-[10px] font-black uppercase tracking-widest">{isAr ? "يوم نظيف" : "Clean"}</span>
+          <div className="flex gap-8 py-6 border-t w-full justify-center mt-6 opacity-60">
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 rounded-full bg-emerald-500" />
+              <span className="text-xs font-black uppercase tracking-widest">{isAr ? "يوم نظيف" : "Clean"}</span>
             </div>
-            <div className="flex items-center gap-2.5">
-              <div className="w-3 h-3 rounded-full bg-red-500" />
-              <span className="text-[10px] font-black uppercase tracking-widest">{isAr ? "انتكاسة" : "Relapse"}</span>
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 rounded-full bg-red-500" />
+              <span className="text-xs font-black uppercase tracking-widest">{isAr ? "انتكاسة" : "Relapse"}</span>
             </div>
           </div>
         </div>
 
-        <div className="mt-8 flex gap-4 w-full max-w-[480px] shrink-0 h-16">
+        <div className="mt-10 flex gap-6 w-full max-w-[540px] shrink-0 h-20">
           {selectedDay && (
             getResetForDay(selectedDay) ? (
               <>
-                <Button onClick={() => onRemoveReset(selectedDay)} variant="outline" className="flex-1 h-16 rounded-[1.5rem] font-black border-2 border-red-500 text-red-500 text-lg">
-                  <Trash2 className="ml-3 h-5 w-5" /> {isAr ? "حذف السجل" : "Delete Record"}
+                <Button onClick={() => onRemoveReset(selectedDay)} variant="outline" className="flex-1 h-20 rounded-[2rem] font-black border-4 border-red-500 text-red-500 text-xl shadow-lg">
+                  <Trash2 className="ml-4 h-6 w-6" /> {isAr ? "حذف السجل" : "Delete Record"}
                 </Button>
-                <Button onClick={handleAdjustTime} className="w-16 h-16 rounded-[1.5rem] font-black bg-slate-200 text-slate-700">
-                  <Settings2 className="h-6 w-6" />
+                <Button onClick={handleAdjustTime} className="w-20 h-20 rounded-[2rem] font-black bg-slate-200 text-slate-700 shadow-md">
+                  <Settings2 className="h-8 w-8" />
                 </Button>
               </>
             ) : (
-              <Button onClick={() => onReset(selectedDay)} variant="destructive" className="flex-1 h-16 rounded-[1.5rem] font-black bg-red-500 text-lg shadow-xl active:scale-95 transition-all">
-                <AlertCircle className="ml-3 h-6 w-6" /> {isAr ? "تسجيل انتكاسة في هذا اليوم" : "Mark Relapse"}
+              <Button onClick={() => onReset(selectedDay)} variant="destructive" className="flex-1 h-20 rounded-[2rem] font-black bg-red-500 text-xl shadow-2xl active:scale-95 transition-all">
+                <AlertCircle className="ml-4 h-8 w-8" /> {isAr ? "تسجيل انتكاسة (0)" : "Mark Relapse (0)"}
               </Button>
             )
           )}
@@ -188,8 +191,8 @@ export const JourneyLog = React.memo(({
       </main>
 
       <Dialog open={showTimePicker} onOpenChange={setShowTimePicker}>
-        <DialogContent className="rounded-[3rem] p-8 max-w-[420px] z-[200]">
-          <DialogHeader><DialogTitle className="text-center font-black text-xl">{isAr ? "ضبط الوقت" : "Set Time"}</DialogTitle></DialogHeader>
+        <DialogContent className="rounded-[4rem] p-10 max-w-[460px] z-[200]">
+          <DialogHeader><DialogTitle className="text-center font-black text-2xl">{isAr ? "ضبط الوقت" : "Set Time"}</DialogTitle></DialogHeader>
           <CircularTimePicker 
             mode={pickerMode} 
             value={pickerMode === 'hours' ? tempHour : tempMinute} 
@@ -197,7 +200,7 @@ export const JourneyLog = React.memo(({
             onComplete={() => pickerMode === 'hours' ? setPickerMode('minutes') : saveAdjustedTime()} 
           />
           {pickerMode === 'minutes' && (
-             <Button onClick={saveAdjustedTime} className="w-full mt-6 h-14 rounded-2xl font-black text-lg shadow-lg">تأكيد الوقت</Button>
+             <Button onClick={saveAdjustedTime} className="w-full mt-8 h-16 rounded-[2rem] font-black text-xl shadow-xl">تأكيد الوقت</Button>
           )}
         </DialogContent>
       </Dialog>
