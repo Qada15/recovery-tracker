@@ -306,6 +306,18 @@ export function RecoveryTrackerApp() {
              resetDates: sorted.map(d => d.toISOString()) 
            });
         }}
+        onUpdateTime={(oldDate, newDate) => {
+          if (!activeHabit) return;
+          const newResets = activeHabit.resetDates.map(d => {
+            const current = parseISO(d);
+            return current.getTime() === oldDate.getTime() ? newDate.toISOString() : d;
+          }).sort((a, b) => parseISO(a).getTime() - parseISO(b).getTime());
+          
+          handleUpdateActiveHabit({
+            startDate: newResets[newResets.length - 1],
+            resetDates: newResets
+          });
+        }}
       />
 
       <SidePanel
