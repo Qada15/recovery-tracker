@@ -7,12 +7,14 @@ import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { startOfDay, isBefore, isSameDay, max, isAfter, differenceInDays } from "date-fns"
 
-// علامات الحالة: خلفية خفيفة مع نقطة في الأسفل. عند التحديد يطغى اللون الأزرق وتبقى النقطة.
+// علامات الحالة: خلفية خفيفة فقط. النقطة تظهر فقط عند التحديد عبر الـ modifiers.
 const MODIFIERS_STYLES = {
-  relapse: "bg-red-500/10 text-red-600 rounded-full font-black relative aria-selected:bg-primary aria-selected:text-primary-foreground after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-red-600 after:rounded-full aria-selected:after:bg-red-300 !opacity-100",
-  clean: "bg-emerald-500/10 text-emerald-600 rounded-full font-black relative aria-selected:bg-primary aria-selected:text-primary-foreground after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-emerald-600 after:rounded-full aria-selected:after:bg-emerald-300 !opacity-100",
-  outsideRelapse: "opacity-30 grayscale relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-slate-400 after:rounded-full",
-  outsideClean: "opacity-30 grayscale relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-slate-400 after:rounded-full"
+  relapse: "bg-red-500/10 text-red-600 rounded-full font-black relative !opacity-100",
+  clean: "bg-emerald-500/10 text-emerald-600 rounded-full font-black relative !opacity-100",
+  selectedRelapse: "after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-red-300 after:rounded-full z-20",
+  selectedClean: "after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-emerald-300 after:rounded-full z-20",
+  outsideRelapse: "opacity-20 grayscale",
+  outsideClean: "opacity-20 grayscale"
 }
 
 interface JourneyLogProps {
@@ -36,7 +38,6 @@ export const JourneyLog = React.memo(({
 }: JourneyLogProps) => {
   const [selectedDay, setSelectedDay] = React.useState<Date | undefined>(undefined)
   const [currentMonth, setCurrentMonth] = React.useState<Date | null>(null)
-  
   const [today, setToday] = React.useState<Date | null>(null)
 
   React.useEffect(() => {
@@ -47,7 +48,6 @@ export const JourneyLog = React.memo(({
     }
   }, [])
 
-  // حساب الإحصائيات من كامل التاريخ (الأيام الحمراء = 0)
   const stats = React.useMemo(() => {
     if (!today) return { highest: 0, previous: 0 }
     
@@ -81,30 +81,24 @@ export const JourneyLog = React.memo(({
            date.getFullYear() === currentMonth.getFullYear()
   }, [currentMonth])
 
-  const modifiers = React.useMemo(() => ({
-    relapse: (date: Date) => {
-      return isDateInCurrentMonth(date) && resetDates.some(rd => isSameDay(startOfDay(rd), startOfDay(date)))
-    },
-    clean: (date: Date) => {
-      if (!today || !isDateInCurrentMonth(date)) return false
-      const day = startOfDay(date)
-      const isRelapse = resetDates.some(rd => isSameDay(startOfDay(rd), day))
-      return !isRelapse && isAfter(day, latestResetDate) && (isBefore(day, today) || isSameDay(day, today))
-    },
-    outsideRelapse: (date: Date) => {
-      return !isDateInCurrentMonth(date) && resetDates.some(rd => isSameDay(startOfDay(rd), startOfDay(date)))
-    },
-    outsideClean: (date: Date) => {
-      if (!today || isDateInCurrentMonth(date)) return false
-      const day = startOfDay(date)
-      const isRelapse = resetDates.some(rd => isSameDay(startOfDay(rd), day))
-      return !isRelapse && isAfter(day, latestResetDate) && (isBefore(day, today) || isSameDay(day, today))
-    }
-  }), [resetDates, latestResetDate, today, isDateInCurrentMonth])
-
-  const getResetForDay = React.useCallback((date: Date) => {
-    return resetDates.find(rd => isSameDay(startOfDay(rd), startOfDay(date)))
+  const isRelapse = React.useCallback((date: Date) => {
+    return resetDates.some(rd => isSameDay(startOfDay(rd), startOfDay(date)))
   }, [resetDates])
+
+  const isClean = React.useCallback((date: Date) => {
+    if (!today) return false
+    const day = startOfDay(date)
+    return !isRelapse(day) && isAfter(day, latestResetDate) && (isBefore(day, today) || isSameDay(day, today))
+  }, [isRelapse, latestResetDate, today])
+
+  const modifiers = React.useMemo(() => ({
+    relapse: (date: Date) => isDateInCurrentMonth(date) && isRelapse(date),
+    clean: (date: Date) => isDateInCurrentMonth(date) && isClean(date),
+    selectedRelapse: (date: Date) => selectedDay && isSameDay(date, selectedDay) && isRelapse(date),
+    selectedClean: (date: Date) => selectedDay && isSameDay(date, selectedDay) && isClean(date),
+    outsideRelapse: (date: Date) => !isDateInCurrentMonth(date) && isRelapse(date),
+    outsideClean: (date: Date) => !isDateInCurrentMonth(date) && isClean(date)
+  }), [isDateInCurrentMonth, isRelapse, isClean, selectedDay])
 
   const isAr = language === 'ar'
 
@@ -123,8 +117,7 @@ export const JourneyLog = React.memo(({
         <div className="w-10" />
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-between p-4 overflow-hidden bg-slate-50/50 dark:bg-slate-950/50">
-        {/* قسم الإحصائيات - تم تصغيره ليناسب الشاشة الواحدة */}
+      <main className="flex-1 flex flex-col items-center p-4 overflow-hidden bg-slate-50/50 dark:bg-slate-950/50 space-y-4">
         <div className="w-full max-w-[420px] grid grid-cols-2 gap-3 shrink-0">
           <div className="bg-amber-500/5 border-2 border-amber-500/20 rounded-[1.5rem] p-3 flex flex-col items-center justify-center text-center shadow-sm">
             <Trophy className="h-5 w-5 text-amber-500 mb-1" />
@@ -138,8 +131,7 @@ export const JourneyLog = React.memo(({
           </div>
         </div>
 
-        {/* قسم التقويم - ضبط الحجم ليتناسب مع الشاشة الواحدة */}
-        <div className="flex-1 w-full max-w-[460px] flex items-center justify-center overflow-hidden py-2">
+        <div className="flex-1 w-full max-w-[460px] flex items-center justify-center overflow-hidden">
           <div className="w-full bg-white dark:bg-slate-900 rounded-[2.5rem] border-2 shadow-2xl p-4 flex flex-col items-center justify-center overflow-hidden">
             <Calendar 
               mode="single" 
@@ -148,28 +140,27 @@ export const JourneyLog = React.memo(({
               month={currentMonth}
               onMonthChange={setCurrentMonth}
               disabled={[{ after: today }]} 
-              modifiers={modifiers}
+              modifiers={modifiers as any}
               modifiersClassNames={MODIFIERS_STYLES}
-              className="scale-[0.85] sm:scale-95 origin-center"
+              className="scale-90 origin-center"
               showOutsideDays={true}
             />
             <div className="flex gap-6 py-2 border-t w-full justify-center mt-1 opacity-60">
               <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/30" />
                 <span className="text-[8px] font-black uppercase tracking-widest">{isAr ? "نظيف" : "Clean"}</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500/30" />
                 <span className="text-[8px] font-black uppercase tracking-widest">{isAr ? "انتكاسة" : "Relapse"}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* أزرار التحكم في الأسفل */}
-        <div className="w-full max-w-[460px] shrink-0 h-16 flex gap-3 mt-2">
+        <div className="w-full max-w-[460px] shrink-0 h-16 flex gap-3">
           {selectedDay && (
-            getResetForDay(selectedDay) ? (
+            isRelapse(selectedDay) ? (
               <Button onClick={() => onRemoveReset(selectedDay)} variant="outline" className="flex-1 h-full rounded-2xl font-black border-2 border-red-500 text-red-500 text-lg shadow-sm">
                 <Trash2 className="ml-2 h-6 w-6" /> {isAr ? "حذف الانتكاسة" : "Delete Relapse"}
               </Button>

@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -7,11 +8,10 @@ import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
 import { SidePanel } from "@/components/SidePanel"
 import { saveToStorage, getFromStorage, STORAGE_KEYS, clearAllStorage, type Habit } from "@/lib/storage"
-import { parseISO, setHours, setMinutes, isSameDay, startOfDay } from "date-fns"
+import { parseISO, isSameDay, startOfDay } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
-import { CircularTimePicker } from "./CircularTimePicker"
 import { Switch } from "@/components/ui/switch"
 import {
   Dialog,
@@ -97,7 +97,7 @@ export function RecoveryTrackerApp() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
   const [isClearDataOpen, setIsClearDataOpen] = React.useState(false)
   const [isFactoryResetOpen, setIsFactoryResetOpen] = React.useState(false)
-  const [setupStep, setSetupStep] = React.useState<'name' | 'icon' | 'date' | 'hour' | 'minute'>('name')
+  const [setupStep, setSetupStep] = React.useState<'name' | 'icon' | 'date'>('name')
 
   const [language, setLanguage] = React.useState<'ar' | 'en'>('ar')
   const [theme, setTheme] = React.useState<'light' | 'dark'>('light')
@@ -107,8 +107,6 @@ export function RecoveryTrackerApp() {
   const [tempName, setTempName] = React.useState("")
   const [tempIcon, setTempIcon] = React.useState("Sparkles")
   const [tempDate, setTempDate] = React.useState<Date | null>(null)
-  const [tempHour, setTempHour] = React.useState(12)
-  const [tempMinute, setTempMinute] = React.useState(0)
   
   const [today, setToday] = React.useState<Date | null>(null)
 
@@ -164,7 +162,7 @@ export function RecoveryTrackerApp() {
 
   const handleFinishSetup = React.useCallback(() => {
     if (!tempDate) return
-    const finalDate = setMinutes(setHours(startOfDay(tempDate), tempHour), tempMinute)
+    const finalDate = startOfDay(tempDate)
     const newHabit: Habit = {
       id: Math.random().toString(36).substr(2, 9),
       name: tempName,
@@ -181,7 +179,7 @@ export function RecoveryTrackerApp() {
     setIsSetupOpen(false)
     setSetupStep('name')
     setTempName("")
-  }, [habits, tempName, tempIcon, tempDate, tempHour, tempMinute])
+  }, [habits, tempName, tempIcon, tempDate])
 
   const toggleLanguage = () => {
     const newLang = language === 'ar' ? 'en' : 'ar'
@@ -231,12 +229,6 @@ export function RecoveryTrackerApp() {
                 externalAccentColor={activeHabit.color}
                 resetDates={activeHabitData.resetDates}
                 onOpenHistory={() => setIsHistoryOpen(true)}
-                onUpdateDate={(d) => {
-                  const currentResets = activeHabit.resetDates.map(rd => parseISO(rd));
-                  const filtered = currentResets.filter(rd => !isSameDay(rd, activeHabitData.startDate));
-                  const newResets = [...filtered, d].sort((a, b) => a.getTime() - b.getTime());
-                  handleUpdateActiveHabit({ startDate: d.toISOString(), resetDates: newResets.map(rd => rd.toISOString()) });
-                }}
                 onUpdateName={(name) => handleUpdateActiveHabit({ name })}
                 onUpdateColor={(color) => handleUpdateActiveHabit({ color })}
                 onReset={() => {
@@ -376,9 +368,11 @@ export function RecoveryTrackerApp() {
                 <Button onClick={() => { setTempDate(new Date()); setSetupStep('date'); }} className="w-full h-12 mt-2 rounded-xl font-black bg-slate-800">{isAr ? "التالي" : "Next"}</Button>
               </div>
             )}
-            {setupStep === 'date' && <div className="scale-75"><Calendar mode="single" selected={tempDate || undefined} onSelect={(d) => { if(d) { setTempDate(d); setSetupStep('hour'); } }} disabled={today ? { after: today } : undefined} className="border rounded-2xl" /></div>}
-            {setupStep === 'hour' && <div className="scale-75"><CircularTimePicker mode="hours" value={tempHour} onChange={setTempHour} onComplete={() => setSetupStep('minute')} /></div>}
-            {setupStep === 'minute' && <div className="scale-75"><CircularTimePicker mode="minutes" value={tempMinute} onChange={setTempMinute} onComplete={handleFinishSetup} /></div>}
+            {setupStep === 'date' && (
+              <div className="scale-75 flex flex-col items-center">
+                <Calendar mode="single" selected={tempDate || undefined} onSelect={(d) => { if(d) { setTempDate(d); handleFinishSetup(); } }} disabled={today ? { after: today } : undefined} className="border rounded-2xl" />
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
