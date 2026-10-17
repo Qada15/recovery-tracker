@@ -11,7 +11,9 @@ import { CircularTimePicker } from "./CircularTimePicker"
 
 const MODIFIERS_STYLES = {
   relapse: "bg-red-500 text-white rounded-full font-black !opacity-100",
-  clean: "bg-emerald-500 text-white rounded-full font-black !opacity-100"
+  clean: "bg-emerald-500 text-white rounded-full font-black !opacity-100",
+  outsideRelapse: "bg-red-500/20 text-red-500/40 rounded-full font-black grayscale",
+  outsideClean: "bg-emerald-500/20 text-emerald-500/40 rounded-full font-black grayscale"
 }
 
 interface JourneyLogProps {
@@ -50,29 +52,21 @@ export const JourneyLog = React.memo(({
     }
   }, [])
 
-  // حساب الإحصائيات من كامل السجل التاريخي (منذ البداية حتى لو كانت في 1998)
   const stats = React.useMemo(() => {
     if (!today) return { highest: 0, previous: 0 }
     
-    // تاريخ البداية الفعلي هو إما startDate أو أقدم انتكاسة مسجلة
     const allDates = [startOfDay(startDate), ...resetDates.map(d => startOfDay(d))].sort((a, b) => a.getTime() - b.getTime())
-    const history = allDates
-    
     const streaks: number[] = []
     
-    // حساب الفترات بين الانتكاسات
-    for (let i = 0; i < history.length - 1; i++) {
-      const diff = differenceInDays(history[i + 1], history[i])
-      // الفترة النظيفة هي الأيام بين تاريخين، أيام الانتكاسة نفسها تعتبر 0
+    for (let i = 0; i < allDates.length - 1; i++) {
+      const diff = differenceInDays(allDates[i + 1], allDates[i])
       streaks.push(Math.max(0, diff - 1))
     }
     
-    // الفترة الحالية (منذ آخر انتكاسة حتى اليوم)
-    const latestReset = history[history.length - 1]
+    const latestReset = allDates[allDates.length - 1]
     const isTodayRelapse = resetDates.some(rd => isSameDay(startOfDay(rd), today))
     const currentStreak = isTodayRelapse ? 0 : differenceInDays(today, latestReset)
     
-    // دمج كافة الفترات
     const allStreaks = [...streaks, currentStreak]
     const highest = allStreaks.length > 0 ? Math.max(...allStreaks) : 0
     const previous = streaks.length > 0 ? streaks[streaks.length - 1] : 0
@@ -85,24 +79,27 @@ export const JourneyLog = React.memo(({
     return max(resetDates.map(d => startOfDay(d)))
   }, [resetDates, startDate])
 
-  // دالة للتحقق مما إذا كان التاريخ ينتمي للشهر المعروض حالياً
   const isDateInCurrentMonth = React.useCallback((date: Date) => {
     if (!currentMonth) return false
     return date.getMonth() === currentMonth.getMonth() && 
            date.getFullYear() === currentMonth.getFullYear()
   }, [currentMonth])
 
-  // منطق الموديفايرز: لا تظهر أي ألوان للأيام التي لا تنتمي للشهر الحالي (Outside Days)
   const modifiers = React.useMemo(() => ({
     relapse: (date: Date) => {
-      // حجب الانتكاسة لو كان اليوم باهتاً (خارج الشهر الحالي)
-      if (!isDateInCurrentMonth(date)) return false
-      return resetDates.some(rd => isSameDay(startOfDay(rd), startOfDay(date)))
+      return isDateInCurrentMonth(date) && resetDates.some(rd => isSameDay(startOfDay(rd), startOfDay(date)))
     },
     clean: (date: Date) => {
-      // حجب اليوم النظيف لو كان اليوم باهتاً
       if (!today || !isDateInCurrentMonth(date)) return false
-      
+      const day = startOfDay(date)
+      const isRelapse = resetDates.some(rd => isSameDay(startOfDay(rd), day))
+      return !isRelapse && isAfter(day, latestResetDate) && (isBefore(day, today) || isSameDay(day, today))
+    },
+    outsideRelapse: (date: Date) => {
+      return !isDateInCurrentMonth(date) && resetDates.some(rd => isSameDay(startOfDay(rd), startOfDay(date)))
+    },
+    outsideClean: (date: Date) => {
+      if (!today || isDateInCurrentMonth(date)) return false
       const day = startOfDay(date)
       const isRelapse = resetDates.some(rd => isSameDay(startOfDay(rd), day))
       return !isRelapse && isAfter(day, latestResetDate) && (isBefore(day, today) || isSameDay(day, today))
@@ -148,23 +145,21 @@ export const JourneyLog = React.memo(({
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-between p-4 overflow-hidden bg-slate-50/50 dark:bg-slate-950/50">
-        {/* قسم الإحصائيات - تم تصغيره ليناسب الشاشة الواحدة */}
-        <div className="w-full max-w-[400px] grid grid-cols-2 gap-3 shrink-0">
+        <div className="w-full max-w-[420px] grid grid-cols-2 gap-3 shrink-0">
           <div className="bg-amber-500/5 border-2 border-amber-500/20 rounded-[1.5rem] p-3 flex flex-col items-center justify-center text-center shadow-sm">
-            <Trophy className="h-5 w-5 text-amber-500 mb-1" />
+            <Trophy className="h-6 w-6 text-amber-500 mb-1" />
             <span className="text-4xl font-black text-amber-600 dark:text-amber-400 tabular-nums leading-none">{stats.highest}</span>
-            <span className="text-[8px] font-black uppercase tracking-widest opacity-60 mt-1">{isAr ? "أعلى رقم تاريخي" : "Historical Best"}</span>
+            <span className="text-[9px] font-black uppercase tracking-widest opacity-60 mt-1">{isAr ? "أعلى رقم تاريخي" : "Historical Best"}</span>
           </div>
           <div className="bg-slate-500/5 border-2 border-slate-500/20 rounded-[1.5rem] p-3 flex flex-col items-center justify-center text-center shadow-sm">
-            <HistoryIcon className="h-5 w-5 text-slate-500 mb-1" />
+            <HistoryIcon className="h-6 w-6 text-slate-500 mb-1" />
             <span className="text-4xl font-black text-slate-600 dark:text-slate-400 tabular-nums leading-none">{stats.previous}</span>
-            <span className="text-[8px] font-black uppercase tracking-widest opacity-60 mt-1">{isAr ? "الرقم السابق" : "Previous Streak"}</span>
+            <span className="text-[9px] font-black uppercase tracking-widest opacity-60 mt-1">{isAr ? "الرقم السابق" : "Previous Streak"}</span>
           </div>
         </div>
 
-        {/* قسم التقويم - ضبط الحجم ليتناسب مع حيز الشاشة */}
-        <div className="flex-1 w-full max-w-[440px] flex items-center justify-center overflow-hidden">
-          <div className="w-full bg-white dark:bg-slate-900 rounded-[2.5rem] border-2 shadow-xl p-4 flex flex-col items-center justify-center overflow-hidden">
+        <div className="flex-1 w-full max-w-[460px] flex items-center justify-center overflow-hidden py-4">
+          <div className="w-full bg-white dark:bg-slate-900 rounded-[2.5rem] border-2 shadow-2xl p-4 flex flex-col items-center justify-center overflow-hidden">
             <Calendar 
               mode="single" 
               selected={selectedDay}
@@ -174,7 +169,7 @@ export const JourneyLog = React.memo(({
               disabled={[{ after: today }]} 
               modifiers={modifiers}
               modifiersClassNames={MODIFIERS_STYLES}
-              className="scale-95 origin-center"
+              className="scale-[0.9] sm:scale-100 origin-center"
               showOutsideDays={true}
             />
             <div className="flex gap-6 py-2 border-t w-full justify-center mt-2 opacity-60">
@@ -190,8 +185,7 @@ export const JourneyLog = React.memo(({
           </div>
         </div>
 
-        {/* شريط الإجراءات السفلي - ثابت ومحدد الحيز */}
-        <div className="w-full max-w-[440px] shrink-0 h-16 flex gap-3 mt-2">
+        <div className="w-full max-w-[460px] shrink-0 h-16 flex gap-3 mt-auto">
           {selectedDay && (
             getResetForDay(selectedDay) ? (
               <>
