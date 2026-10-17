@@ -2,18 +2,17 @@
 "use client"
 
 import * as React from "react"
-import { Trash2, Settings2, ChevronLeft, AlertCircle, Trophy, History as HistoryIcon } from "lucide-react"
+import { Trash2, ChevronLeft, AlertCircle, Trophy, History as HistoryIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
-import { startOfDay, isBefore, isSameDay, max, setHours, setMinutes, isAfter, differenceInDays } from "date-fns"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { CircularTimePicker } from "./CircularTimePicker"
+import { startOfDay, isBefore, isSameDay, max, isAfter, differenceInDays } from "date-fns"
 
+// علامات الحالة: خلفية خفيفة مع نقطة في الأسفل. عند التحديد يطغى اللون الأزرق وتبقى النقطة.
 const MODIFIERS_STYLES = {
-  relapse: "bg-red-500 text-white rounded-full font-black !opacity-100",
-  clean: "bg-emerald-500 text-white rounded-full font-black !opacity-100",
-  outsideRelapse: "bg-red-500/20 text-red-500/40 rounded-full font-black grayscale",
-  outsideClean: "bg-emerald-500/20 text-emerald-500/40 rounded-full font-black grayscale"
+  relapse: "bg-red-500/10 text-red-600 rounded-full font-black relative aria-selected:bg-primary aria-selected:text-primary-foreground after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-red-600 after:rounded-full aria-selected:after:bg-red-300 !opacity-100",
+  clean: "bg-emerald-500/10 text-emerald-600 rounded-full font-black relative aria-selected:bg-primary aria-selected:text-primary-foreground after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-emerald-600 after:rounded-full aria-selected:after:bg-emerald-300 !opacity-100",
+  outsideRelapse: "opacity-30 grayscale relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-slate-400 after:rounded-full",
+  outsideClean: "opacity-30 grayscale relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-slate-400 after:rounded-full"
 }
 
 interface JourneyLogProps {
@@ -37,10 +36,6 @@ export const JourneyLog = React.memo(({
 }: JourneyLogProps) => {
   const [selectedDay, setSelectedDay] = React.useState<Date | undefined>(undefined)
   const [currentMonth, setCurrentMonth] = React.useState<Date | null>(null)
-  const [showTimePicker, setShowTimePicker] = React.useState(false)
-  const [pickerMode, setPickerMode] = React.useState<'hours' | 'minutes'>('hours')
-  const [tempHour, setTempHour] = React.useState(12)
-  const [tempMinute, setTempMinute] = React.useState(0)
   
   const [today, setToday] = React.useState<Date | null>(null)
 
@@ -52,18 +47,19 @@ export const JourneyLog = React.memo(({
     }
   }, [])
 
+  // حساب الإحصائيات من كامل التاريخ (الأيام الحمراء = 0)
   const stats = React.useMemo(() => {
     if (!today) return { highest: 0, previous: 0 }
     
-    const allDates = [startOfDay(startDate), ...resetDates.map(d => startOfDay(d))].sort((a, b) => a.getTime() - b.getTime())
+    const allEvents = [startOfDay(startDate), ...resetDates.map(d => startOfDay(d))].sort((a, b) => a.getTime() - b.getTime())
     const streaks: number[] = []
     
-    for (let i = 0; i < allDates.length - 1; i++) {
-      const diff = differenceInDays(allDates[i + 1], allDates[i])
+    for (let i = 0; i < allEvents.length - 1; i++) {
+      const diff = differenceInDays(allEvents[i + 1], allEvents[i])
       streaks.push(Math.max(0, diff - 1))
     }
     
-    const latestReset = allDates[allDates.length - 1]
+    const latestReset = allEvents[allEvents.length - 1]
     const isTodayRelapse = resetDates.some(rd => isSameDay(startOfDay(rd), today))
     const currentStreak = isTodayRelapse ? 0 : differenceInDays(today, latestReset)
     
@@ -110,33 +106,16 @@ export const JourneyLog = React.memo(({
     return resetDates.find(rd => isSameDay(startOfDay(rd), startOfDay(date)))
   }, [resetDates])
 
-  const handleAdjustTime = React.useCallback((e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (!selectedDay) return
-    const existingReset = getResetForDay(selectedDay) || selectedDay
-    setTempHour(existingReset.getHours())
-    setTempMinute(existingReset.getMinutes())
-    setPickerMode('hours')
-    setShowTimePicker(true)
-  }, [selectedDay, getResetForDay])
-
-  const saveAdjustedTime = React.useCallback(() => {
-    if (!selectedDay) return
-    const newDateTime = setMinutes(setHours(startOfDay(selectedDay), tempHour), tempMinute)
-    onReset(newDateTime)
-    setShowTimePicker(false)
-  }, [selectedDay, tempHour, tempMinute, onReset])
-
   const isAr = language === 'ar'
 
   if (!today || !currentMonth) return null
 
   return (
     <div 
-      className={`fixed inset-0 z-[100] bg-background flex flex-col transition-all duration-300 pointer-events-auto overflow-hidden ${isOpen ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'}`} 
+      className={`fixed inset-0 z-[100] bg-background flex flex-col transition-all duration-500 pointer-events-auto overflow-hidden ${isOpen ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'}`} 
       dir={isAr ? 'rtl' : 'ltr'}
     >
-      <header className="w-full h-14 border-b flex items-center justify-between px-6 bg-white dark:bg-slate-900 shrink-0 shadow-sm">
+      <header className="w-full h-14 border-b flex items-center justify-between px-6 bg-white dark:bg-slate-900 shrink-0 shadow-sm z-10">
         <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full h-10 w-10">
           <ChevronLeft className={`h-8 w-8 ${isAr ? 'rotate-180' : ''}`} />
         </Button>
@@ -145,20 +124,22 @@ export const JourneyLog = React.memo(({
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-between p-4 overflow-hidden bg-slate-50/50 dark:bg-slate-950/50">
+        {/* قسم الإحصائيات - تم تصغيره ليناسب الشاشة الواحدة */}
         <div className="w-full max-w-[420px] grid grid-cols-2 gap-3 shrink-0">
           <div className="bg-amber-500/5 border-2 border-amber-500/20 rounded-[1.5rem] p-3 flex flex-col items-center justify-center text-center shadow-sm">
-            <Trophy className="h-6 w-6 text-amber-500 mb-1" />
-            <span className="text-4xl font-black text-amber-600 dark:text-amber-400 tabular-nums leading-none">{stats.highest}</span>
-            <span className="text-[9px] font-black uppercase tracking-widest opacity-60 mt-1">{isAr ? "أعلى رقم تاريخي" : "Historical Best"}</span>
+            <Trophy className="h-5 w-5 text-amber-500 mb-1" />
+            <span className="text-3xl font-black text-amber-600 dark:text-amber-400 tabular-nums leading-none">{stats.highest}</span>
+            <span className="text-[8px] font-black uppercase tracking-widest opacity-60 mt-1">{isAr ? "أعلى رقم تاريخي" : "Historical Best"}</span>
           </div>
           <div className="bg-slate-500/5 border-2 border-slate-500/20 rounded-[1.5rem] p-3 flex flex-col items-center justify-center text-center shadow-sm">
-            <HistoryIcon className="h-6 w-6 text-slate-500 mb-1" />
-            <span className="text-4xl font-black text-slate-600 dark:text-slate-400 tabular-nums leading-none">{stats.previous}</span>
-            <span className="text-[9px] font-black uppercase tracking-widest opacity-60 mt-1">{isAr ? "الرقم السابق" : "Previous Streak"}</span>
+            <HistoryIcon className="h-5 w-5 text-slate-500 mb-1" />
+            <span className="text-3xl font-black text-slate-600 dark:text-slate-400 tabular-nums leading-none">{stats.previous}</span>
+            <span className="text-[8px] font-black uppercase tracking-widest opacity-60 mt-1">{isAr ? "الرقم السابق" : "Previous Streak"}</span>
           </div>
         </div>
 
-        <div className="flex-1 w-full max-w-[460px] flex items-center justify-center overflow-hidden py-4">
+        {/* قسم التقويم - ضبط الحجم ليتناسب مع الشاشة الواحدة */}
+        <div className="flex-1 w-full max-w-[460px] flex items-center justify-center overflow-hidden py-2">
           <div className="w-full bg-white dark:bg-slate-900 rounded-[2.5rem] border-2 shadow-2xl p-4 flex flex-col items-center justify-center overflow-hidden">
             <Calendar 
               mode="single" 
@@ -169,33 +150,29 @@ export const JourneyLog = React.memo(({
               disabled={[{ after: today }]} 
               modifiers={modifiers}
               modifiersClassNames={MODIFIERS_STYLES}
-              className="scale-[0.9] sm:scale-100 origin-center"
+              className="scale-[0.85] sm:scale-95 origin-center"
               showOutsideDays={true}
             />
-            <div className="flex gap-6 py-2 border-t w-full justify-center mt-2 opacity-60">
+            <div className="flex gap-6 py-2 border-t w-full justify-center mt-1 opacity-60">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                <span className="text-[9px] font-black uppercase tracking-widest">{isAr ? "نظيف" : "Clean"}</span>
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                <span className="text-[8px] font-black uppercase tracking-widest">{isAr ? "نظيف" : "Clean"}</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-500" />
-                <span className="text-[9px] font-black uppercase tracking-widest">{isAr ? "انتكاسة" : "Relapse"}</span>
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                <span className="text-[8px] font-black uppercase tracking-widest">{isAr ? "انتكاسة" : "Relapse"}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="w-full max-w-[460px] shrink-0 h-16 flex gap-3 mt-auto">
+        {/* أزرار التحكم في الأسفل */}
+        <div className="w-full max-w-[460px] shrink-0 h-16 flex gap-3 mt-2">
           {selectedDay && (
             getResetForDay(selectedDay) ? (
-              <>
-                <Button onClick={() => onRemoveReset(selectedDay)} variant="outline" className="flex-1 h-full rounded-2xl font-black border-2 border-red-500 text-red-500 text-lg shadow-sm">
-                  <Trash2 className="ml-2 h-6 w-6" /> {isAr ? "حذف" : "Delete"}
-                </Button>
-                <Button onClick={handleAdjustTime} className="w-16 h-full rounded-2xl font-black bg-slate-200 text-slate-700 shadow-sm">
-                  <Settings2 className="h-7 w-7" />
-                </Button>
-              </>
+              <Button onClick={() => onRemoveReset(selectedDay)} variant="outline" className="flex-1 h-full rounded-2xl font-black border-2 border-red-500 text-red-500 text-lg shadow-sm">
+                <Trash2 className="ml-2 h-6 w-6" /> {isAr ? "حذف الانتكاسة" : "Delete Relapse"}
+              </Button>
             ) : (
               <Button onClick={() => onReset(selectedDay)} variant="destructive" className="flex-1 h-full rounded-2xl font-black bg-red-500 text-lg shadow-lg active:scale-95 transition-all">
                 <AlertCircle className="ml-2 h-7 w-7" /> {isAr ? "تسجيل انتكاسة" : "Mark Relapse"}
@@ -204,23 +181,6 @@ export const JourneyLog = React.memo(({
           )}
         </div>
       </main>
-
-      <Dialog open={showTimePicker} onOpenChange={setShowTimePicker}>
-        <DialogContent className="rounded-[2.5rem] p-6 max-w-[340px] z-[200]">
-          <DialogHeader><DialogTitle className="text-center font-black text-xl">{isAr ? "ضبط الوقت" : "Set Time"}</DialogTitle></DialogHeader>
-          <div className="scale-90 flex justify-center">
-            <CircularTimePicker 
-              mode={pickerMode} 
-              value={pickerMode === 'hours' ? tempHour : tempMinute} 
-              onChange={pickerMode === 'hours' ? setTempHour : setTempMinute} 
-              onComplete={() => pickerMode === 'hours' ? setPickerMode('minutes') : saveAdjustedTime()} 
-            />
-          </div>
-          {pickerMode === 'minutes' && (
-             <Button onClick={saveAdjustedTime} className="w-full mt-4 h-14 rounded-2xl font-black text-lg shadow-md">{isAr ? "تأكيد" : "Confirm"}</Button>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   )
 })

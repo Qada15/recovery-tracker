@@ -43,7 +43,7 @@ function Calendar({
         day: "h-12 w-full text-center text-sm p-0 relative flex items-center justify-center",
         day_button: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-10 w-10 p-0 font-bold aria-selected:opacity-100 flex items-center justify-center rounded-full transition-all hover:scale-110"
+          "h-10 w-10 p-0 font-bold aria-selected:opacity-100 flex items-center justify-center rounded-full transition-all hover:scale-110 !overflow-visible"
         ),
         selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground shadow-lg scale-110",
         today: "bg-accent/20 text-accent ring-2 ring-accent/30",
