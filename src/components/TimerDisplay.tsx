@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -23,6 +24,11 @@ import { CircularTimePicker } from "./CircularTimePicker"
 
 const ICON_MAP = {
   Sparkles, Heart, Zap, Moon, Sun, Target, Shield, Flame, Cloud, Ghost
+}
+
+const MODIFIERS_STYLES = {
+  relapse: "bg-red-500 text-white rounded-full font-black !opacity-100",
+  clean: "bg-emerald-500 text-white rounded-full font-black !opacity-100"
 }
 
 const LiveClock = React.memo(({ startDate, language }: { startDate: Date; language: 'ar' | 'en' }) => {
