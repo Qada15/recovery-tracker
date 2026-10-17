@@ -42,12 +42,12 @@ export const JourneyLog = React.memo(({
   const [today, setToday] = React.useState<Date | null>(null)
 
   React.useEffect(() => {
-    if (isOpen) {
+    if (typeof window !== 'undefined') {
       const now = new Date()
       setToday(startOfDay(now))
       setCurrentMonth(now)
     }
-  }, [isOpen])
+  }, [])
 
   const latestResetDate = React.useMemo(() => {
     if (resetDates.length === 0) return startOfDay(startDate)
@@ -59,7 +59,6 @@ export const JourneyLog = React.memo(({
     clean: (date: Date) => {
       if (!today) return false
       const day = startOfDay(date)
-      // اليوم نظيف إذا كان بعد آخر انتكاسة وقبل اليوم أو هو اليوم
       return isAfter(day, latestResetDate) && (isBefore(day, today) || isSameDay(day, today))
     }
   }), [resetDates, latestResetDate, today])
@@ -87,10 +86,13 @@ export const JourneyLog = React.memo(({
 
   const isAr = language === 'ar'
 
-  if (!isOpen || !today || !currentMonth) return null
+  if (!today || !currentMonth) return null
 
   return (
-    <div className="fixed inset-0 z-[100] bg-background flex flex-col animate-in fade-in slide-in-from-bottom-5 duration-300 overflow-hidden" dir={isAr ? 'rtl' : 'ltr'}>
+    <div 
+      className={`fixed inset-0 z-[100] bg-background flex flex-col transition-all duration-300 ${isOpen ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'}`} 
+      dir={isAr ? 'rtl' : 'ltr'}
+    >
       <header className="w-full h-14 border-b flex items-center justify-between px-4 bg-white dark:bg-slate-900 shrink-0">
         <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full">
           <ChevronLeft className={`h-6 w-6 ${isAr ? 'rotate-180' : ''}`} />

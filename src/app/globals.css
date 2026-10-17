@@ -54,13 +54,16 @@
     @apply border-border;
   }
   html, body {
-    @apply h-full w-full overflow-hidden;
-    /* أزلنا fixed و inset-0 للسماح لـ Radix UI بإدارة الجسم بشكل صحيح */
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
+    position: relative;
   }
   body {
-    @apply bg-background text-foreground flex flex-col;
+    @apply bg-background text-foreground;
+    /* Allow Radix to manage pointer-events on body */
   }
 }
 

@@ -289,33 +289,35 @@ export function RecoveryTrackerApp() {
         )}
       </main>
 
-      {activeHabit && activeHabitData && isHistoryOpen && (
-        <JourneyLog 
-          isOpen={isHistoryOpen} 
-          onClose={() => setIsHistoryOpen(false)} 
-          startDate={activeHabitData.startDate}
-          resetDates={activeHabitData.resetDates}
-          language={language}
-          onReset={(date) => {
-            const currentResets = activeHabit.resetDates.map(d => parseISO(d));
-            const newResets = [...currentResets, date].sort((a, b) => a.getTime() - b.getTime());
-            handleUpdateActiveHabit({
-              startDate: newResets[newResets.length - 1].toISOString(),
-              resetDates: newResets.map(d => d.toISOString())
-            });
-          }} 
-          onRemoveReset={(date) => {
-             const newResets = activeHabit.resetDates.filter(d => !isSameDay(parseISO(d), date));
-             if (newResets.length === 0) return;
-             const sorted = newResets.map(d => parseISO(d)).sort((a, b) => a.getTime() - b.getTime());
-             handleUpdateActiveHabit({ 
-               startDate: sorted[sorted.length - 1].toISOString(), 
-               resetDates: sorted.map(d => d.toISOString()) 
-             });
-          }}
-        />
-      )}
+      {/* History Log Panel - Stay mounted but control via isOpen to ensure Radix cleanup */}
+      <JourneyLog 
+        isOpen={isHistoryOpen} 
+        onClose={() => setIsHistoryOpen(false)} 
+        startDate={activeHabitData?.startDate || new Date()}
+        resetDates={activeHabitData?.resetDates || []}
+        language={language}
+        onReset={(date) => {
+          if (!activeHabit) return;
+          const currentResets = activeHabit.resetDates.map(d => parseISO(d));
+          const newResets = [...currentResets, date].sort((a, b) => a.getTime() - b.getTime());
+          handleUpdateActiveHabit({
+            startDate: newResets[newResets.length - 1].toISOString(),
+            resetDates: newResets.map(d => d.toISOString())
+          });
+        }} 
+        onRemoveReset={(date) => {
+           if (!activeHabit) return;
+           const newResets = activeHabit.resetDates.filter(d => !isSameDay(parseISO(d), date));
+           if (newResets.length === 0) return;
+           const sorted = newResets.map(d => parseISO(d)).sort((a, b) => a.getTime() - b.getTime());
+           handleUpdateActiveHabit({ 
+             startDate: sorted[sorted.length - 1].toISOString(), 
+             resetDates: sorted.map(d => d.toISOString()) 
+           });
+        }}
+      />
 
+      {/* Settings Side Panel - Stay mounted */}
       <SidePanel
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
@@ -372,6 +374,7 @@ export function RecoveryTrackerApp() {
         </div>
       </SidePanel>
 
+      {/* Setup Dialog */}
       <Dialog open={isSetupOpen} onOpenChange={setIsSetupOpen}>
         <DialogContent className="rounded-[2.5rem] p-6 max-w-[380px] max-h-[90vh] overflow-hidden flex flex-col z-[100]">
           <DialogHeader><DialogTitle className="text-center font-black">{t.setupTitle}</DialogTitle></DialogHeader>
