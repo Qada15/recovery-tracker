@@ -125,7 +125,9 @@ export function RecoveryTrackerApp() {
     if (savedLang) setLanguage(savedLang)
     if (savedTheme) {
       setTheme(savedTheme)
-      document.documentElement.classList.toggle('dark', savedTheme === 'dark')
+      if (typeof document !== 'undefined') {
+        document.documentElement.classList.toggle('dark', savedTheme === 'dark')
+      }
     }
 
     if (savedHabits) {
@@ -191,7 +193,9 @@ export function RecoveryTrackerApp() {
     const newTheme = theme === 'light' ? 'dark' : 'light'
     setTheme(newTheme)
     saveToStorage(STORAGE_KEYS.THEME, newTheme)
-    document.documentElement.classList.toggle('dark', newTheme === 'dark')
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.toggle('dark', newTheme === 'dark')
+    }
   }
 
   const t = TRANSLATIONS[language]
@@ -200,23 +204,23 @@ export function RecoveryTrackerApp() {
   if (!mounted) return null;
 
   return (
-    <div className="h-screen w-screen bg-slate-50 dark:bg-slate-950 flex flex-col overflow-hidden fixed inset-0" dir={isAr ? 'rtl' : 'ltr'}>
-      <header className="h-14 flex items-center justify-between px-6 z-40 shrink-0">
+    <div className="flex flex-col h-full w-full overflow-hidden" dir={isAr ? 'rtl' : 'ltr'}>
+      <header className="h-14 flex items-center justify-between px-6 z-40 shrink-0 border-b bg-background/50 backdrop-blur-md">
         <Button variant="ghost" size="icon" className="rounded-full text-slate-400">
           <User className="h-5 w-5" />
         </Button>
-        <h1 className="text-lg font-black text-slate-700 dark:text-white tracking-tighter">{t.title}</h1>
+        <h1 className="text-lg font-black tracking-tighter">{t.title}</h1>
         <Button variant="ghost" size="icon" className="rounded-full text-slate-400" onClick={() => setIsSettingsOpen(true)}>
           <Settings className="h-5 w-5" />
         </Button>
       </header>
 
-      <main className="flex-1 w-full flex flex-col items-center px-4 py-2 overflow-hidden">
+      <main className="flex-1 w-full flex flex-col items-center px-4 py-2 overflow-hidden bg-slate-50 dark:bg-slate-950">
         {activeHabit && activeHabitData ? (
           <div className="w-full flex flex-col items-center h-full max-w-[480px]">
             <div className="text-center space-y-0.5 mb-4 shrink-0">
-              <h2 className="text-2xl font-black text-slate-800 dark:text-white tracking-tighter">{t.subtitle}</h2>
-              <p className="text-[10px] font-bold text-slate-400">{t.motivation}</p>
+              <h2 className="text-2xl font-black tracking-tighter">{t.subtitle}</h2>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t.motivation}</p>
             </div>
 
             <div className="flex-1 w-full flex flex-col justify-center overflow-hidden">
@@ -285,14 +289,13 @@ export function RecoveryTrackerApp() {
         )}
       </main>
 
-      {activeHabit && activeHabitData && (
+      {activeHabit && activeHabitData && isHistoryOpen && (
         <JourneyLog 
           isOpen={isHistoryOpen} 
           onClose={() => setIsHistoryOpen(false)} 
           startDate={activeHabitData.startDate}
           resetDates={activeHabitData.resetDates}
-          habitName={activeHabit.name}
-          accentColor={activeHabit.color}
+          language={language}
           onReset={(date) => {
             const currentResets = activeHabit.resetDates.map(d => parseISO(d));
             const newResets = [...currentResets, date].sort((a, b) => a.getTime() - b.getTime());
@@ -310,7 +313,6 @@ export function RecoveryTrackerApp() {
                resetDates: sorted.map(d => d.toISOString()) 
              });
           }}
-          language={language}
         />
       )}
 
@@ -371,7 +373,7 @@ export function RecoveryTrackerApp() {
       </SidePanel>
 
       <Dialog open={isSetupOpen} onOpenChange={setIsSetupOpen}>
-        <DialogContent className="rounded-[2.5rem] p-6 max-w-[380px] max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="rounded-[2.5rem] p-6 max-w-[380px] max-h-[90vh] overflow-hidden flex flex-col z-[100]">
           <DialogHeader><DialogTitle className="text-center font-black">{t.setupTitle}</DialogTitle></DialogHeader>
           <div className="flex-1 flex flex-col items-center justify-center overflow-hidden py-4">
             {setupStep === 'name' && (
@@ -404,12 +406,12 @@ export function RecoveryTrackerApp() {
               </div>
             )}
             {setupStep === 'date' && (
-              <div className="w-full flex flex-col items-center">
+              <div className="w-full flex flex-col items-center scale-90">
                 <Calendar 
                   mode="single" 
                   selected={tempDate || undefined} 
                   onSelect={(date) => { if(date) { setTempDate(date); setSetupStep('hour'); } }} 
-                  className="rounded-3xl border p-2 scale-90" 
+                  className="rounded-3xl border p-2" 
                   disabled={today ? { after: today } : undefined}
                 />
               </div>
@@ -421,7 +423,7 @@ export function RecoveryTrackerApp() {
       </Dialog>
 
       <AlertDialog open={isClearDataOpen} onOpenChange={setIsClearDataOpen}>
-        <AlertDialogContent className="rounded-[2.5rem] max-w-[340px]">
+        <AlertDialogContent className="rounded-[2.5rem] max-w-[340px] z-[110]">
           <AlertDialogHeader><AlertDialogTitle className="font-black">{isAr ? "حذف سجلات العداد" : "Clear Habit History"}</AlertDialogTitle><AlertDialogDescription>{t.confirmClear}</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter><AlertDialogCancel className="rounded-xl">{t.cancel}</AlertDialogCancel><AlertDialogAction onClick={() => {
             if (!activeHabit) return;
@@ -434,7 +436,7 @@ export function RecoveryTrackerApp() {
       </AlertDialog>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="rounded-[2.5rem] max-w-[340px]">
+        <AlertDialogContent className="rounded-[2.5rem] max-w-[340px] z-[110]">
           <AlertDialogHeader><AlertDialogTitle className="font-black">{isAr ? "تأكيد الحذف" : "Confirm Delete"}</AlertDialogTitle><AlertDialogDescription>{t.confirmDelete}</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter><AlertDialogCancel className="rounded-xl">{t.cancel}</AlertDialogCancel><AlertDialogAction onClick={() => {
             const newHabits = habits.filter(h => h.id !== activeHabitId);
@@ -447,7 +449,7 @@ export function RecoveryTrackerApp() {
       </AlertDialog>
 
       <AlertDialog open={isFactoryResetOpen} onOpenChange={setIsFactoryResetOpen}>
-        <AlertDialogContent className="rounded-[2.5rem] max-w-[340px]">
+        <AlertDialogContent className="rounded-[2.5rem] max-w-[340px] z-[110]">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-black text-red-500">{t.factoryReset}</AlertDialogTitle>
             <AlertDialogDescription>{t.resetWarning}</AlertDialogDescription>

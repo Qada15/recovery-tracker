@@ -54,7 +54,8 @@
     @apply border-border;
   }
   html, body {
-    @apply overflow-hidden h-full w-full fixed inset-0;
+    @apply h-full w-full overflow-hidden;
+    /* أزلنا fixed و inset-0 للسماح لـ Radix UI بإدارة الجسم بشكل صحيح */
     user-select: none;
     -webkit-tap-highlight-color: transparent;
   }

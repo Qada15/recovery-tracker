@@ -38,8 +38,11 @@ export default function RootLayout({
         <meta name="theme-color" content="#ffffff" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
-      <body suppressHydrationWarning className="font-body antialiased bg-background text-foreground h-full w-full flex flex-col overflow-hidden fixed inset-0">
-        {children}
+      <body suppressHydrationWarning className="font-body antialiased bg-background text-foreground h-full w-full overflow-hidden">
+        {/* الحاوية الرئيسية هي التي تضمن حيز الشاشة بدون تمرير */}
+        <div className="flex flex-col h-full w-full fixed inset-0 overflow-hidden">
+          {children}
+        </div>
       </body>
     </html>
   );
