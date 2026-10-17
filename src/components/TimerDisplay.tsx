@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { History, Trophy, RefreshCw, MoreVertical, Settings2, Calendar as CalendarIcon, Sparkles, Trash2, RotateCcw } from "lucide-react"
+import { History, Trophy, MoreVertical, Settings2, Calendar as CalendarIcon, Sparkles, Trash2, RotateCcw, RefreshCw, Heart, Zap, Moon, Sun, Target, Shield, Flame, Cloud, Ghost } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -21,9 +21,8 @@ import { Calendar } from "@/components/ui/calendar"
 import { setHours, setMinutes, differenceInDays, startOfDay, isBefore, isSameDay, max } from "date-fns"
 import { CircularTimePicker } from "./CircularTimePicker"
 
-const MODIFIERS_STYLES = {
-  relapse: "bg-red-500 text-white rounded-full font-black !opacity-100",
-  clean: "bg-emerald-500 text-white rounded-full font-black !opacity-100"
+const ICON_MAP = {
+  Sparkles, Heart, Zap, Moon, Sun, Target, Shield, Flame, Cloud, Ghost
 }
 
 const LiveClock = React.memo(({ startDate, language }: { startDate: Date; language: 'ar' | 'en' }) => {
@@ -84,6 +83,7 @@ LiveClock.displayName = "LiveClock"
 interface TimerDisplayProps {
   externalStartDate: Date
   externalHabitName: string
+  externalHabitIcon?: string
   externalAccentColor: string
   resetDates: Date[]
   onOpenHistory: () => void
@@ -99,6 +99,7 @@ interface TimerDisplayProps {
 export const TimerDisplay = React.memo(({ 
   externalStartDate, 
   externalHabitName, 
+  externalHabitIcon = 'Sparkles',
   resetDates,
   onOpenHistory,
   onUpdateDate,
@@ -122,6 +123,7 @@ export const TimerDisplay = React.memo(({
   }, [])
 
   const isAr = language === 'ar'
+  const IconComponent = ICON_MAP[externalHabitIcon as keyof typeof ICON_MAP] || Sparkles
   
   const latestResetDate = React.useMemo(() => {
     return resetDates.length === 0 ? startOfDay(externalStartDate) : max(resetDates.map(d => startOfDay(d)));
@@ -179,6 +181,10 @@ export const TimerDisplay = React.memo(({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="rounded-2xl w-56">
+              <DropdownMenuItem onClick={onReset} className="text-red-500 font-bold p-3">
+                <RefreshCw className="h-4 w-4 ml-2" /> {isAr ? "تصفير العداد" : "Reset Counter"}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setShowNameDialog(true)} className="p-3 font-bold">
                 <Settings2 className="h-4 w-4 ml-2" /> {isAr ? "تعديل الاسم" : "Edit Name"}
               </DropdownMenuItem>
@@ -196,7 +202,7 @@ export const TimerDisplay = React.memo(({
           </DropdownMenu>
           <div className="flex items-center gap-2">
             <h3 className="text-lg font-black text-slate-800 dark:text-white tracking-tight truncate max-w-[150px]">{externalHabitName}</h3>
-            <Sparkles className="h-4 w-4 text-orange-400" />
+            <IconComponent className="h-5 w-5 text-orange-400" />
           </div>
         </div>
 
@@ -214,12 +220,6 @@ export const TimerDisplay = React.memo(({
         </div>
 
         <LiveClock startDate={externalStartDate} language={language} />
-
-        <div className="w-full mb-3 shrink-0">
-          <button onClick={onReset} className="w-full h-12 rounded-2xl border-2 border-red-100 text-red-500 font-black text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all">
-            <RefreshCw className="h-4 w-4" /> {isAr ? "تصفير" : "Reset"}
-          </button>
-        </div>
 
         <Button onClick={onOpenHistory} className="w-full h-14 rounded-[1.2rem] bg-slate-900 dark:bg-slate-800 text-white font-black text-base flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all shrink-0">
           <History className="h-5 w-5" /> {isAr ? "سجل الرحلة" : "Journey Log"}

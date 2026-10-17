@@ -11,6 +11,7 @@ export interface Habit {
   startDate: string;
   resetDates: string[];
   color: string;
+  icon?: string;
 }
 
 export function saveToStorage(key: string, value: string) {

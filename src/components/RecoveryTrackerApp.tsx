@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Settings, User, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun } from "lucide-react"
+import { Settings, User, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Heart, Zap, Target, Shield, Flame, Cloud, Ghost } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
@@ -49,7 +49,8 @@ const TRANSLATIONS = {
     factoryReset: "مسح كافة البيانات",
     resetWarning: "سيؤدي هذا إلى حذف جميع العدادات والبيانات المسجلة نهائياً ولا يمكن التراجع عن هذه الخطوة.",
     about: "عن التطبيق",
-    version: "الإصدار 1.0.0"
+    version: "الإصدار 1.0.0",
+    selectIcon: "اختر رمزاً"
   },
   en: {
     title: "Recovery",
@@ -69,9 +70,23 @@ const TRANSLATIONS = {
     factoryReset: "Factory Reset",
     resetWarning: "This will permanently delete all habits and records. This action cannot be undone.",
     about: "About",
-    version: "Version 1.0.0"
+    version: "Version 1.0.0",
+    selectIcon: "Select Icon"
   }
 }
+
+const AVAILABLE_ICONS = [
+  { name: 'Sparkles', icon: Sparkles },
+  { name: 'Heart', icon: Heart },
+  { name: 'Zap', icon: Zap },
+  { name: 'Moon', icon: Moon },
+  { name: 'Sun', icon: Sun },
+  { name: 'Target', icon: Target },
+  { name: 'Shield', icon: Shield },
+  { name: 'Flame', icon: Flame },
+  { name: 'Cloud', icon: Cloud },
+  { name: 'Ghost', icon: Ghost },
+]
 
 export function RecoveryTrackerApp() {
   const { toast } = useToast()
@@ -82,7 +97,7 @@ export function RecoveryTrackerApp() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
   const [isClearDataOpen, setIsClearDataOpen] = React.useState(false)
   const [isFactoryResetOpen, setIsFactoryResetOpen] = React.useState(false)
-  const [setupStep, setSetupStep] = React.useState<'name' | 'date' | 'hour' | 'minute'>('name')
+  const [setupStep, setSetupStep] = React.useState<'name' | 'icon' | 'date' | 'hour' | 'minute'>('name')
 
   const [language, setLanguage] = React.useState<'ar' | 'en'>('ar')
   const [theme, setTheme] = React.useState<'light' | 'dark'>('light')
@@ -90,6 +105,7 @@ export function RecoveryTrackerApp() {
   const [activeHabitId, setActiveHabitId] = React.useState<string | null>(null)
 
   const [tempName, setTempName] = React.useState("")
+  const [tempIcon, setTempIcon] = React.useState("Sparkles")
   const [tempDate, setTempDate] = React.useState<Date | null>(null)
   const [tempHour, setTempHour] = React.useState(12)
   const [tempMinute, setTempMinute] = React.useState(0)
@@ -150,6 +166,7 @@ export function RecoveryTrackerApp() {
     const newHabit: Habit = {
       id: Math.random().toString(36).substr(2, 9),
       name: tempName,
+      icon: tempIcon,
       startDate: finalDate.toISOString(),
       resetDates: [finalDate.toISOString()],
       color: 'hsl(var(--accent))'
@@ -162,7 +179,7 @@ export function RecoveryTrackerApp() {
     setIsSetupOpen(false)
     setSetupStep('name')
     setTempName("")
-  }, [habits, tempName, tempDate, tempHour, tempMinute])
+  }, [habits, tempName, tempIcon, tempDate, tempHour, tempMinute])
 
   const toggleLanguage = () => {
     const newLang = language === 'ar' ? 'en' : 'ar'
@@ -206,6 +223,7 @@ export function RecoveryTrackerApp() {
               <TimerDisplay 
                 externalStartDate={activeHabitData.startDate} 
                 externalHabitName={activeHabit.name}
+                externalHabitIcon={activeHabit.icon}
                 externalAccentColor={activeHabit.color}
                 resetDates={activeHabitData.resetDates}
                 onOpenHistory={() => setIsHistoryOpen(true)}
@@ -234,29 +252,32 @@ export function RecoveryTrackerApp() {
 
             <div className="w-full py-6 shrink-0">
               <div className="flex items-center gap-3 overflow-x-auto pb-2 custom-scrollbar px-4 w-full justify-center">
-                <button onClick={() => setIsSetupOpen(true)} className="shrink-0 w-14 h-14 rounded-[1.2rem] bg-slate-800 text-white flex items-center justify-center shadow-lg active:scale-95 transition-transform">
+                <button onClick={() => { setIsSetupOpen(true); setSetupStep('name'); }} className="shrink-0 w-14 h-14 rounded-[1.2rem] bg-slate-800 text-white flex items-center justify-center shadow-lg active:scale-95 transition-transform">
                   <Plus className="h-5 w-5" />
                 </button>
-                {habits.map((habit) => (
-                  <button
-                    key={habit.id}
-                    onClick={() => { setActiveHabitId(habit.id); saveToStorage(STORAGE_KEYS.ACTIVE_HABIT_ID, habit.id); }}
-                    className={`shrink-0 h-20 w-16 rounded-[1.2rem] flex flex-col items-center justify-center gap-1 border-2 transition-all ${
-                      activeHabitId === habit.id ? "bg-white dark:bg-slate-900 border-slate-800 dark:border-white text-slate-800 dark:text-white shadow-xl" : "bg-transparent border-transparent text-slate-400 opacity-60"
-                    }`}
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
-                       <Sparkles className="h-4 w-4" style={{ color: habit.color }} />
-                    </div>
-                    <span className="text-[8px] font-black uppercase tracking-tighter truncate w-full px-1 text-center">{habit.name}</span>
-                  </button>
-                ))}
+                {habits.map((habit) => {
+                  const HabitIcon = AVAILABLE_ICONS.find(i => i.name === habit.icon)?.icon || Sparkles;
+                  return (
+                    <button
+                      key={habit.id}
+                      onClick={() => { setActiveHabitId(habit.id); saveToStorage(STORAGE_KEYS.ACTIVE_HABIT_ID, habit.id); }}
+                      className={`shrink-0 h-20 w-16 rounded-[1.2rem] flex flex-col items-center justify-center gap-1 border-2 transition-all ${
+                        activeHabitId === habit.id ? "bg-white dark:bg-slate-900 border-slate-800 dark:border-white text-slate-800 dark:text-white shadow-xl" : "bg-transparent border-transparent text-slate-400 opacity-60"
+                      }`}
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
+                         <HabitIcon className="h-4 w-4" style={{ color: habit.color }} />
+                      </div>
+                      <span className="text-[8px] font-black uppercase tracking-tighter truncate w-full px-1 text-center">{habit.name}</span>
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </div>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center space-y-6">
-            <button onClick={() => setIsSetupOpen(true)} className="w-28 h-28 rounded-[2.5rem] bg-slate-800 dark:bg-slate-900 text-white shadow-2xl flex items-center justify-center active:scale-95 transition-transform">
+            <button onClick={() => { setIsSetupOpen(true); setSetupStep('name'); }} className="w-28 h-28 rounded-[2.5rem] bg-slate-800 dark:bg-slate-900 text-white shadow-2xl flex items-center justify-center active:scale-95 transition-transform">
               <Plus className="h-10 w-10" />
             </button>
             <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">{t.addHabit}</p>
@@ -356,13 +377,30 @@ export function RecoveryTrackerApp() {
             {setupStep === 'name' && (
               <div className="w-full space-y-6">
                 <Input value={tempName} onChange={(e) => setTempName(e.target.value)} placeholder={isAr ? "اسم العداد..." : "Habit name..."} className="h-16 rounded-[1.5rem] text-center font-bold text-lg" />
-                <Button disabled={!tempName.trim()} onClick={() => {
-                  const now = new Date();
-                  setTempDate(now);
-                  setTempHour(now.getHours());
-                  setTempMinute(now.getMinutes());
-                  setSetupStep('date');
-                }} className="w-full h-16 rounded-[1.5rem] font-black bg-slate-800 text-lg">{t.save}</Button>
+                <Button disabled={!tempName.trim()} onClick={() => setSetupStep('icon')} className="w-full h-16 rounded-[1.5rem] font-black bg-slate-800 text-lg">{isAr ? "التالي" : "Next"}</Button>
+              </div>
+            )}
+            {setupStep === 'icon' && (
+              <div className="w-full space-y-4">
+                <p className="text-center font-black opacity-40 text-xs uppercase tracking-widest">{t.selectIcon}</p>
+                <div className="grid grid-cols-5 gap-3">
+                  {AVAILABLE_ICONS.map((item) => (
+                    <button
+                      key={item.name}
+                      onClick={() => setTempIcon(item.name)}
+                      className={`h-12 w-12 rounded-xl flex items-center justify-center transition-all ${tempIcon === item.name ? 'bg-primary text-white scale-110 shadow-lg' : 'bg-secondary/40 text-slate-400 hover:bg-secondary'}`}
+                    >
+                      <item.icon className="h-5 w-5" />
+                    </button>
+                  ))}
+                </div>
+                <Button onClick={() => {
+                   const now = new Date();
+                   setTempDate(now);
+                   setTempHour(now.getHours());
+                   setTempMinute(now.getMinutes());
+                   setSetupStep('date');
+                }} className="w-full h-14 mt-4 rounded-[1.2rem] font-black bg-slate-800">{isAr ? "التالي" : "Next"}</Button>
               </div>
             )}
             {setupStep === 'date' && (
