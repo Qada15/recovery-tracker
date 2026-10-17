@@ -55,14 +55,28 @@ export const JourneyLog = React.memo(({
   }, [resetDates, startDate])
 
   const stats = React.useMemo(() => {
-    if (resetDates.length < 2) return { highest: 0, previous: 0 }
+    if (!today || resetDates.length === 0) return { highest: 0, previous: 0 }
+    
     const streaks: number[] = []
-    const sortedResets = [...resetDates].sort((a, b) => a.getTime() - b.getTime())
+    const sortedResets = [...resetDates].map(d => startOfDay(d)).sort((a, b) => a.getTime() - b.getTime())
+    
+    // حساب الفترات بين الانتكاسات المسجلة
     for (let i = 0; i < sortedResets.length - 1; i++) {
       streaks.push(differenceInDays(sortedResets[i + 1], sortedResets[i]))
     }
-    return { highest: streaks.length > 0 ? Math.max(...streaks) : 0, previous: streaks.length > 0 ? streaks[streaks.length - 1] : 0 }
-  }, [resetDates])
+    
+    // حساب الفترة الحالية (من آخر انتكاسة حتى اليوم)
+    const currentStreak = differenceInDays(today, sortedResets[sortedResets.length - 1])
+    
+    // الرقم الأعلى هو أقصى قيمة بين الفترات السابقة والفترة الحالية
+    const allStreaks = [...streaks, currentStreak]
+    const highest = allStreaks.length > 0 ? Math.max(...allStreaks) : 0
+    
+    // الرقم السابق هو آخر فترة مكتملة قبل الحالية
+    const previous = streaks.length > 0 ? streaks[streaks.length - 1] : 0
+    
+    return { highest, previous }
+  }, [resetDates, today])
 
   const modifiers = React.useMemo(() => ({
     relapse: resetDates,
@@ -112,7 +126,7 @@ export const JourneyLog = React.memo(({
       </header>
 
       <main className="flex-1 flex flex-col items-center p-6 overflow-y-auto custom-scrollbar">
-        {/* Stats Section moved inside Journey Log */}
+        {/* Stats Section */}
         <div className="w-full max-w-[480px] grid grid-cols-2 gap-4 mb-8 shrink-0">
           <div className="bg-amber-500/5 border-2 border-amber-500/20 rounded-[2rem] p-6 flex flex-col items-center justify-center text-center shadow-sm">
             <Trophy className="h-6 w-6 text-amber-500 mb-2" />
