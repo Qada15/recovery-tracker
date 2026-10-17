@@ -1,8 +1,7 @@
-
 "use client"
 
 import * as React from "react"
-import { History, Trophy, MoreVertical, Settings2, Calendar as CalendarIcon, Sparkles, Trash2, RotateCcw, RefreshCw, Heart, Zap, Moon, Sun, Target, Shield, Flame, Cloud, Ghost } from "lucide-react"
+import { History, Trophy, MoreVertical, Settings2, Calendar as CalendarIcon, RotateCcw, RefreshCw, Sparkles, Heart, Zap, Moon, Sun, Target, Shield, Flame, Cloud, Ghost, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -19,7 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
-import { setHours, setMinutes, differenceInDays, startOfDay, isBefore, isSameDay, max } from "date-fns"
+import { setHours, setMinutes, differenceInDays, startOfDay, isBefore, isSameDay, max, isAfter } from "date-fns"
 import { CircularTimePicker } from "./CircularTimePicker"
 
 const ICON_MAP = {
@@ -132,7 +131,8 @@ export const TimerDisplay = React.memo(({
   const IconComponent = ICON_MAP[externalHabitIcon as keyof typeof ICON_MAP] || Sparkles
   
   const latestResetDate = React.useMemo(() => {
-    return resetDates.length === 0 ? startOfDay(externalStartDate) : max(resetDates.map(d => startOfDay(d)));
+    if (resetDates.length === 0) return startOfDay(externalStartDate)
+    return max(resetDates.map(d => startOfDay(d)))
   }, [resetDates, externalStartDate]);
 
   const stats = React.useMemo(() => {
@@ -145,23 +145,14 @@ export const TimerDisplay = React.memo(({
     return { highest: streaks.length > 0 ? Math.max(...streaks) : 0, previous: streaks.length > 0 ? streaks[streaks.length - 1] : 0 }
   }, [resetDates])
 
-  const relapseDatesList = React.useMemo(() => resetDates, [resetDates])
-  const cleanDatesList = React.useMemo(() => {
-    if (!today) return [];
-    const dates: Date[] = [];
-    let d = new Date(latestResetDate);
-    d.setDate(d.getDate() + 1);
-    while (isBefore(d, today) || isSameDay(d, today)) {
-      dates.push(new Date(d));
-      d.setDate(d.getDate() + 1);
-    }
-    return dates;
-  }, [today, latestResetDate]);
-
   const modifiers = React.useMemo(() => ({
-    relapse: relapseDatesList,
-    clean: cleanDatesList
-  }), [relapseDatesList, cleanDatesList])
+    relapse: resetDates,
+    clean: (date: Date) => {
+      if (!today) return false
+      const day = startOfDay(date)
+      return isAfter(day, latestResetDate) && (isBefore(day, today) || isSameDay(day, today))
+    }
+  }), [resetDates, latestResetDate, today])
 
   const handleUpdateName = React.useCallback(() => {
     if (!tempHabitName.trim()) return

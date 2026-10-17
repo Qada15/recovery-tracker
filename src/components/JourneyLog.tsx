@@ -1,10 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { Trash2, Settings2, ChevronLeft, AlertCircle, X } from "lucide-react"
+import { Trash2, Settings2, ChevronLeft, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
-import { startOfDay, isBefore, isSameDay, max, setHours, setMinutes } from "date-fns"
+import { startOfDay, isBefore, isSameDay, max, setHours, setMinutes, isAfter } from "date-fns"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { CircularTimePicker } from "./CircularTimePicker"
 
@@ -18,11 +18,9 @@ interface JourneyLogProps {
   onClose: () => void
   startDate: Date
   resetDates: Date[]
-  habitName: string
-  accentColor: string
+  language: 'ar' | 'en'
   onReset: (date: Date) => void
   onRemoveReset: (date: Date) => void
-  language: 'ar' | 'en'
 }
 
 export const JourneyLog = React.memo(({ 
@@ -42,6 +40,7 @@ export const JourneyLog = React.memo(({
   const [tempMinute, setTempMinute] = React.useState(0)
   
   const [today, setToday] = React.useState<Date | null>(null)
+
   React.useEffect(() => {
     if (isOpen) {
       const now = new Date()
@@ -50,29 +49,20 @@ export const JourneyLog = React.memo(({
     }
   }, [isOpen])
 
-  const isAr = language === 'ar'
-
   const latestResetDate = React.useMemo(() => {
-    return resetDates.length === 0 ? startOfDay(startDate) : max(resetDates.map(d => startOfDay(d)));
-  }, [resetDates, startDate]);
-
-  const relapseDatesList = React.useMemo(() => resetDates, [resetDates])
-  const cleanDatesList = React.useMemo(() => {
-    if (!today) return [];
-    const dates: Date[] = [];
-    let d = new Date(latestResetDate);
-    d.setDate(d.getDate() + 1);
-    while (isBefore(d, today) || isSameDay(d, today)) {
-      dates.push(new Date(d));
-      d.setDate(d.getDate() + 1);
-    }
-    return dates;
-  }, [today, latestResetDate]);
+    if (resetDates.length === 0) return startOfDay(startDate)
+    return max(resetDates.map(d => startOfDay(d)))
+  }, [resetDates, startDate])
 
   const modifiers = React.useMemo(() => ({
-    relapse: relapseDatesList,
-    clean: cleanDatesList
-  }), [relapseDatesList, cleanDatesList])
+    relapse: resetDates,
+    clean: (date: Date) => {
+      if (!today) return false
+      const day = startOfDay(date)
+      // اليوم نظيف إذا كان بعد آخر انتكاسة وقبل اليوم أو هو اليوم
+      return isAfter(day, latestResetDate) && (isBefore(day, today) || isSameDay(day, today))
+    }
+  }), [resetDates, latestResetDate, today])
 
   const getResetForDay = React.useCallback((date: Date) => {
     return resetDates.find(rd => isSameDay(startOfDay(rd), startOfDay(date)))
@@ -95,6 +85,8 @@ export const JourneyLog = React.memo(({
     setShowTimePicker(false)
   }, [selectedDay, tempHour, tempMinute, onReset])
 
+  const isAr = language === 'ar'
+
   if (!isOpen || !today || !currentMonth) return null
 
   return (
@@ -109,7 +101,7 @@ export const JourneyLog = React.memo(({
 
       <main className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden">
         <div className="w-full max-w-[340px] bg-white dark:bg-slate-900 rounded-[2.5rem] border shadow-2xl p-2 flex flex-col items-center shrink-0">
-          <div className="scale-90">
+          <div className="scale-90 w-full">
             <Calendar 
               mode="single" 
               selected={selectedDay}
