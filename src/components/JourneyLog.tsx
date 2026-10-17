@@ -54,13 +54,10 @@ export const JourneyLog = React.memo(({
     if (!today || resetDates.length === 0) return { highest: 0, previous: 0 }
     
     const streaks: number[] = []
-    // فرز كافة التواريخ من الأقدم (مهما كان التاريخ بعيداً) إلى الأحدث
     const sortedResets = [...resetDates].map(d => startOfDay(d)).sort((a, b) => a.getTime() - b.getTime())
     
-    // حساب الفترات النظيفة بين كل انتكاسة والتي تليها (الأيام الحمراء لا تحسب وتعتبر 0)
     for (let i = 0; i < sortedResets.length - 1; i++) {
       const diff = differenceInDays(sortedResets[i + 1], sortedResets[i])
-      // إذا كانت الانتكاسة تالية مباشرة أو في نفس اليوم، الفرق يكون 0
       streaks.push(Math.max(0, diff - 1))
     }
     
@@ -79,15 +76,24 @@ export const JourneyLog = React.memo(({
     return max(resetDates.map(d => startOfDay(d)))
   }, [resetDates, startDate])
 
+  // منطق الموديفايرز: يطبق فقط على الأيام التي تنتمي للشهر المعروض حالياً
   const modifiers = React.useMemo(() => ({
-    relapse: resetDates,
+    relapse: (date: Date) => {
+      if (!currentMonth) return false
+      const isSameMonth = date.getMonth() === currentMonth.getMonth() && date.getFullYear() === currentMonth.getFullYear()
+      if (!isSameMonth) return false
+      return resetDates.some(rd => isSameDay(startOfDay(rd), startOfDay(date)))
+    },
     clean: (date: Date) => {
-      if (!today) return false
+      if (!today || !currentMonth) return false
+      const isSameMonth = date.getMonth() === currentMonth.getMonth() && date.getFullYear() === currentMonth.getFullYear()
+      if (!isSameMonth) return false
+      
       const day = startOfDay(date)
       const isRelapse = resetDates.some(rd => isSameDay(startOfDay(rd), day))
       return !isRelapse && isAfter(day, latestResetDate) && (isBefore(day, today) || isSameDay(day, today))
     }
-  }), [resetDates, latestResetDate, today])
+  }), [resetDates, latestResetDate, today, currentMonth])
 
   const getResetForDay = React.useCallback((date: Date) => {
     return resetDates.find(rd => isSameDay(startOfDay(rd), startOfDay(date)))
@@ -128,7 +134,7 @@ export const JourneyLog = React.memo(({
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-between p-4 overflow-hidden bg-slate-50/50 dark:bg-slate-950/50">
-        {/* قسم الإحصائيات - تم تصغيره ليناسب الشاشة */}
+        {/* قسم الإحصائيات */}
         <div className="w-full max-w-[440px] grid grid-cols-2 gap-3 shrink-0">
           <div className="bg-amber-500/5 border-2 border-amber-500/20 rounded-[1.5rem] p-3 flex flex-col items-center justify-center text-center shadow-sm">
             <Trophy className="h-4 w-4 text-amber-500 mb-0.5" />
@@ -142,7 +148,7 @@ export const JourneyLog = React.memo(({
           </div>
         </div>
 
-        {/* قسم التقويم - يتوسط المساحة المتبقية */}
+        {/* قسم التقويم */}
         <div className="flex-1 w-full max-w-[440px] flex items-center justify-center overflow-hidden py-1">
           <div className="w-full bg-white dark:bg-slate-900 rounded-[2rem] border-2 shadow-lg p-3 flex flex-col items-center justify-center overflow-hidden">
             <Calendar 
@@ -155,6 +161,7 @@ export const JourneyLog = React.memo(({
               modifiers={modifiers}
               modifiersClassNames={MODIFIERS_STYLES}
               className="scale-90"
+              showOutsideDays={true}
             />
             <div className="flex gap-4 py-1.5 border-t w-full justify-center mt-1 opacity-60">
               <div className="flex items-center gap-1.5">
