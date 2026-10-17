@@ -21,29 +21,24 @@ export function SidePanel({ isOpen, onClose, side, title, children }: SidePanelP
         isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
       )}
     >
-      {/* Backdrop - Click here to close */}
-      <div 
-        className="absolute inset-0 bg-black/40 backdrop-blur-[2px] cursor-pointer" 
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] cursor-pointer" onClick={onClose} />
       
-      {/* Panel Content */}
       <div
         className={cn(
-          "relative bg-background w-[90%] max-w-md h-[80%] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden transition-transform duration-500 ease-out",
-          isOpen ? "translate-x-0 scale-100" : side === "left" ? "-translate-x-full scale-95" : "translate-x-full scale-95"
+          "relative bg-background w-[90%] max-w-sm h-auto max-h-[80%] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transition-transform duration-500 ease-out",
+          isOpen ? "translate-y-0 scale-100" : "translate-y-10 scale-95"
         )}
-        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the panel
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-6 border-b bg-white/50 backdrop-blur-md">
-          <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full hover:bg-secondary">
+        <div className="flex items-center justify-between p-4 border-b bg-white/50 backdrop-blur-md shrink-0">
+          <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full h-10 w-10">
             <ChevronLeft className="h-6 w-6" />
           </Button>
-          <h2 className="text-xl font-black font-headline tracking-tight">{title}</h2>
+          <h2 className="text-lg font-black tracking-tight">{title}</h2>
           <div className="w-10" />
         </div>
         
-        <div className="flex-1 p-8 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 p-6 overflow-hidden">
           {children}
         </div>
       </div>
