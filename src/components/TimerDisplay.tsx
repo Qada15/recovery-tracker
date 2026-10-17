@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { History, Flame, Trophy, RefreshCw, MoreVertical, Settings2, Calendar as CalendarIcon, Sparkles, Trash2, RotateCcw } from "lucide-react"
+import { History, Trophy, RefreshCw, MoreVertical, Settings2, Calendar as CalendarIcon, Sparkles, Trash2, RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -18,13 +18,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
-import { setHours, setMinutes, differenceInDays, startOfDay, isAfter, isBefore, isSameDay, max } from "date-fns"
+import { setHours, setMinutes, differenceInDays, startOfDay, isBefore, isSameDay, max } from "date-fns"
 import { CircularTimePicker } from "./CircularTimePicker"
 
 const MODIFIERS_STYLES = {
   relapse: "bg-red-500 text-white rounded-full font-black !opacity-100",
-  clean: "bg-emerald-500 text-white rounded-full font-black !opacity-100",
-  urge: "urge-dot"
+  clean: "bg-emerald-500 text-white rounded-full font-black !opacity-100"
 }
 
 const LiveClock = React.memo(({ startDate, language }: { startDate: Date; language: 'ar' | 'en' }) => {
@@ -87,13 +86,11 @@ interface TimerDisplayProps {
   externalHabitName: string
   externalAccentColor: string
   resetDates: Date[]
-  urgeDates: Date[]
   onOpenHistory: () => void
   onUpdateDate: (date: Date) => void
   onUpdateName: (name: string) => void
   onUpdateColor: (color: string) => void
   onReset: () => void
-  onUrge: () => void
   onDelete: () => void
   onClearData: () => void
   language: 'ar' | 'en'
@@ -103,12 +100,10 @@ export const TimerDisplay = React.memo(({
   externalStartDate, 
   externalHabitName, 
   resetDates,
-  urgeDates,
   onOpenHistory,
   onUpdateDate,
   onUpdateName,
   onReset,
-  onUrge,
   onDelete,
   onClearData,
   language
@@ -128,11 +123,6 @@ export const TimerDisplay = React.memo(({
 
   const isAr = language === 'ar'
   
-  const currentDays = React.useMemo(() => {
-    if (!today) return 0;
-    return Math.floor(Math.max(0, new Date().getTime() - externalStartDate.getTime()) / (1000 * 60 * 60 * 24))
-  }, [today, externalStartDate])
-
   const latestResetDate = React.useMemo(() => {
     return resetDates.length === 0 ? startOfDay(externalStartDate) : max(resetDates.map(d => startOfDay(d)));
   }, [resetDates, externalStartDate]);
@@ -148,7 +138,6 @@ export const TimerDisplay = React.memo(({
   }, [resetDates])
 
   const relapseDatesList = React.useMemo(() => resetDates, [resetDates])
-  const urgeDatesList = React.useMemo(() => urgeDates, [urgeDates])
   const cleanDatesList = React.useMemo(() => {
     if (!today) return [];
     const dates: Date[] = [];
@@ -163,9 +152,8 @@ export const TimerDisplay = React.memo(({
 
   const modifiers = React.useMemo(() => ({
     relapse: relapseDatesList,
-    urge: urgeDatesList,
     clean: cleanDatesList
-  }), [relapseDatesList, urgeDatesList, cleanDatesList])
+  }), [relapseDatesList, cleanDatesList])
 
   const handleUpdateName = React.useCallback(() => {
     if (!tempHabitName.trim()) return
@@ -227,21 +215,10 @@ export const TimerDisplay = React.memo(({
 
         <LiveClock startDate={externalStartDate} language={language} />
 
-        <div className="w-full grid grid-cols-5 gap-2 mb-3 shrink-0">
-          {currentDays >= 1 ? (
-            <>
-              <button onClick={onUrge} className="col-span-3 h-12 rounded-2xl border-2 border-orange-100 text-orange-500 font-black text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all">
-                <Flame className="h-4 w-4" /> {isAr ? "أشعر برغبة" : "Feel Urge"}
-              </button>
-              <button onClick={onReset} className="col-span-2 h-12 rounded-2xl border-2 border-red-100 text-red-500 font-black text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all">
-                <RefreshCw className="h-4 w-4" /> {isAr ? "تصفير" : "Reset"}
-              </button>
-            </>
-          ) : (
-            <button onClick={onReset} className="col-span-5 h-12 rounded-2xl border-2 border-red-100 text-red-500 font-black text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all">
-              <RefreshCw className="h-4 w-4" /> {isAr ? "تصفير" : "Reset"}
-            </button>
-          )}
+        <div className="w-full mb-3 shrink-0">
+          <button onClick={onReset} className="w-full h-12 rounded-2xl border-2 border-red-100 text-red-500 font-black text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all">
+            <RefreshCw className="h-4 w-4" /> {isAr ? "تصفير" : "Reset"}
+          </button>
         </div>
 
         <Button onClick={onOpenHistory} className="w-full h-14 rounded-[1.2rem] bg-slate-900 dark:bg-slate-800 text-white font-black text-base flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all shrink-0">

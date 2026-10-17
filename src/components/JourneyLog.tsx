@@ -1,17 +1,16 @@
 "use client"
 
 import * as React from "react"
-import { Flame, Trash2, Settings2, ChevronLeft, AlertCircle, X } from "lucide-react"
+import { Trash2, Settings2, ChevronLeft, AlertCircle, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
-import { startOfDay, isAfter, isBefore, isSameDay, max, setHours, setMinutes } from "date-fns"
+import { startOfDay, isBefore, isSameDay, max, setHours, setMinutes } from "date-fns"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { CircularTimePicker } from "./CircularTimePicker"
 
 const MODIFIERS_STYLES = {
   relapse: "bg-red-500 text-white rounded-full font-black !opacity-100",
-  clean: "bg-emerald-500 text-white rounded-full font-black !opacity-100",
-  urge: "urge-dot"
+  clean: "bg-emerald-500 text-white rounded-full font-black !opacity-100"
 }
 
 interface JourneyLogProps {
@@ -19,13 +18,10 @@ interface JourneyLogProps {
   onClose: () => void
   startDate: Date
   resetDates: Date[]
-  urgeDates: Date[]
   habitName: string
   accentColor: string
   onReset: (date: Date) => void
   onRemoveReset: (date: Date) => void
-  onUrge: (date: Date) => void
-  onRemoveUrge: (date: Date) => void
   language: 'ar' | 'en'
 }
 
@@ -33,12 +29,9 @@ export const JourneyLog = React.memo(({
   isOpen, 
   onClose, 
   startDate, 
-  resetDates, 
-  urgeDates,
+  resetDates,
   onReset,
   onRemoveReset,
-  onUrge,
-  onRemoveUrge,
   language
 }: JourneyLogProps) => {
   const [selectedDay, setSelectedDay] = React.useState<Date | undefined>(undefined)
@@ -64,7 +57,6 @@ export const JourneyLog = React.memo(({
   }, [resetDates, startDate]);
 
   const relapseDatesList = React.useMemo(() => resetDates, [resetDates])
-  const urgeDatesList = React.useMemo(() => urgeDates, [urgeDates])
   const cleanDatesList = React.useMemo(() => {
     if (!today) return [];
     const dates: Date[] = [];
@@ -79,17 +71,12 @@ export const JourneyLog = React.memo(({
 
   const modifiers = React.useMemo(() => ({
     relapse: relapseDatesList,
-    urge: urgeDatesList,
     clean: cleanDatesList
-  }), [relapseDatesList, urgeDatesList, cleanDatesList])
+  }), [relapseDatesList, cleanDatesList])
 
   const getResetForDay = React.useCallback((date: Date) => {
     return resetDates.find(rd => isSameDay(startOfDay(rd), startOfDay(date)))
   }, [resetDates])
-
-  const getUrgeForDay = React.useCallback((date: Date) => {
-    return urgeDates.find(ud => isSameDay(startOfDay(ud), startOfDay(date)))
-  }, [urgeDates])
 
   const handleAdjustTime = React.useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
@@ -159,20 +146,9 @@ export const JourneyLog = React.memo(({
                 </Button>
               </>
             ) : (
-              <>
-                {getUrgeForDay(selectedDay) ? (
-                  <Button onClick={() => onRemoveUrge(selectedDay)} variant="outline" className="flex-1 h-12 rounded-2xl font-black border-2 border-orange-500 text-orange-500">
-                    <X className="ml-2 h-4 w-4" /> {isAr ? "حذف الرغبة" : "Clear Urge"}
-                  </Button>
-                ) : (
-                  <Button onClick={() => onUrge(selectedDay)} disabled={resetDates.some(d => isSameDay(d, selectedDay))} className="flex-1 h-12 rounded-2xl font-black bg-orange-500 text-white">
-                    <Flame className="ml-2 h-4 w-4" /> {isAr ? "رغبة" : "Urge"}
-                  </Button>
-                )}
-                <Button onClick={() => onReset(selectedDay)} variant="destructive" className="flex-1 h-12 rounded-2xl font-black bg-red-500">
-                  <AlertCircle className="ml-2 h-4 w-4" /> {isAr ? "انتكاسة" : "Relapse"}
-                </Button>
-              </>
+              <Button onClick={() => onReset(selectedDay)} variant="destructive" className="flex-1 h-12 rounded-2xl font-black bg-red-500">
+                <AlertCircle className="ml-2 h-4 w-4" /> {isAr ? "انتكاسة" : "Relapse"}
+              </Button>
             )
           )}
         </div>

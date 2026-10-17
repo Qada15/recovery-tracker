@@ -10,7 +10,6 @@ export interface Habit {
   name: string;
   startDate: string;
   resetDates: string[];
-  urgeDates: string[];
   color: string;
 }
 

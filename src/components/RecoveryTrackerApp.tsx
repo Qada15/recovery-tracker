@@ -40,7 +40,7 @@ const TRANSLATIONS = {
     save: "حفظ",
     cancel: "إلغاء",
     confirmDelete: "سيتم حذف كافة البيانات نهائياً.",
-    confirmClear: "سيتم تصفير السجل وحذف كافة الزلات والرغبات لهذا العداد.",
+    confirmClear: "سيتم تصفير السجل وحذف كافة الزلات لهذا العداد.",
     historyCleared: "تم تصفير السجل",
     settings: "الإعدادات",
     language: "اللغة",
@@ -60,7 +60,7 @@ const TRANSLATIONS = {
     save: "Save",
     cancel: "Cancel",
     confirmDelete: "All data will be permanently deleted.",
-    confirmClear: "All relapses and urges for this tracker will be deleted.",
+    confirmClear: "All relapses for this tracker will be deleted.",
     historyCleared: "History Cleared",
     settings: "Settings",
     language: "Language",
@@ -131,8 +131,7 @@ export function RecoveryTrackerApp() {
     if (!activeHabit) return null;
     return {
       startDate: parseISO(activeHabit.startDate),
-      resetDates: activeHabit.resetDates.map(d => parseISO(d)),
-      urgeDates: (activeHabit.urgeDates || []).map(d => parseISO(d))
+      resetDates: activeHabit.resetDates.map(d => parseISO(d))
     };
   }, [activeHabit]);
 
@@ -153,7 +152,6 @@ export function RecoveryTrackerApp() {
       name: tempName,
       startDate: finalDate.toISOString(),
       resetDates: [finalDate.toISOString()],
-      urgeDates: [],
       color: 'hsl(var(--accent))'
     }
     const newHabits = [...habits, newHabit]
@@ -210,7 +208,6 @@ export function RecoveryTrackerApp() {
                 externalHabitName={activeHabit.name}
                 externalAccentColor={activeHabit.color}
                 resetDates={activeHabitData.resetDates}
-                urgeDates={activeHabitData.urgeDates}
                 onOpenHistory={() => setIsHistoryOpen(true)}
                 onUpdateDate={(d) => {
                   const currentResets = activeHabit.resetDates.map(rd => parseISO(rd));
@@ -228,11 +225,6 @@ export function RecoveryTrackerApp() {
                     startDate: now.toISOString(),
                     resetDates: newResets.map(d => d.toISOString())
                   })
-                }}
-                onUrge={() => {
-                  const now = new Date()
-                  const newUrges = [...(activeHabit.urgeDates || []), now.toISOString()]
-                  handleUpdateActiveHabit({ urgeDates: newUrges })
                 }}
                 onDelete={() => setIsDeleteDialogOpen(true)}
                 onClearData={() => setIsClearDataOpen(true)}
@@ -278,7 +270,6 @@ export function RecoveryTrackerApp() {
           onClose={() => setIsHistoryOpen(false)} 
           startDate={activeHabitData.startDate}
           resetDates={activeHabitData.resetDates}
-          urgeDates={activeHabitData.urgeDates}
           habitName={activeHabit.name}
           accentColor={activeHabit.color}
           onReset={(date) => {
@@ -297,14 +288,6 @@ export function RecoveryTrackerApp() {
                startDate: sorted[sorted.length - 1].toISOString(), 
                resetDates: sorted.map(d => d.toISOString()) 
              });
-          }}
-          onUrge={(date) => {
-            const newUrges = [...(activeHabit.urgeDates || []), date.toISOString()];
-            handleUpdateActiveHabit({ urgeDates: newUrges });
-          }}
-          onRemoveUrge={(date) => {
-            const newUrges = (activeHabit.urgeDates || []).filter(d => !isSameDay(parseISO(d), date));
-            handleUpdateActiveHabit({ urgeDates: newUrges });
           }}
           language={language}
         />
@@ -405,7 +388,7 @@ export function RecoveryTrackerApp() {
           <AlertDialogFooter><AlertDialogCancel className="rounded-xl">{t.cancel}</AlertDialogCancel><AlertDialogAction onClick={() => {
             if (!activeHabit) return;
             const now = new Date();
-            handleUpdateActiveHabit({ startDate: now.toISOString(), resetDates: [now.toISOString()], urgeDates: [] });
+            handleUpdateActiveHabit({ startDate: now.toISOString(), resetDates: [now.toISOString()] });
             setIsClearDataOpen(false);
             toast({ title: t.historyCleared });
           }} className="bg-orange-500 rounded-xl">{t.save}</AlertDialogAction></AlertDialogFooter>
