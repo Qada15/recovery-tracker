@@ -64,14 +64,29 @@
     font-family: var(--font-inter), system-ui, -apple-system, sans-serif !important;
   }
 
-  /* معالجة حقول التاريخ لمنع تعريب الأرقام داخلياً */
+  /* حل نهائي وجذري لحقول التاريخ لمنع تعريب الأرقام داخلياً في المتصفحات */
   input[type="date"], 
   input[type="datetime-local"], 
-  input[type="time"] {
+  input[type="time"],
+  input[type="month"] {
     direction: ltr !important;
     text-align: right !important;
     font-family: sans-serif !important;
-    unicode-bidi: plaintext !important;
+    unicode-bidi: bidi-override !important;
+  }
+
+  /* استهداف العناصر الداخلية لمتصفحات WebKit (Chrome, Safari, Edge) */
+  input[type="date"]::-webkit-datetime-edit,
+  input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+  input[type="date"]::-webkit-datetime-edit-text,
+  input[type="date"]::-webkit-datetime-edit-month-field,
+  input[type="date"]::-webkit-datetime-edit-day-field,
+  input[type="date"]::-webkit-datetime-edit-year-field {
+    font-variant-numeric: lining-nums !important;
+    font-feature-settings: "lnum" 1 !important;
+    -webkit-font-feature-settings: "lnum" 1 !important;
+    font-family: sans-serif !important;
+    color: currentColor;
   }
 
   html, body {

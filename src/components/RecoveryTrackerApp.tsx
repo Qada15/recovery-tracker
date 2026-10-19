@@ -286,7 +286,8 @@ export function RecoveryTrackerApp() {
                   className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none text-right tabular-nums w-full"
                   style={{ 
                     fontFamily: 'sans-serif',
-                    fontVariantNumeric: 'lining-nums tabular-nums'
+                    fontVariantNumeric: 'lining-nums tabular-nums',
+                    unicodeBidi: 'plaintext'
                   }}
                 />
               </div>
@@ -509,7 +510,8 @@ export function RecoveryTrackerApp() {
                       className="h-11 rounded-xl font-bold bg-slate-50 dark:bg-slate-900 border-none text-right tabular-nums w-full"
                       style={{ 
                         fontFamily: 'sans-serif',
-                        fontVariantNumeric: 'lining-nums tabular-nums'
+                        fontVariantNumeric: 'lining-nums tabular-nums',
+                        unicodeBidi: 'plaintext'
                       }}
                     />
                  </div>
