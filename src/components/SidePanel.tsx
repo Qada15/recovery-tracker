@@ -25,12 +25,12 @@ export function SidePanel({ isOpen, onClose, side, title, children }: SidePanelP
       
       <div
         className={cn(
-          "relative bg-background w-[90%] max-w-sm h-auto max-h-[80%] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden transition-transform duration-500 ease-out",
+          "relative bg-background w-[92%] max-w-sm h-auto max-h-[85vh] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden transition-transform duration-500 ease-out",
           isOpen ? "translate-y-0 scale-100" : "translate-y-10 scale-95"
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-4 border-b bg-white/50 backdrop-blur-md shrink-0">
+        <div className="flex items-center justify-between p-5 border-b bg-white/50 dark:bg-slate-900/50 backdrop-blur-md shrink-0">
           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full h-10 w-10">
             <ChevronLeft className="h-6 w-6" />
           </Button>
@@ -38,7 +38,7 @@ export function SidePanel({ isOpen, onClose, side, title, children }: SidePanelP
           <div className="w-10" />
         </div>
         
-        <div className="flex-1 p-6 overflow-hidden">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
           {children}
         </div>
       </div>

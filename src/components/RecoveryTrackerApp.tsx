@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -480,7 +479,7 @@ export function RecoveryTrackerApp() {
         side={isAr ? "left" : "right"}
         title={t.settings}
       >
-        <div className="space-y-8 overflow-y-auto max-h-full pb-8 custom-scrollbar">
+        <div className="space-y-8 pb-10">
           {/* Section 1: Profile Settings */}
           <div className="space-y-4">
             <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
