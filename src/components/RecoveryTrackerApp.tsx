@@ -1,19 +1,18 @@
+
 "use client"
 
 import * as React from "react"
-import { Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Heart, Zap, Target, Shield, Flame, Cloud, Ghost, Calendar as CalendarIcon, UserCog, AppWindow } from "lucide-react"
+import { Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Target, Shield, Flame, Cloud, Ghost, Calendar as CalendarIcon, UserCog, AppWindow, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
 import { SidePanel } from "@/components/SidePanel"
 import { saveToStorage, getFromStorage, STORAGE_KEYS, clearAllStorage, type Habit, type UserProfile } from "@/lib/storage"
-import { parseISO, isSameDay, startOfDay, isBefore, format, intervalToDuration } from "date-fns"
+import { parseISO, isSameDay, startOfDay, isBefore, format, intervalToDuration, isValid, setYear, setMonth, setDate } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
-import { Calendar } from "@/components/ui/calendar"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import {
   Dialog,
@@ -72,7 +71,11 @@ const TRANSLATIONS = {
     age: "العمر",
     years: "سنة",
     months: "شهر",
-    days: "يوم"
+    days: "يوم",
+    day: "يوم",
+    month: "شهر",
+    year: "سنة",
+    next: "التالي"
   },
   en: {
     title: "Recovery",
@@ -113,7 +116,11 @@ const TRANSLATIONS = {
     age: "Age",
     years: "Years",
     months: "Months",
-    days: "Days"
+    days: "Days",
+    day: "Day",
+    month: "Month",
+    year: "Year",
+    next: "Next"
   }
 }
 
@@ -129,6 +136,84 @@ const AVAILABLE_ICONS = [
   { name: 'Cloud', icon: Cloud },
   { name: 'Ghost', icon: Ghost },
 ]
+
+function TripleDateInput({ 
+  value, 
+  onChange, 
+  labels 
+}: { 
+  value: string; 
+  onChange: (val: string) => void; 
+  labels: { day: string, month: string, year: string }
+}) {
+  const [parts, setParts] = React.useState(() => {
+    if (!value) return { day: "", month: "", year: "" };
+    const d = new Date(value);
+    if (!isValid(d)) return { day: "", month: "", year: "" };
+    return {
+      day: d.getDate().toString(),
+      month: (d.getMonth() + 1).toString(),
+      year: d.getFullYear().toString()
+    };
+  });
+
+  const update = (newParts: typeof parts) => {
+    setParts(newParts);
+    const d = parseInt(newParts.day);
+    const m = parseInt(newParts.month) - 1;
+    const y = parseInt(newParts.year);
+
+    if (d > 0 && d <= 31 && m >= 0 && m < 12 && y > 1900 && y <= new Date().getFullYear()) {
+      const date = setDate(setMonth(setYear(new Date(), y), m), d);
+      if (isValid(date)) {
+        onChange(date.toISOString().split('T')[0]);
+      }
+    }
+  };
+
+  const handleChar = (val: string) => val.replace(/[^0-9]/g, '');
+
+  return (
+    <div className="grid grid-cols-3 gap-2" dir="ltr">
+      <div className="space-y-1">
+        <Input 
+          type="text" 
+          inputMode="numeric"
+          placeholder="DD"
+          className="text-center font-black h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-none tabular-nums"
+          value={parts.day}
+          maxLength={2}
+          onChange={(e) => update({ ...parts, day: handleChar(e.target.value) })}
+        />
+        <label className="block text-[7px] font-black uppercase tracking-widest opacity-30 text-center">{labels.day}</label>
+      </div>
+      <div className="space-y-1">
+        <Input 
+          type="text" 
+          inputMode="numeric"
+          placeholder="MM"
+          className="text-center font-black h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-none tabular-nums"
+          value={parts.month}
+          maxLength={2}
+          onChange={(e) => update({ ...parts, month: handleChar(e.target.value) })}
+        />
+        <label className="block text-[7px] font-black uppercase tracking-widest opacity-30 text-center">{labels.month}</label>
+      </div>
+      <div className="space-y-1">
+        <Input 
+          type="text" 
+          inputMode="numeric"
+          placeholder="YYYY"
+          className="text-center font-black h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-none tabular-nums"
+          value={parts.year}
+          maxLength={4}
+          onChange={(e) => update({ ...parts, year: handleChar(e.target.value) })}
+        />
+        <label className="block text-[7px] font-black uppercase tracking-widest opacity-30 text-center">{labels.year}</label>
+      </div>
+    </div>
+  );
+}
 
 export function RecoveryTrackerApp() {
   const { toast } = useToast()
@@ -150,7 +235,7 @@ export function RecoveryTrackerApp() {
 
   const [tempName, setTempName] = React.useState("")
   const [tempIcon, setTempIcon] = React.useState("Sparkles")
-  const [tempDate, setTempDate] = React.useState<Date | null>(null)
+  const [tempHabitDate, setTempHabitDate] = React.useState("")
   
   const [today, setToday] = React.useState<Date | null>(null)
 
@@ -198,6 +283,7 @@ export function RecoveryTrackerApp() {
   const age = React.useMemo(() => {
     if (!profile.birthDate || !today) return null
     const birth = parseISO(profile.birthDate)
+    if (!isValid(birth)) return null;
     const duration = intervalToDuration({ start: birth, end: new Date() })
     return {
       years: duration.years || 0,
@@ -226,8 +312,8 @@ export function RecoveryTrackerApp() {
   }, [activeHabitId])
 
   const handleFinishSetup = React.useCallback(() => {
-    if (!tempDate) return
-    const finalDate = startOfDay(tempDate)
+    if (!tempHabitDate) return
+    const finalDate = startOfDay(parseISO(tempHabitDate))
     
     if (userBirthDate && isBefore(finalDate, userBirthDate)) {
       toast({ variant: "destructive", title: language === 'ar' ? "تاريخ غير مسموح" : "Invalid Date", description: language === 'ar' ? "لا يمكن اختيار تاريخ قبل ميلادك" : "Cannot choose a date before your birth" });
@@ -250,7 +336,8 @@ export function RecoveryTrackerApp() {
     setIsSetupOpen(false)
     setSetupStep('name')
     setTempName("")
-  }, [habits, tempName, tempIcon, tempDate, userBirthDate, language, toast])
+    setTempHabitDate("")
+  }, [habits, tempName, tempIcon, tempHabitDate, userBirthDate, language, toast])
 
   const updateProfile = (updates: Partial<UserProfile>) => {
     const newProfile = { ...profile, ...updates }
@@ -290,7 +377,7 @@ export function RecoveryTrackerApp() {
             <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">{t.onboardingSub}</p>
           </header>
 
-          <div className="space-y-4 bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] shadow-xl border">
+          <div className="space-y-4 bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] shadow-xl border overflow-y-auto max-h-[60vh] custom-scrollbar">
             <div className="space-y-1.5 text-right">
               <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userName}</label>
               <Input value={profile.name} onChange={(e) => updateProfile({ name: e.target.value })} placeholder="..." className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none" />
@@ -303,32 +390,11 @@ export function RecoveryTrackerApp() {
 
             <div className="space-y-1.5 text-right">
               <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.birthDate}</label>
-              <div dir="ltr" className="w-full">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none justify-start text-left tabular-nums",
-                        !profile.birthDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4 opacity-50" />
-                      {profile.birthDate ? format(parseISO(profile.birthDate), "yyyy-MM-dd") : <span>{t.pickDate}</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 rounded-2xl" align="center">
-                    <Calendar
-                      mode="single"
-                      selected={profile.birthDate ? parseISO(profile.birthDate) : undefined}
-                      onSelect={(date) => updateProfile({ birthDate: date ? date.toISOString().split('T')[0] : "" })}
-                      disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                      initialFocus
-                      className="rounded-2xl"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
+              <TripleDateInput 
+                value={profile.birthDate} 
+                onChange={(val) => updateProfile({ birthDate: val })} 
+                labels={{ day: t.day, month: t.month, year: t.year }}
+              />
             </div>
 
             <div className="space-y-1.5 text-right">
@@ -480,7 +546,6 @@ export function RecoveryTrackerApp() {
         title={t.settings}
       >
         <div className="space-y-8 pb-10">
-          {/* Section 1: Profile Settings */}
           <div className="space-y-4">
             <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
               <UserCog className="h-3 w-3" /> {t.profileInfo}
@@ -496,32 +561,11 @@ export function RecoveryTrackerApp() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.birthDate}</label>
-                <div dir="ltr">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full h-10 rounded-xl font-bold bg-white dark:bg-slate-900 border-none shadow-sm justify-start text-left tabular-nums",
-                          !profile.birthDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4 opacity-50" />
-                        {profile.birthDate ? format(parseISO(profile.birthDate), "yyyy-MM-dd") : <span>{t.pickDate}</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 rounded-2xl" align="center">
-                      <Calendar
-                        mode="single"
-                        selected={profile.birthDate ? parseISO(profile.birthDate) : undefined}
-                        onSelect={(date) => updateProfile({ birthDate: date ? date.toISOString().split('T')[0] : "" })}
-                        disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                        initialFocus
-                        className="rounded-2xl"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
+                <TripleDateInput 
+                  value={profile.birthDate} 
+                  onChange={(val) => updateProfile({ birthDate: val })} 
+                  labels={{ day: t.day, month: t.month, year: t.year }}
+                />
               </div>
               <div className="space-y-1.5">
                 <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.gender}</label>
@@ -538,7 +582,6 @@ export function RecoveryTrackerApp() {
             </div>
           </div>
 
-          {/* Section 2: App Settings */}
           <div className="space-y-4">
             <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
               <AppWindow className="h-3 w-3" /> {t.appSettings}
@@ -638,7 +681,7 @@ export function RecoveryTrackerApp() {
             {setupStep === 'name' && (
               <div className="w-full space-y-4">
                 <Input value={tempName} onChange={(e) => setTempName(e.target.value)} placeholder={isAr ? "اسم العداد..." : "Habit name..."} className="h-14 rounded-xl text-center font-bold" />
-                <Button disabled={!tempName.trim()} onClick={() => setSetupStep('icon')} className="w-full h-14 rounded-xl font-black bg-slate-800">{isAr ? "التالي" : "Next"}</Button>
+                <Button disabled={!tempName.trim()} onClick={() => setSetupStep('icon')} className="w-full h-14 rounded-xl font-black bg-slate-800">{t.next}</Button>
               </div>
             )}
             {setupStep === 'icon' && (
@@ -650,19 +693,26 @@ export function RecoveryTrackerApp() {
                     </button>
                   ))}
                 </div>
-                <Button onClick={() => { setTempDate(new Date()); setSetupStep('date'); }} className="w-full h-12 mt-2 rounded-xl font-black bg-slate-800">{isAr ? "التالي" : "Next"}</Button>
+                <Button onClick={() => setSetupStep('date')} className="w-full h-12 mt-2 rounded-xl font-black bg-slate-800">{t.next}</Button>
               </div>
             )}
             {setupStep === 'date' && (
-              <div className="scale-75 flex flex-col items-center">
-                <Calendar 
-                  mode="single" 
-                  selected={tempDate || undefined} 
-                  onSelect={(d) => { if(d) { setTempDate(d); handleFinishSetup(); } }} 
-                  disabled={today ? [{ after: today }, ...(userBirthDate ? [{ before: userBirthDate }] : [])] : undefined} 
-                  fromDate={userBirthDate || undefined}
-                  className="border rounded-2xl" 
+              <div className="w-full space-y-4">
+                <div className="text-center mb-2">
+                   <p className="text-[9px] font-black uppercase tracking-widest opacity-40">{isAr ? "تاريخ بداية العداد" : "Start Date"}</p>
+                </div>
+                <TripleDateInput 
+                  value={tempHabitDate} 
+                  onChange={setTempHabitDate} 
+                  labels={{ day: t.day, month: t.month, year: t.year }}
                 />
+                <Button 
+                  disabled={!tempHabitDate} 
+                  onClick={handleFinishSetup} 
+                  className="w-full h-14 rounded-xl font-black bg-slate-900 mt-4 flex items-center justify-center gap-2"
+                >
+                  {t.save} <ArrowRight className="h-5 w-5" />
+                </Button>
               </div>
             )}
           </div>
