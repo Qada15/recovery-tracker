@@ -174,14 +174,20 @@ export const JourneyLog = React.memo(({
               onSelect={setSelectedDay}
               month={currentMonth}
               onMonthChange={(m) => {
+                 const now = new Date();
                  // منع التمرير لما قبل شهر الميلاد
                  if (birthDate && isBefore(m, startOfDay(new Date(birthDate.getFullYear(), birthDate.getMonth(), 1)))) {
+                   return;
+                 }
+                 // منع التمرير للأشهر المستقبلية
+                 if (m.getFullYear() > now.getFullYear() || (m.getFullYear() === now.getFullYear() && m.getMonth() > now.getMonth())) {
                    return;
                  }
                  setCurrentMonth(m);
               }}
               disabled={[{ after: today }, ...(birthDate ? [{ before: birthDate }] : [])]} 
               fromDate={birthDate || undefined}
+              toMonth={today} // تقييد المكون نفسه برمجياً لمنع عرض أزرار الأشهر المستقبلية
               modifiers={modifiers as any}
               modifiersClassNames={MODIFIERS_STYLES}
               className="scale-[0.85] origin-top"
