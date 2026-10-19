@@ -57,26 +57,29 @@ export const JourneyLog = React.memo(({
   }, [])
 
   const stats = React.useMemo(() => {
-    if (!today) return { highest: 0, previous: 0 }
+    if (!today || resetDates.length === 0) return { highest: 0, previous: 0 }
     
-    // استخدام تاريخ الميلاد كأدنى تاريخ ممكن للحساب
-    const floorDate = birthDate ? startOfDay(birthDate) : startOfDay(startDate)
+    // الحصول على التواريخ الفريدة للانتكاسات مرتبة زمنياً
+    const uniqueTimestamps = Array.from(new Set(
+      resetDates.map(d => startOfDay(d).getTime())
+    )).sort((a, b) => a - b)
 
-    const uniqueEvents = Array.from(new Set([
-      floorDate.getTime(),
-      ...resetDates.filter(d => !birthDate || !isBefore(d, birthDate)).map(d => startOfDay(d).getTime())
-    ])).sort((a, b) => a - b).map(t => new Date(t))
+    if (uniqueTimestamps.length === 0) return { highest: 0, previous: 0 }
 
-    if (uniqueEvents.length === 0) return { highest: 0, previous: 0 }
+    const uniqueEvents = uniqueTimestamps.map(t => new Date(t))
 
     const streaks: number[] = []
+    // حساب الفترات (Streaks) بين كل انتكاسة والتي تليها
     for (let i = 0; i < uniqueEvents.length - 1; i++) {
       const diff = differenceInDays(uniqueEvents[i + 1], uniqueEvents[i])
       streaks.push(Math.max(0, diff))
     }
     
+    // آخر انتكاسة مسجلة هي نقطة البداية للعداد الحالي
     const latestReset = uniqueEvents[uniqueEvents.length - 1]
     const isTodayRelapse = resetDates.some(rd => isSameDay(startOfDay(rd), today))
+    
+    // العداد الحالي يحسب من تاريخ آخر انتكاسة حتى اليوم
     const currentStreak = isTodayRelapse ? 0 : differenceInDays(today, latestReset)
     
     const allStreaks = [...streaks, currentStreak]
@@ -84,7 +87,7 @@ export const JourneyLog = React.memo(({
     const previous = streaks.length > 0 ? streaks[streaks.length - 1] : 0
     
     return { highest, previous }
-  }, [resetDates, startDate, birthDate, today])
+  }, [resetDates, today])
 
   const latestResetDate = React.useMemo(() => {
     if (resetDates.length === 0) return startOfDay(startDate)
