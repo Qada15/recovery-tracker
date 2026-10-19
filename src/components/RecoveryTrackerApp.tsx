@@ -66,7 +66,6 @@ const TRANSLATIONS = {
     female: "أنثى",
     start: "ابدأ الآن",
     invalidDate: "التاريخ غير صالح",
-    pickDate: "اختر التاريخ",
     profileInfo: "إعدادات الملف الشخصي",
     appSettings: "إعدادات التطبيق",
     age: "العمر",
@@ -112,7 +111,6 @@ const TRANSLATIONS = {
     female: "Female",
     start: "Start Now",
     invalidDate: "Invalid Date",
-    pickDate: "Pick Date",
     profileInfo: "Profile Settings",
     appSettings: "App Settings",
     age: "Age",
@@ -287,6 +285,7 @@ export function RecoveryTrackerApp() {
   }, [])
 
   const userBirthDate = React.useMemo(() => profile.birthDate ? startOfDay(parseISO(profile.birthDate)) : null, [profile.birthDate])
+  
   const isProfileComplete = React.useMemo(() => {
     return profile.name.trim() !== "" && profile.surname.trim() !== "" && profile.birthDate !== "" && profile.gender !== ""
   }, [profile])
@@ -324,10 +323,7 @@ export function RecoveryTrackerApp() {
 
   const handleFinishSetup = React.useCallback(() => {
     if (!tempName.trim()) return
-    
     const now = new Date()
-    
-    // يبدأ العداد من اللحظة الحالية وتعتبر اللحظة الحالية أول انتكاسة في السجل
     const newHabit: Habit = {
       id: Math.random().toString(36).substr(2, 9),
       name: tempName,
@@ -377,7 +373,7 @@ export function RecoveryTrackerApp() {
   if (!isProfileComplete) {
     return (
       <div className="fixed inset-0 z-[200] bg-background flex flex-col items-center justify-center p-6 text-center overflow-hidden" dir={isAr ? 'rtl' : 'ltr'}>
-        <div className="w-full max-w-sm space-y-8">
+        <div className="w-full max-sm space-y-8">
           <header className="space-y-2">
             <div className="mx-auto w-20 h-20 rounded-[2rem] bg-slate-900 flex items-center justify-center shadow-2xl mb-6">
               <Sparkles className="h-10 w-10 text-orange-400" />
