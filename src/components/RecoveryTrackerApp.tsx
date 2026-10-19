@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Target, Shield, Flame, Cloud, Ghost, Calendar as CalendarIcon, UserCog, AppWindow, ArrowRight, Heart, Zap } from "lucide-react"
+import { Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Target, Shield, Flame, Cloud, Ghost, Calendar as CalendarIcon, UserCog, AppWindow, ArrowRight, Heart, Zap, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
@@ -38,7 +38,7 @@ const TRANSLATIONS = {
     motivation: "أنت تبلي بلاءً حسنًا!",
     addHabit: "إضافة عداد جديد",
     setupTitle: "إعداد العداد",
-    save: "حفظ",
+    save: "حفظ وبدء",
     cancel: "إلغاء",
     confirmDelete: "سيتم حذف كافة البيانات نهائياً.",
     confirmClear: "سيتم تصفير السجل وحذف كافة الزلات لهذا العداد.",
@@ -52,6 +52,7 @@ const TRANSLATIONS = {
     about: "عن التطبيق",
     version: "الإصدار 1.0.0",
     selectIcon: "اختر رمزاً",
+    selectColor: "اختر لوناً",
     profile: "الملف الشخصي",
     welcome: "مرحباً بك",
     onboardingTitle: "لنبدأ رحلتك",
@@ -83,7 +84,7 @@ const TRANSLATIONS = {
     motivation: "You are doing great!",
     addHabit: "Add New Tracker",
     setupTitle: "Setup Tracker",
-    save: "Save",
+    save: "Save & Start",
     cancel: "Cancel",
     confirmDelete: "All data will be permanently deleted.",
     confirmClear: "All relapses for this tracker will be deleted.",
@@ -97,6 +98,7 @@ const TRANSLATIONS = {
     about: "About",
     version: "Version 1.0.0",
     selectIcon: "Select Icon",
+    selectColor: "Select Color",
     profile: "Profile",
     welcome: "Welcome",
     onboardingTitle: "Let's Start Your Journey",
@@ -135,6 +137,15 @@ const AVAILABLE_ICONS = [
   { name: 'Flame', icon: Flame },
   { name: 'Cloud', icon: Cloud },
   { name: 'Ghost', icon: Ghost },
+]
+
+const AVAILABLE_COLORS = [
+  "hsl(212 100% 45%)", // Blue
+  "hsl(160 84% 39%)",  // Emerald
+  "hsl(346 84% 61%)",  // Rose
+  "hsl(38 92% 50%)",   // Amber
+  "hsl(262 83% 58%)",  // Violet
+  "hsl(215 25% 27%)",  // Slate
 ]
 
 function TripleDateInput({ 
@@ -225,7 +236,7 @@ export function RecoveryTrackerApp() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
   const [isClearDataOpen, setIsClearDataOpen] = React.useState(false)
   const [isFactoryResetOpen, setIsFactoryResetOpen] = React.useState(false)
-  const [setupStep, setSetupStep] = React.useState<'name' | 'icon' | 'date'>('name')
+  const [setupStep, setSetupStep] = React.useState<'name' | 'icon' | 'color'>('name')
 
   const [language, setLanguage] = React.useState<'ar' | 'en'>('ar')
   const [theme, setTheme] = React.useState<'light' | 'dark'>('light')
@@ -235,7 +246,7 @@ export function RecoveryTrackerApp() {
 
   const [tempName, setTempName] = React.useState("")
   const [tempIcon, setTempIcon] = React.useState("Sparkles")
-  const [tempHabitDate, setTempHabitDate] = React.useState("")
+  const [tempColor, setTempColor] = React.useState(AVAILABLE_COLORS[0])
   
   const [today, setToday] = React.useState<Date | null>(null)
 
@@ -312,22 +323,18 @@ export function RecoveryTrackerApp() {
   }, [activeHabitId])
 
   const handleFinishSetup = React.useCallback(() => {
-    if (!tempHabitDate) return
-    const finalDate = startOfDay(parseISO(tempHabitDate))
+    if (!tempName.trim()) return
     
-    if (userBirthDate && isBefore(finalDate, userBirthDate)) {
-      toast({ variant: "destructive", title: language === 'ar' ? "تاريخ غير مسموح" : "Invalid Date", description: language === 'ar' ? "لا يمكن اختيار تاريخ قبل ميلادك" : "Cannot choose a date before your birth" });
-      return;
-    }
-
-    // عند إنشاء عداد جديد، يعتبر تاريخ البدء هو أول انتكاسة مسجلة تلقائياً
+    const now = new Date()
+    
+    // يبدأ العداد من اللحظة الحالية وتعتبر اللحظة الحالية أول انتكاسة في السجل
     const newHabit: Habit = {
       id: Math.random().toString(36).substr(2, 9),
       name: tempName,
       icon: tempIcon,
-      startDate: finalDate.toISOString(),
-      resetDates: [finalDate.toISOString()], // تسجيل تاريخ البدء كانتكاسة أولى
-      color: 'hsl(var(--accent))'
+      startDate: now.toISOString(),
+      resetDates: [now.toISOString()],
+      color: tempColor
     }
     const newHabits = [...habits, newHabit]
     setHabits(newHabits)
@@ -337,8 +344,9 @@ export function RecoveryTrackerApp() {
     setIsSetupOpen(false)
     setSetupStep('name')
     setTempName("")
-    setTempHabitDate("")
-  }, [habits, tempName, tempIcon, tempHabitDate, userBirthDate, language, toast])
+    setTempIcon("Sparkles")
+    setTempColor(AVAILABLE_COLORS[0])
+  }, [habits, tempName, tempIcon, tempColor])
 
   const updateProfile = (updates: Partial<UserProfile>) => {
     const newProfile = { ...profile, ...updates }
@@ -687,6 +695,9 @@ export function RecoveryTrackerApp() {
             )}
             {setupStep === 'icon' && (
               <div className="w-full space-y-4">
+                <div className="text-center mb-2">
+                   <p className="text-[9px] font-black uppercase tracking-widest opacity-40">{t.selectIcon}</p>
+                </div>
                 <div className="grid grid-cols-5 gap-2">
                   {AVAILABLE_ICONS.map((item) => (
                     <button key={item.name} onClick={() => setTempIcon(item.name)} className={`h-10 w-10 rounded-lg flex items-center justify-center transition-all ${tempIcon === item.name ? 'bg-primary text-white shadow-md' : 'bg-secondary/40 text-slate-400'}`}>
@@ -694,23 +705,32 @@ export function RecoveryTrackerApp() {
                     </button>
                   ))}
                 </div>
-                <Button onClick={() => setSetupStep('date')} className="w-full h-12 mt-2 rounded-xl font-black bg-slate-800">{t.next}</Button>
+                <Button onClick={() => setSetupStep('color')} className="w-full h-12 mt-2 rounded-xl font-black bg-slate-800">{t.next}</Button>
               </div>
             )}
-            {setupStep === 'date' && (
+            {setupStep === 'color' && (
               <div className="w-full space-y-4">
                 <div className="text-center mb-2">
-                   <p className="text-[9px] font-black uppercase tracking-widest opacity-40">{isAr ? "تاريخ بداية العداد" : "Start Date"}</p>
+                   <p className="text-[9px] font-black uppercase tracking-widest opacity-40">{t.selectColor}</p>
                 </div>
-                <TripleDateInput 
-                  value={tempHabitDate} 
-                  onChange={setTempHabitDate} 
-                  labels={{ day: t.day, month: t.month, year: t.year }}
-                />
+                <div className="grid grid-cols-3 gap-3">
+                  {AVAILABLE_COLORS.map((color) => (
+                    <button 
+                      key={color} 
+                      onClick={() => setTempColor(color)} 
+                      className={cn(
+                        "h-12 rounded-xl flex items-center justify-center transition-all border-4",
+                        tempColor === color ? "border-slate-800 scale-105" : "border-transparent opacity-60"
+                      )}
+                      style={{ backgroundColor: color }}
+                    >
+                      {tempColor === color && <Check className="h-5 w-5 text-white" />}
+                    </button>
+                  ))}
+                </div>
                 <Button 
-                  disabled={!tempHabitDate} 
                   onClick={handleFinishSetup} 
-                  className="w-full h-14 rounded-xl font-black bg-slate-900 mt-4 flex items-center justify-center gap-2"
+                  className="w-full h-14 rounded-xl font-black bg-slate-900 mt-4 flex items-center justify-center gap-2 shadow-lg"
                 >
                   {t.save} <ArrowRight className="h-5 w-5" />
                 </Button>
