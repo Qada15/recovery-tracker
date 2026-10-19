@@ -2,13 +2,13 @@
 "use client"
 
 import * as React from "react"
-import { Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Heart, Zap, Target, Shield, Flame, Cloud, Ghost, Calendar as CalendarIcon } from "lucide-react"
+import { Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Heart, Zap, Target, Shield, Flame, Cloud, Ghost, Calendar as CalendarIcon, UserCog } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
 import { SidePanel } from "@/components/SidePanel"
 import { saveToStorage, getFromStorage, STORAGE_KEYS, clearAllStorage, type Habit, type UserProfile } from "@/lib/storage"
-import { parseISO, isSameDay, startOfDay, isBefore, format } from "date-fns"
+import { parseISO, isSameDay, startOfDay, isBefore, format, intervalToDuration } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
@@ -67,7 +67,12 @@ const TRANSLATIONS = {
     female: "أنثى",
     start: "ابدأ الآن",
     invalidDate: "التاريخ غير صالح",
-    pickDate: "اختر التاريخ"
+    pickDate: "اختر التاريخ",
+    profileInfo: "المعلومات الشخصية",
+    age: "العمر",
+    years: "سنة",
+    months: "شهر",
+    days: "يوم"
   },
   en: {
     title: "Recovery",
@@ -102,7 +107,12 @@ const TRANSLATIONS = {
     female: "Female",
     start: "Start Now",
     invalidDate: "Invalid Date",
-    pickDate: "Pick Date"
+    pickDate: "Pick Date",
+    profileInfo: "Profile Information",
+    age: "Age",
+    years: "Years",
+    months: "Months",
+    days: "Days"
   }
 }
 
@@ -183,6 +193,17 @@ export function RecoveryTrackerApp() {
   const isProfileComplete = React.useMemo(() => {
     return profile.name.trim() !== "" && profile.surname.trim() !== "" && profile.birthDate !== "" && profile.gender !== ""
   }, [profile])
+
+  const age = React.useMemo(() => {
+    if (!profile.birthDate || !today) return null
+    const birth = parseISO(profile.birthDate)
+    const duration = intervalToDuration({ start: birth, end: new Date() })
+    return {
+      years: duration.years || 0,
+      months: duration.months || 0,
+      days: duration.days || 0
+    }
+  }, [profile.birthDate, today])
 
   const activeHabit = React.useMemo(() => habits.find(h => h.id === activeHabitId), [habits, activeHabitId]);
 
@@ -281,30 +302,32 @@ export function RecoveryTrackerApp() {
 
             <div className="space-y-1.5 text-right">
               <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.birthDate}</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none justify-start text-right tabular-nums",
-                      !profile.birthDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4 opacity-50" />
-                    {profile.birthDate ? format(parseISO(profile.birthDate), "yyyy-MM-dd") : <span>{t.pickDate}</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 rounded-2xl" align="center">
-                  <Calendar
-                    mode="single"
-                    selected={profile.birthDate ? parseISO(profile.birthDate) : undefined}
-                    onSelect={(date) => updateProfile({ birthDate: date ? date.toISOString().split('T')[0] : "" })}
-                    disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                    initialFocus
-                    className="rounded-2xl"
-                  />
-                </PopoverContent>
-              </Popover>
+              <div dir="ltr" className="w-full">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none justify-start text-left tabular-nums",
+                        !profile.birthDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4 opacity-50" />
+                      {profile.birthDate ? format(parseISO(profile.birthDate), "yyyy-MM-dd") : <span>{t.pickDate}</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 rounded-2xl" align="center">
+                    <Calendar
+                      mode="single"
+                      selected={profile.birthDate ? parseISO(profile.birthDate) : undefined}
+                      onSelect={(date) => updateProfile({ birthDate: date ? date.toISOString().split('T')[0] : "" })}
+                      disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                      initialFocus
+                      className="rounded-2xl"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
 
             <div className="space-y-1.5 text-right">
@@ -455,71 +478,30 @@ export function RecoveryTrackerApp() {
         side={isAr ? "left" : "right"}
         title={t.settings}
       >
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <h3 className="text-[9px] font-black uppercase tracking-widest opacity-30">{t.language}</h3>
-            <Button variant="outline" className="w-full h-12 rounded-xl font-black justify-between px-4" onClick={toggleLanguage}>
-              <Globe className="h-4 w-4 opacity-40" />
-              <span>{language === 'ar' ? "English" : "العربية"}</span>
-            </Button>
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-[9px] font-black uppercase tracking-widest opacity-30">{t.theme}</h3>
-            <div className="w-full h-12 rounded-xl border bg-card flex items-center justify-between px-4">
-              <div className="flex items-center gap-2">
-                {theme === 'dark' ? <Moon className="h-4 w-4 text-slate-400" /> : <Sun className="h-4 w-4 text-orange-500" />}
-                <span className="font-black text-sm">{t.darkMode}</span>
-              </div>
-              <Switch checked={theme === 'dark'} onCheckedChange={toggleTheme} className="scale-75" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-[9px] font-black uppercase tracking-widest opacity-30">{t.factoryReset}</h3>
-            <Button variant="destructive" className="w-full h-12 rounded-xl font-black justify-between px-4 bg-red-500/10 text-red-500 border-none" onClick={() => setIsFactoryResetOpen(true)}>
-              <Trash2 className="h-4 w-4" />
-              <span>{t.factoryReset}</span>
-            </Button>
-          </div>
-          <div className="pt-4 border-t opacity-40 flex items-center gap-3">
-             <Info className="h-4 w-4" />
-             <div className="text-[9px] font-black uppercase tabular-nums">{t.version}</div>
-          </div>
-        </div>
-      </SidePanel>
-
-      <SidePanel
-        isOpen={isProfileOpen}
-        onClose={() => setIsProfileOpen(false)}
-        side={isAr ? "left" : "right"}
-        title={t.profile}
-      >
-        <div className="flex flex-col space-y-5">
-           <div className="flex flex-col items-center gap-2 mb-2">
-              <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                 <UserIcon className="h-8 w-8 text-slate-400" />
-              </div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t.welcome} {profile.name}</p>
-           </div>
-
-           <div className="space-y-4">
+        <div className="space-y-6 overflow-y-auto max-h-full pb-8 custom-scrollbar">
+          {/* Profile Section inside Settings */}
+          <div className="space-y-4">
+            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
+              <UserCog className="h-3 w-3" /> {t.profileInfo}
+            </h3>
+            <div className="space-y-3 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-3xl border border-slate-100 dark:border-slate-800">
               <div className="space-y-1.5">
-                 <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userName}</label>
-                 <Input value={profile.name} onChange={(e) => updateProfile({ name: e.target.value })} placeholder="..." className="h-11 rounded-xl font-bold bg-slate-50 dark:bg-slate-900 border-none" />
+                <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userName}</label>
+                <Input value={profile.name} onChange={(e) => updateProfile({ name: e.target.value })} placeholder="..." className="h-10 rounded-xl font-bold bg-white dark:bg-slate-900 border-none shadow-sm" />
               </div>
-
               <div className="space-y-1.5">
-                 <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userSurname}</label>
-                 <Input value={profile.surname} onChange={(e) => updateProfile({ surname: e.target.value })} placeholder="..." className="h-11 rounded-xl font-bold bg-slate-50 dark:bg-slate-900 border-none" />
+                <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userSurname}</label>
+                <Input value={profile.surname} onChange={(e) => updateProfile({ surname: e.target.value })} placeholder="..." className="h-10 rounded-xl font-bold bg-white dark:bg-slate-900 border-none shadow-sm" />
               </div>
-
-              <div className="space-y-1.5 text-right">
-                 <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.birthDate}</label>
-                 <Popover>
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.birthDate}</label>
+                <div dir="ltr">
+                  <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant={"outline"}
                         className={cn(
-                          "w-full h-11 rounded-xl font-bold bg-slate-50 dark:bg-slate-900 border-none justify-start text-right tabular-nums",
+                          "w-full h-10 rounded-xl font-bold bg-white dark:bg-slate-900 border-none shadow-sm justify-start text-left tabular-nums",
                           !profile.birthDate && "text-muted-foreground"
                         )}
                       >
@@ -537,25 +519,104 @@ export function RecoveryTrackerApp() {
                         className="rounded-2xl"
                       />
                     </PopoverContent>
-                 </Popover>
+                  </Popover>
+                </div>
               </div>
-
               <div className="space-y-1.5">
-                 <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.gender}</label>
-                 <Select value={profile.gender} onValueChange={(v: any) => updateProfile({ gender: v })}>
-                    <SelectTrigger className="h-11 rounded-xl font-bold bg-slate-50 dark:bg-slate-900 border-none shadow-none">
-                       <SelectValue placeholder="..." />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-2xl">
-                       <SelectItem value="male" className="font-bold">{t.male}</SelectItem>
-                       <SelectItem value="female" className="font-bold">{t.female}</SelectItem>
-                    </SelectContent>
-                 </Select>
+                <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.gender}</label>
+                <Select value={profile.gender} onValueChange={(v: any) => updateProfile({ gender: v })}>
+                  <SelectTrigger className="h-10 rounded-xl font-bold bg-white dark:bg-slate-900 border-none shadow-sm">
+                    <SelectValue placeholder="..." />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl">
+                    <SelectItem value="male" className="font-bold">{t.male}</SelectItem>
+                    <SelectItem value="female" className="font-bold">{t.female}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30">{t.language}</h3>
+            <Button variant="outline" className="w-full h-12 rounded-2xl font-black justify-between px-4 border-2" onClick={toggleLanguage}>
+              <Globe className="h-4 w-4 opacity-40" />
+              <span>{language === 'ar' ? "English" : "العربية"}</span>
+            </Button>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30">{t.theme}</h3>
+            <div className="w-full h-12 rounded-2xl border-2 bg-card flex items-center justify-between px-4">
+              <div className="flex items-center gap-2">
+                {theme === 'dark' ? <Moon className="h-4 w-4 text-slate-400" /> : <Sun className="h-4 w-4 text-orange-500" />}
+                <span className="font-black text-sm">{t.darkMode}</span>
+              </div>
+              <Switch checked={theme === 'dark'} onCheckedChange={toggleTheme} className="scale-75" />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30">{t.factoryReset}</h3>
+            <Button variant="destructive" className="w-full h-12 rounded-2xl font-black justify-between px-4 bg-red-500/10 text-red-500 border-none" onClick={() => setIsFactoryResetOpen(true)}>
+              <Trash2 className="h-4 w-4" />
+              <span>{t.factoryReset}</span>
+            </Button>
+          </div>
+
+          <div className="pt-4 border-t opacity-40 flex items-center justify-between">
+             <div className="flex items-center gap-2">
+              <Info className="h-3 w-3" />
+              <div className="text-[9px] font-black uppercase tabular-nums">{t.version}</div>
+             </div>
+             <Heart className="h-3 w-3 text-red-500 fill-red-500" />
+          </div>
+        </div>
+      </SidePanel>
+
+      <SidePanel
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        side={isAr ? "left" : "right"}
+        title={t.profile}
+      >
+        <div className="flex flex-col space-y-8 items-center text-center">
+           <div className="relative">
+              <div className="w-24 h-24 rounded-[2.5rem] bg-slate-100 dark:bg-slate-800 flex items-center justify-center shadow-inner">
+                 <UserIcon className="h-10 w-10 text-slate-400" />
+              </div>
+              <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-primary flex items-center justify-center border-4 border-background shadow-lg">
+                <Sparkles className="h-3 w-3 text-white" />
               </div>
            </div>
 
-           <div className="pt-4">
-              <p className="text-slate-400 text-[8px] font-bold uppercase tracking-widest leading-relaxed text-center">
+           <div className="space-y-1">
+              <h2 className="text-2xl font-black tracking-tight">{profile.name} {profile.surname}</h2>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{profile.gender === 'male' ? t.male : t.female}</p>
+           </div>
+
+           {age && (
+             <div className="w-full space-y-3">
+               <h3 className="text-[9px] font-black uppercase tracking-widest opacity-30">{t.age}</h3>
+               <div className="grid grid-cols-3 gap-2">
+                 <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
+                   <div className="text-xl font-black text-primary tabular-nums">{age.years}</div>
+                   <div className="text-[8px] font-black uppercase opacity-40 mt-1">{t.years}</div>
+                 </div>
+                 <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
+                   <div className="text-xl font-black text-primary tabular-nums">{age.months}</div>
+                   <div className="text-[8px] font-black uppercase opacity-40 mt-1">{t.months}</div>
+                 </div>
+                 <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
+                   <div className="text-xl font-black text-primary tabular-nums">{age.days}</div>
+                   <div className="text-[8px] font-black uppercase opacity-40 mt-1">{t.days}</div>
+                 </div>
+               </div>
+             </div>
+           )}
+
+           <div className="w-full pt-4 opacity-40">
+              <p className="text-[8px] font-black uppercase tracking-widest leading-relaxed">
                  {t.localNote}
               </p>
            </div>
