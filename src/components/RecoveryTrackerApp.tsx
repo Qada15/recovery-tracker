@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Heart, Zap, Target, Shield, Flame, Cloud, Ghost, Check } from "lucide-react"
+import { Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Heart, Zap, Target, Shield, Flame, Cloud, Ghost } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
@@ -251,7 +251,6 @@ export function RecoveryTrackerApp() {
 
   if (!mounted) return null;
 
-  // واجهة الترحيب والتهيئة الإجبارية
   if (!isProfileComplete) {
     return (
       <div className="fixed inset-0 z-[200] bg-background flex flex-col items-center justify-center p-6 text-center overflow-hidden" dir={isAr ? 'rtl' : 'ltr'}>
@@ -279,10 +278,11 @@ export function RecoveryTrackerApp() {
               <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.birthDate}</label>
               <Input 
                 type="date" 
+                lang="en"
                 value={profile.birthDate} 
                 max={today?.toISOString().split('T')[0]}
                 onChange={(e) => updateProfile({ birthDate: e.target.value })} 
-                className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none" 
+                className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none tabular-nums" 
               />
             </div>
 
@@ -461,7 +461,7 @@ export function RecoveryTrackerApp() {
           </div>
           <div className="pt-4 border-t opacity-40 flex items-center gap-3">
              <Info className="h-4 w-4" />
-             <div className="text-[9px] font-black uppercase">{t.version}</div>
+             <div className="text-[9px] font-black uppercase tabular-nums">{t.version}</div>
           </div>
         </div>
       </SidePanel>
@@ -496,10 +496,11 @@ export function RecoveryTrackerApp() {
                  <div className="relative">
                     <Input 
                       type="date" 
+                      lang="en"
                       value={profile.birthDate} 
                       max={today?.toISOString().split('T')[0]}
                       onChange={(e) => updateProfile({ birthDate: e.target.value })} 
-                      className="h-11 rounded-xl font-bold bg-slate-50 dark:bg-slate-900 border-none" 
+                      className="h-11 rounded-xl font-bold bg-slate-50 dark:bg-slate-900 border-none tabular-nums" 
                     />
                  </div>
               </div>

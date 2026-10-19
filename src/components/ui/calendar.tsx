@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -25,7 +24,7 @@ function Calendar({
         months: "flex flex-col space-y-4 w-full",
         month: "space-y-4 w-full",
         month_caption: "flex justify-center pt-1 relative items-center mb-4",
-        caption_label: "text-base font-black uppercase tracking-widest",
+        caption_label: "text-base font-black uppercase tracking-widest tabular-nums",
         nav: "space-x-1 flex items-center",
         button_previous: cn(
           buttonVariants({ variant: "outline" }),
@@ -43,7 +42,7 @@ function Calendar({
         day: "h-12 w-full text-center text-sm p-0 relative flex items-center justify-center",
         day_button: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-10 w-10 p-0 font-bold aria-selected:opacity-100 flex items-center justify-center rounded-full transition-all hover:scale-110 !overflow-visible"
+          "h-10 w-10 p-0 font-bold aria-selected:opacity-100 flex items-center justify-center rounded-full transition-all hover:scale-110 !overflow-visible tabular-nums"
         ),
         selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground shadow-lg scale-110",
         today: "bg-accent/20 text-accent ring-2 ring-accent/30",

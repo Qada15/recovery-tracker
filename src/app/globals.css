@@ -52,6 +52,9 @@
 @layer base {
   * {
     @apply border-border;
+    /* Force Western Arabic Numerals (0-9) */
+    font-variant-numeric: lining-nums tabular-nums !important;
+    font-feature-settings: "lnum" 1, "tnum" 1 !important;
   }
   html, body {
     height: 100%;
