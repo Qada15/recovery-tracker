@@ -1,6 +1,8 @@
+
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -38,9 +40,11 @@ export default function RootLayout({
         <meta name="theme-color" content="#ffffff" />
       </head>
       <body suppressHydrationWarning className="antialiased">
-        <div className="flex flex-col h-full w-full fixed inset-0 overflow-hidden pointer-events-auto">
-          {children}
-        </div>
+        <FirebaseClientProvider>
+          <div className="flex flex-col h-full w-full fixed inset-0 overflow-hidden pointer-events-auto">
+            {children}
+          </div>
+        </FirebaseClientProvider>
       </body>
     </html>
   );
