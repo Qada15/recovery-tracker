@@ -1,17 +1,18 @@
 "use client"
 
 import * as React from "react"
-import { Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Heart, Zap, Target, Shield, Flame, Cloud, Ghost } from "lucide-react"
+import { Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Heart, Zap, Target, Shield, Flame, Cloud, Ghost, Calendar as CalendarIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
 import { SidePanel } from "@/components/SidePanel"
-import { saveToStorage, getFromStorage, STORAGE_KEYS, clearAllStorage, type Habit } from "@/lib/storage"
-import { parseISO, isSameDay, startOfDay } from "date-fns"
+import { saveToStorage, getFromStorage, STORAGE_KEYS, clearAllStorage, type Habit, type UserProfile } from "@/lib/storage"
+import { parseISO, isSameDay, startOfDay, isBefore } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
 import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Dialog,
   DialogContent,
@@ -52,7 +53,13 @@ const TRANSLATIONS = {
     selectIcon: "اختر رمزاً",
     profile: "الملف الشخصي",
     welcome: "مرحباً",
-    localNote: "يتم حفظ بياناتك محلياً على هذا الجهاز"
+    localNote: "يتم حفظ بياناتك محلياً على هذا الجهاز",
+    userName: "اسم المستخدم",
+    birthDate: "تاريخ الميلاد",
+    gender: "الجنس",
+    male: "ذكر",
+    female: "أنثى",
+    invalidDate: "التاريخ غير صالح"
   },
   en: {
     title: "Recovery",
@@ -76,7 +83,13 @@ const TRANSLATIONS = {
     selectIcon: "Select Icon",
     profile: "Profile",
     welcome: "Welcome",
-    localNote: "Your data is saved locally on this device"
+    localNote: "Your data is saved locally on this device",
+    userName: "User Name",
+    birthDate: "Birth Date",
+    gender: "Gender",
+    male: "Male",
+    female: "Female",
+    invalidDate: "Invalid Date"
   }
 }
 
@@ -109,6 +122,7 @@ export function RecoveryTrackerApp() {
   const [theme, setTheme] = React.useState<'light' | 'dark'>('light')
   const [habits, setHabits] = React.useState<Habit[]>([])
   const [activeHabitId, setActiveHabitId] = React.useState<string | null>(null)
+  const [profile, setProfile] = React.useState<UserProfile>({ name: "", birthDate: "", gender: "" })
 
   const [tempName, setTempName] = React.useState("")
   const [tempIcon, setTempIcon] = React.useState("Sparkles")
@@ -125,6 +139,7 @@ export function RecoveryTrackerApp() {
     const savedActiveId = getFromStorage(STORAGE_KEYS.ACTIVE_HABIT_ID)
     const savedLang = getFromStorage(STORAGE_KEYS.LANGUAGE) as 'ar' | 'en'
     const savedTheme = getFromStorage(STORAGE_KEYS.THEME) as 'light' | 'dark'
+    const savedProfile = getFromStorage(STORAGE_KEYS.USER_PROFILE)
 
     if (savedLang) setLanguage(savedLang)
     if (savedTheme) {
@@ -132,6 +147,10 @@ export function RecoveryTrackerApp() {
       if (typeof document !== 'undefined') {
         document.documentElement.classList.toggle('dark', savedTheme === 'dark')
       }
+    }
+
+    if (savedProfile) {
+      try { setProfile(JSON.parse(savedProfile)) } catch (e) { console.error("Profile parse error") }
     }
 
     if (savedHabits) {
@@ -146,6 +165,8 @@ export function RecoveryTrackerApp() {
       } catch (e) { console.error("Parse error") }
     }
   }, [])
+
+  const userBirthDate = React.useMemo(() => profile.birthDate ? startOfDay(parseISO(profile.birthDate)) : null, [profile.birthDate])
 
   const activeHabit = React.useMemo(() => habits.find(h => h.id === activeHabitId), [habits, activeHabitId]);
 
@@ -169,6 +190,13 @@ export function RecoveryTrackerApp() {
   const handleFinishSetup = React.useCallback(() => {
     if (!tempDate) return
     const finalDate = startOfDay(tempDate)
+    
+    // منع إضافة تاريخ قبل الميلاد
+    if (userBirthDate && isBefore(finalDate, userBirthDate)) {
+      toast({ variant: "destructive", title: language === 'ar' ? "تاريخ غير مسموح" : "Invalid Date", description: language === 'ar' ? "لا يمكن اختيار تاريخ قبل ميلادك" : "Cannot choose a date before your birth" });
+      return;
+    }
+
     const newHabit: Habit = {
       id: Math.random().toString(36).substr(2, 9),
       name: tempName,
@@ -185,7 +213,13 @@ export function RecoveryTrackerApp() {
     setIsSetupOpen(false)
     setSetupStep('name')
     setTempName("")
-  }, [habits, tempName, tempIcon, tempDate])
+  }, [habits, tempName, tempIcon, tempDate, userBirthDate, language, toast])
+
+  const updateProfile = (updates: Partial<UserProfile>) => {
+    const newProfile = { ...profile, ...updates }
+    setProfile(newProfile)
+    saveToStorage(STORAGE_KEYS.USER_PROFILE, JSON.stringify(newProfile))
+  }
 
   const toggleLanguage = () => {
     const newLang = language === 'ar' ? 'en' : 'ar'
@@ -291,6 +325,7 @@ export function RecoveryTrackerApp() {
         isOpen={isHistoryOpen} 
         onClose={() => setIsHistoryOpen(false)} 
         startDate={activeHabitData?.startDate || new Date()}
+        birthDate={userBirthDate}
         resetDates={activeHabitData?.resetDates || []}
         language={language}
         onReset={(date) => {
@@ -370,18 +405,52 @@ export function RecoveryTrackerApp() {
         side={isAr ? "left" : "right"}
         title={t.profile}
       >
-        <div className="flex flex-col items-center justify-center space-y-6 pt-4">
-          <div className="w-full space-y-6 flex flex-col items-center">
-            <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center">
-              <UserIcon className="h-10 w-10 text-slate-300" />
-            </div>
-            <div className="text-center px-4">
-              <h3 className="text-lg font-black tracking-tighter mb-2">{t.welcome}</h3>
-              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-relaxed">
-                {t.localNote}
+        <div className="flex flex-col space-y-5">
+           <div className="flex flex-col items-center gap-2 mb-2">
+              <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                 <UserIcon className="h-8 w-8 text-slate-400" />
+              </div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t.welcome}</p>
+           </div>
+
+           <div className="space-y-4">
+              <div className="space-y-1.5">
+                 <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userName}</label>
+                 <Input value={profile.name} onChange={(e) => updateProfile({ name: e.target.value })} placeholder="..." className="h-11 rounded-xl font-bold bg-slate-50 dark:bg-slate-900 border-none" />
+              </div>
+
+              <div className="space-y-1.5">
+                 <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.birthDate}</label>
+                 <div className="relative">
+                    <Input 
+                      type="date" 
+                      value={profile.birthDate} 
+                      max={today?.toISOString().split('T')[0]}
+                      onChange={(e) => updateProfile({ birthDate: e.target.value })} 
+                      className="h-11 rounded-xl font-bold bg-slate-50 dark:bg-slate-900 border-none" 
+                    />
+                 </div>
+              </div>
+
+              <div className="space-y-1.5">
+                 <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.gender}</label>
+                 <Select value={profile.gender} onValueChange={(v: any) => updateProfile({ gender: v })}>
+                    <SelectTrigger className="h-11 rounded-xl font-bold bg-slate-50 dark:bg-slate-900 border-none shadow-none">
+                       <SelectValue placeholder="..." />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl">
+                       <SelectItem value="male" className="font-bold">{t.male}</SelectItem>
+                       <SelectItem value="female" className="font-bold">{t.female}</SelectItem>
+                    </SelectContent>
+                 </Select>
+              </div>
+           </div>
+
+           <div className="pt-4">
+              <p className="text-slate-400 text-[8px] font-bold uppercase tracking-widest leading-relaxed text-center">
+                 {t.localNote}
               </p>
-            </div>
-          </div>
+           </div>
         </div>
       </SidePanel>
 
@@ -409,7 +478,14 @@ export function RecoveryTrackerApp() {
             )}
             {setupStep === 'date' && (
               <div className="scale-75 flex flex-col items-center">
-                <Calendar mode="single" selected={tempDate || undefined} onSelect={(d) => { if(d) { setTempDate(d); handleFinishSetup(); } }} disabled={today ? { after: today } : undefined} className="border rounded-2xl" />
+                <Calendar 
+                  mode="single" 
+                  selected={tempDate || undefined} 
+                  onSelect={(d) => { if(d) { setTempDate(d); handleFinishSetup(); } }} 
+                  disabled={today ? [{ after: today }, ...(userBirthDate ? [{ before: userBirthDate }] : [])] : undefined} 
+                  fromDate={userBirthDate || undefined}
+                  className="border rounded-2xl" 
+                />
               </div>
             )}
           </div>

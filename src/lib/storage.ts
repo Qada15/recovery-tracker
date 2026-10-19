@@ -3,7 +3,14 @@ export const STORAGE_KEYS = {
   ACTIVE_HABIT_ID: 'recovery_tracker_active_id',
   LANGUAGE: 'recovery_tracker_language',
   THEME: 'recovery_tracker_theme',
+  USER_PROFILE: 'recovery_tracker_user_profile',
 };
+
+export interface UserProfile {
+  name: string;
+  birthDate: string;
+  gender: 'male' | 'female' | '';
+}
 
 export interface Habit {
   id: string;

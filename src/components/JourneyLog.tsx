@@ -1,11 +1,10 @@
-
 "use client"
 
 import * as React from "react"
 import { Trash2, ChevronLeft, AlertCircle, Trophy, History as HistoryIcon, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
-import { startOfDay, isBefore, isSameDay, max, isAfter, differenceInDays, setHours, setMinutes, parseISO } from "date-fns"
+import { startOfDay, isBefore, isSameDay, max, isAfter, differenceInDays, setHours, setMinutes } from "date-fns"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { CircularTimePicker } from "@/components/CircularTimePicker"
 
@@ -23,6 +22,7 @@ interface JourneyLogProps {
   isOpen: boolean
   onClose: () => void
   startDate: Date
+  birthDate: Date | null
   resetDates: Date[]
   language: 'ar' | 'en'
   onReset: (date: Date) => void
@@ -34,6 +34,7 @@ export const JourneyLog = React.memo(({
   isOpen, 
   onClose, 
   startDate, 
+  birthDate,
   resetDates,
   onReset,
   onRemoveReset,
@@ -58,9 +59,12 @@ export const JourneyLog = React.memo(({
   const stats = React.useMemo(() => {
     if (!today) return { highest: 0, previous: 0 }
     
+    // استخدام تاريخ الميلاد كأدنى تاريخ ممكن للحساب
+    const floorDate = birthDate ? startOfDay(birthDate) : startOfDay(startDate)
+
     const uniqueEvents = Array.from(new Set([
-      startOfDay(startDate).getTime(),
-      ...resetDates.map(d => startOfDay(d).getTime())
+      floorDate.getTime(),
+      ...resetDates.filter(d => !birthDate || !isBefore(d, birthDate)).map(d => startOfDay(d).getTime())
     ])).sort((a, b) => a - b).map(t => new Date(t))
 
     if (uniqueEvents.length === 0) return { highest: 0, previous: 0 }
@@ -80,7 +84,7 @@ export const JourneyLog = React.memo(({
     const previous = streaks.length > 0 ? streaks[streaks.length - 1] : 0
     
     return { highest, previous }
-  }, [resetDates, startDate, today])
+  }, [resetDates, startDate, birthDate, today])
 
   const latestResetDate = React.useMemo(() => {
     if (resetDates.length === 0) return startOfDay(startDate)
@@ -166,8 +170,15 @@ export const JourneyLog = React.memo(({
               selected={selectedDay}
               onSelect={setSelectedDay}
               month={currentMonth}
-              onMonthChange={setCurrentMonth}
-              disabled={[{ after: today }]} 
+              onMonthChange={(m) => {
+                 // منع التمرير لما قبل شهر الميلاد
+                 if (birthDate && isBefore(m, startOfDay(new Date(birthDate.getFullYear(), birthDate.getMonth(), 1)))) {
+                   return;
+                 }
+                 setCurrentMonth(m);
+              }}
+              disabled={[{ after: today }, ...(birthDate ? [{ before: birthDate }] : [])]} 
+              fromDate={birthDate || undefined}
               modifiers={modifiers as any}
               modifiersClassNames={MODIFIERS_STYLES}
               className="scale-[0.85] origin-top"
