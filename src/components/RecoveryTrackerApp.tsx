@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Target, Shield, Flame, Cloud, Ghost, Calendar as CalendarIcon, UserCog, AppWindow, ArrowRight } from "lucide-react"
+import { Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Target, Shield, Flame, Cloud, Ghost, Calendar as CalendarIcon, UserCog, AppWindow, ArrowRight, Heart, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
