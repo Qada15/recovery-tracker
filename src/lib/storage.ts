@@ -8,6 +8,7 @@ export const STORAGE_KEYS = {
 
 export interface UserProfile {
   name: string;
+  surname: string;
   birthDate: string;
   gender: 'male' | 'female' | '';
 }

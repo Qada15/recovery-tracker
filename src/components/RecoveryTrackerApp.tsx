@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Heart, Zap, Target, Shield, Flame, Cloud, Ghost, Calendar as CalendarIcon } from "lucide-react"
+import { Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Heart, Zap, Target, Shield, Flame, Cloud, Ghost, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
@@ -52,13 +52,17 @@ const TRANSLATIONS = {
     version: "الإصدار 1.0.0",
     selectIcon: "اختر رمزاً",
     profile: "الملف الشخصي",
-    welcome: "مرحباً",
+    welcome: "مرحباً بك",
+    onboardingTitle: "لنبدأ رحلتك",
+    onboardingSub: "يرجى إكمال بياناتك للبدء",
     localNote: "يتم حفظ بياناتك محلياً على هذا الجهاز",
-    userName: "اسم المستخدم",
+    userName: "الاسم الأول",
+    userSurname: "اللقب",
     birthDate: "تاريخ الميلاد",
     gender: "الجنس",
     male: "ذكر",
     female: "أنثى",
+    start: "ابدأ الآن",
     invalidDate: "التاريخ غير صالح"
   },
   en: {
@@ -83,12 +87,16 @@ const TRANSLATIONS = {
     selectIcon: "Select Icon",
     profile: "Profile",
     welcome: "Welcome",
+    onboardingTitle: "Let's Start Your Journey",
+    onboardingSub: "Please complete your profile to begin",
     localNote: "Your data is saved locally on this device",
-    userName: "User Name",
+    userName: "First Name",
+    userSurname: "Surname",
     birthDate: "Birth Date",
     gender: "Gender",
     male: "Male",
     female: "Female",
+    start: "Start Now",
     invalidDate: "Invalid Date"
   }
 }
@@ -122,7 +130,7 @@ export function RecoveryTrackerApp() {
   const [theme, setTheme] = React.useState<'light' | 'dark'>('light')
   const [habits, setHabits] = React.useState<Habit[]>([])
   const [activeHabitId, setActiveHabitId] = React.useState<string | null>(null)
-  const [profile, setProfile] = React.useState<UserProfile>({ name: "", birthDate: "", gender: "" })
+  const [profile, setProfile] = React.useState<UserProfile>({ name: "", surname: "", birthDate: "", gender: "" })
 
   const [tempName, setTempName] = React.useState("")
   const [tempIcon, setTempIcon] = React.useState("Sparkles")
@@ -167,6 +175,9 @@ export function RecoveryTrackerApp() {
   }, [])
 
   const userBirthDate = React.useMemo(() => profile.birthDate ? startOfDay(parseISO(profile.birthDate)) : null, [profile.birthDate])
+  const isProfileComplete = React.useMemo(() => {
+    return profile.name.trim() !== "" && profile.surname.trim() !== "" && profile.birthDate !== "" && profile.gender !== ""
+  }, [profile])
 
   const activeHabit = React.useMemo(() => habits.find(h => h.id === activeHabitId), [habits, activeHabitId]);
 
@@ -191,7 +202,6 @@ export function RecoveryTrackerApp() {
     if (!tempDate) return
     const finalDate = startOfDay(tempDate)
     
-    // منع إضافة تاريخ قبل الميلاد
     if (userBirthDate && isBefore(finalDate, userBirthDate)) {
       toast({ variant: "destructive", title: language === 'ar' ? "تاريخ غير مسموح" : "Invalid Date", description: language === 'ar' ? "لا يمكن اختيار تاريخ قبل ميلادك" : "Cannot choose a date before your birth" });
       return;
@@ -240,6 +250,63 @@ export function RecoveryTrackerApp() {
   const isAr = language === 'ar'
 
   if (!mounted) return null;
+
+  // واجهة الترحيب والتهيئة الإجبارية
+  if (!isProfileComplete) {
+    return (
+      <div className="fixed inset-0 z-[200] bg-background flex flex-col items-center justify-center p-6 text-center overflow-hidden" dir={isAr ? 'rtl' : 'ltr'}>
+        <div className="w-full max-w-sm space-y-8">
+          <header className="space-y-2">
+            <div className="mx-auto w-20 h-20 rounded-[2rem] bg-slate-900 flex items-center justify-center shadow-2xl mb-6">
+              <Sparkles className="h-10 w-10 text-orange-400" />
+            </div>
+            <h1 className="text-3xl font-black tracking-tighter">{t.onboardingTitle}</h1>
+            <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">{t.onboardingSub}</p>
+          </header>
+
+          <div className="space-y-4 bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] shadow-xl border">
+            <div className="space-y-1.5 text-right">
+              <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userName}</label>
+              <Input value={profile.name} onChange={(e) => updateProfile({ name: e.target.value })} placeholder="..." className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none" />
+            </div>
+
+            <div className="space-y-1.5 text-right">
+              <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userSurname}</label>
+              <Input value={profile.surname} onChange={(e) => updateProfile({ surname: e.target.value })} placeholder="..." className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none" />
+            </div>
+
+            <div className="space-y-1.5 text-right">
+              <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.birthDate}</label>
+              <Input 
+                type="date" 
+                value={profile.birthDate} 
+                max={today?.toISOString().split('T')[0]}
+                onChange={(e) => updateProfile({ birthDate: e.target.value })} 
+                className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none" 
+              />
+            </div>
+
+            <div className="space-y-1.5 text-right">
+              <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.gender}</label>
+              <Select value={profile.gender} onValueChange={(v: any) => updateProfile({ gender: v })}>
+                <SelectTrigger className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none shadow-none">
+                  <SelectValue placeholder="..." />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl">
+                  <SelectItem value="male" className="font-bold">{t.male}</SelectItem>
+                  <SelectItem value="female" className="font-bold">{t.female}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <p className="text-slate-400 text-[8px] font-bold uppercase tracking-widest leading-relaxed">
+            {t.localNote}
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden bg-slate-50 dark:bg-slate-950" dir={isAr ? 'rtl' : 'ltr'}>
@@ -410,13 +477,18 @@ export function RecoveryTrackerApp() {
               <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                  <UserIcon className="h-8 w-8 text-slate-400" />
               </div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t.welcome}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t.welcome} {profile.name}</p>
            </div>
 
            <div className="space-y-4">
               <div className="space-y-1.5">
                  <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userName}</label>
                  <Input value={profile.name} onChange={(e) => updateProfile({ name: e.target.value })} placeholder="..." className="h-11 rounded-xl font-bold bg-slate-50 dark:bg-slate-900 border-none" />
+              </div>
+
+              <div className="space-y-1.5">
+                 <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userSurname}</label>
+                 <Input value={profile.surname} onChange={(e) => updateProfile({ surname: e.target.value })} placeholder="..." className="h-11 rounded-xl font-bold bg-slate-50 dark:bg-slate-900 border-none" />
               </div>
 
               <div className="space-y-1.5">
