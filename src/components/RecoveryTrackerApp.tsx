@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Heart, Zap, Target, Shield, Flame, Cloud, Ghost, Calendar as CalendarIcon, UserCog } from "lucide-react"
+import { Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Heart, Zap, Target, Shield, Flame, Cloud, Ghost, Calendar as CalendarIcon, UserCog, AppWindow } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
@@ -68,7 +68,8 @@ const TRANSLATIONS = {
     start: "ابدأ الآن",
     invalidDate: "التاريخ غير صالح",
     pickDate: "اختر التاريخ",
-    profileInfo: "المعلومات الشخصية",
+    profileInfo: "إعدادات الملف الشخصي",
+    appSettings: "إعدادات التطبيق",
     age: "العمر",
     years: "سنة",
     months: "شهر",
@@ -108,7 +109,8 @@ const TRANSLATIONS = {
     start: "Start Now",
     invalidDate: "Invalid Date",
     pickDate: "Pick Date",
-    profileInfo: "Profile Information",
+    profileInfo: "Profile Settings",
+    appSettings: "App Settings",
     age: "Age",
     years: "Years",
     months: "Months",
@@ -478,8 +480,8 @@ export function RecoveryTrackerApp() {
         side={isAr ? "left" : "right"}
         title={t.settings}
       >
-        <div className="space-y-6 overflow-y-auto max-h-full pb-8 custom-scrollbar">
-          {/* Profile Section inside Settings */}
+        <div className="space-y-8 overflow-y-auto max-h-full pb-8 custom-scrollbar">
+          {/* Section 1: Profile Settings */}
           <div className="space-y-4">
             <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
               <UserCog className="h-3 w-3" /> {t.profileInfo}
@@ -537,31 +539,38 @@ export function RecoveryTrackerApp() {
             </div>
           </div>
 
+          {/* Section 2: App Settings */}
           <div className="space-y-4">
-            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30">{t.language}</h3>
-            <Button variant="outline" className="w-full h-12 rounded-2xl font-black justify-between px-4 border-2" onClick={toggleLanguage}>
-              <Globe className="h-4 w-4 opacity-40" />
-              <span>{language === 'ar' ? "English" : "العربية"}</span>
-            </Button>
-          </div>
-
-          <div className="space-y-4">
-            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30">{t.theme}</h3>
-            <div className="w-full h-12 rounded-2xl border-2 bg-card flex items-center justify-between px-4">
-              <div className="flex items-center gap-2">
-                {theme === 'dark' ? <Moon className="h-4 w-4 text-slate-400" /> : <Sun className="h-4 w-4 text-orange-500" />}
-                <span className="font-black text-sm">{t.darkMode}</span>
+            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
+              <AppWindow className="h-3 w-3" /> {t.appSettings}
+            </h3>
+            <div className="space-y-3 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-3xl border border-slate-100 dark:border-slate-800">
+              <div className="space-y-2">
+                <h3 className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.language}</h3>
+                <Button variant="outline" className="w-full h-10 rounded-xl font-bold justify-between px-4 border-none bg-white dark:bg-slate-900 shadow-sm" onClick={toggleLanguage}>
+                  <Globe className="h-4 w-4 opacity-40" />
+                  <span>{language === 'ar' ? "English" : "العربية"}</span>
+                </Button>
               </div>
-              <Switch checked={theme === 'dark'} onCheckedChange={toggleTheme} className="scale-75" />
-            </div>
-          </div>
 
-          <div className="space-y-4">
-            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30">{t.factoryReset}</h3>
-            <Button variant="destructive" className="w-full h-12 rounded-2xl font-black justify-between px-4 bg-red-500/10 text-red-500 border-none" onClick={() => setIsFactoryResetOpen(true)}>
-              <Trash2 className="h-4 w-4" />
-              <span>{t.factoryReset}</span>
-            </Button>
+              <div className="space-y-2">
+                <h3 className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.theme}</h3>
+                <div className="w-full h-10 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-between px-4 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    {theme === 'dark' ? <Moon className="h-4 w-4 text-slate-400" /> : <Sun className="h-4 w-4 text-orange-500" />}
+                    <span className="font-bold text-sm">{t.darkMode}</span>
+                  </div>
+                  <Switch checked={theme === 'dark'} onCheckedChange={toggleTheme} className="scale-75" />
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <Button variant="destructive" className="w-full h-10 rounded-xl font-bold justify-between px-4 bg-red-500/10 text-red-500 border-none hover:bg-red-500/20" onClick={() => setIsFactoryResetOpen(true)}>
+                  <Trash2 className="h-4 w-4" />
+                  <span>{t.factoryReset}</span>
+                </Button>
+              </div>
+            </div>
           </div>
 
           <div className="pt-4 border-t opacity-40 flex items-center justify-between">
