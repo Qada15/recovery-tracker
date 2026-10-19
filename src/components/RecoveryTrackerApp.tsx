@@ -278,11 +278,13 @@ export function RecoveryTrackerApp() {
               <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.birthDate}</label>
               <Input 
                 type="date" 
-                lang="en"
+                lang="en-US"
+                dir="ltr"
                 value={profile.birthDate} 
                 max={today?.toISOString().split('T')[0]}
                 onChange={(e) => updateProfile({ birthDate: e.target.value })} 
-                className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none tabular-nums" 
+                className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none tabular-nums text-right" 
+                style={{ direction: 'ltr', unicodeBidi: 'plaintext' }}
               />
             </div>
 
@@ -496,11 +498,13 @@ export function RecoveryTrackerApp() {
                  <div className="relative">
                     <Input 
                       type="date" 
-                      lang="en"
+                      lang="en-US"
+                      dir="ltr"
                       value={profile.birthDate} 
                       max={today?.toISOString().split('T')[0]}
                       onChange={(e) => updateProfile({ birthDate: e.target.value })} 
-                      className="h-11 rounded-xl font-bold bg-slate-50 dark:bg-slate-900 border-none tabular-nums" 
+                      className="h-11 rounded-xl font-bold bg-slate-50 dark:bg-slate-900 border-none tabular-nums text-right" 
+                      style={{ direction: 'ltr', unicodeBidi: 'plaintext' }}
                     />
                  </div>
               </div>
