@@ -320,12 +320,13 @@ export function RecoveryTrackerApp() {
       return;
     }
 
+    // عند إنشاء عداد جديد، يعتبر تاريخ البدء هو أول انتكاسة مسجلة تلقائياً
     const newHabit: Habit = {
       id: Math.random().toString(36).substr(2, 9),
       name: tempName,
       icon: tempIcon,
       startDate: finalDate.toISOString(),
-      resetDates: [finalDate.toISOString()],
+      resetDates: [finalDate.toISOString()], // تسجيل تاريخ البدء كانتكاسة أولى
       color: 'hsl(var(--accent))'
     }
     const newHabits = [...habits, newHabit]

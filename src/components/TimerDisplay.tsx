@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -44,6 +45,14 @@ const LiveClock = React.memo(({ startDate, language }: { startDate: Date; langua
     return () => clearInterval(interval)
   }, [startDate])
 
+  // تحديد أكبر وحدة زمنية غير صفرية لعرضها في الدائرة
+  const displayUnit = React.useMemo(() => {
+    if (elapsed.days > 0) return { value: elapsed.days, label: isAr ? "يوم" : "Day" }
+    if (elapsed.hours > 0) return { value: elapsed.hours, label: isAr ? "ساعة" : "Hour" }
+    if (elapsed.minutes > 0) return { value: elapsed.minutes, label: isAr ? "دقيقة" : "Min" }
+    return { value: elapsed.seconds, label: isAr ? "ثانية" : "Sec" }
+  }, [elapsed, isAr])
+
   return (
     <div className="w-full flex flex-col items-center shrink-0">
       {/* Largest time unit in a circle */}
@@ -53,10 +62,10 @@ const LiveClock = React.memo(({ startDate, language }: { startDate: Date; langua
           <div className="absolute inset-0 bg-primary/5 animate-pulse" />
           
           <span className="text-7xl font-black text-primary tabular-nums leading-none relative z-10">
-            {elapsed.days}
+            {displayUnit.value}
           </span>
           <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest mt-2 relative z-10">
-            {isAr ? "يوم" : "Day"}
+            {displayUnit.label}
           </span>
         </div>
       </div>
