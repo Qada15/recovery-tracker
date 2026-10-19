@@ -276,16 +276,20 @@ export function RecoveryTrackerApp() {
 
             <div className="space-y-1.5 text-right">
               <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.birthDate}</label>
-              <Input 
-                type="date" 
-                lang="en-US"
-                dir="ltr"
-                value={profile.birthDate} 
-                max={today?.toISOString().split('T')[0]}
-                onChange={(e) => updateProfile({ birthDate: e.target.value })} 
-                className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none tabular-nums text-right" 
-                style={{ direction: 'ltr', unicodeBidi: 'plaintext' }}
-              />
+              <div dir="ltr" className="w-full">
+                <Input 
+                  type="date" 
+                  lang="en-US"
+                  value={profile.birthDate} 
+                  max={today?.toISOString().split('T')[0]}
+                  onChange={(e) => updateProfile({ birthDate: e.target.value })} 
+                  className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none text-right tabular-nums w-full"
+                  style={{ 
+                    fontFamily: 'sans-serif',
+                    fontVariantNumeric: 'lining-nums tabular-nums'
+                  }}
+                />
+              </div>
             </div>
 
             <div className="space-y-1.5 text-right">
@@ -495,16 +499,18 @@ export function RecoveryTrackerApp() {
 
               <div className="space-y-1.5">
                  <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.birthDate}</label>
-                 <div className="relative">
+                 <div dir="ltr" className="w-full">
                     <Input 
                       type="date" 
                       lang="en-US"
-                      dir="ltr"
                       value={profile.birthDate} 
                       max={today?.toISOString().split('T')[0]}
                       onChange={(e) => updateProfile({ birthDate: e.target.value })} 
-                      className="h-11 rounded-xl font-bold bg-slate-50 dark:bg-slate-900 border-none tabular-nums text-right" 
-                      style={{ direction: 'ltr', unicodeBidi: 'plaintext' }}
+                      className="h-11 rounded-xl font-bold bg-slate-50 dark:bg-slate-900 border-none text-right tabular-nums w-full"
+                      style={{ 
+                        fontFamily: 'sans-serif',
+                        fontVariantNumeric: 'lining-nums tabular-nums'
+                      }}
                     />
                  </div>
               </div>
