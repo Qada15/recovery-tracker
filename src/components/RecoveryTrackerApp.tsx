@@ -1,18 +1,21 @@
+
 "use client"
 
 import * as React from "react"
-import { Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Heart, Zap, Target, Shield, Flame, Cloud, Ghost } from "lucide-react"
+import { Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Heart, Zap, Target, Shield, Flame, Cloud, Ghost, Calendar as CalendarIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
 import { SidePanel } from "@/components/SidePanel"
 import { saveToStorage, getFromStorage, STORAGE_KEYS, clearAllStorage, type Habit, type UserProfile } from "@/lib/storage"
-import { parseISO, isSameDay, startOfDay, isBefore } from "date-fns"
+import { parseISO, isSameDay, startOfDay, isBefore, format } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
 import {
   Dialog,
   DialogContent,
@@ -63,7 +66,8 @@ const TRANSLATIONS = {
     male: "ذكر",
     female: "أنثى",
     start: "ابدأ الآن",
-    invalidDate: "التاريخ غير صالح"
+    invalidDate: "التاريخ غير صالح",
+    pickDate: "اختر التاريخ"
   },
   en: {
     title: "Recovery",
@@ -97,7 +101,8 @@ const TRANSLATIONS = {
     male: "Male",
     female: "Female",
     start: "Start Now",
-    invalidDate: "Invalid Date"
+    invalidDate: "Invalid Date",
+    pickDate: "Pick Date"
   }
 }
 
@@ -276,22 +281,30 @@ export function RecoveryTrackerApp() {
 
             <div className="space-y-1.5 text-right">
               <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.birthDate}</label>
-              <div dir="ltr" className="w-full">
-                <Input 
-                  type="date" 
-                  lang="en-GB"
-                  value={profile.birthDate} 
-                  max={today?.toISOString().split('T')[0]}
-                  onChange={(e) => updateProfile({ birthDate: e.target.value })} 
-                  className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none text-right tabular-nums w-full"
-                  style={{ 
-                    fontFamily: 'sans-serif',
-                    fontVariantNumeric: 'lining-nums tabular-nums',
-                    direction: 'ltr',
-                    textAlign: 'right'
-                  }}
-                />
-              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none justify-start text-right tabular-nums",
+                      !profile.birthDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4 opacity-50" />
+                    {profile.birthDate ? format(parseISO(profile.birthDate), "yyyy-MM-dd") : <span>{t.pickDate}</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 rounded-2xl" align="center">
+                  <Calendar
+                    mode="single"
+                    selected={profile.birthDate ? parseISO(profile.birthDate) : undefined}
+                    onSelect={(date) => updateProfile({ birthDate: date ? date.toISOString().split('T')[0] : "" })}
+                    disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                    initialFocus
+                    className="rounded-2xl"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-1.5 text-right">
@@ -499,24 +512,32 @@ export function RecoveryTrackerApp() {
                  <Input value={profile.surname} onChange={(e) => updateProfile({ surname: e.target.value })} placeholder="..." className="h-11 rounded-xl font-bold bg-slate-50 dark:bg-slate-900 border-none" />
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 text-right">
                  <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.birthDate}</label>
-                 <div dir="ltr" className="w-full">
-                    <Input 
-                      type="date" 
-                      lang="en-GB"
-                      value={profile.birthDate} 
-                      max={today?.toISOString().split('T')[0]}
-                      onChange={(e) => updateProfile({ birthDate: e.target.value })} 
-                      className="h-11 rounded-xl font-bold bg-slate-50 dark:bg-slate-900 border-none text-right tabular-nums w-full"
-                      style={{ 
-                        fontFamily: 'sans-serif',
-                        fontVariantNumeric: 'lining-nums tabular-nums',
-                        direction: 'ltr',
-                        textAlign: 'right'
-                      }}
-                    />
-                 </div>
+                 <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full h-11 rounded-xl font-bold bg-slate-50 dark:bg-slate-900 border-none justify-start text-right tabular-nums",
+                          !profile.birthDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4 opacity-50" />
+                        {profile.birthDate ? format(parseISO(profile.birthDate), "yyyy-MM-dd") : <span>{t.pickDate}</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 rounded-2xl" align="center">
+                      <Calendar
+                        mode="single"
+                        selected={profile.birthDate ? parseISO(profile.birthDate) : undefined}
+                        onSelect={(date) => updateProfile({ birthDate: date ? date.toISOString().split('T')[0] : "" })}
+                        disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                        initialFocus
+                        className="rounded-2xl"
+                      />
+                    </PopoverContent>
+                 </Popover>
               </div>
 
               <div className="space-y-1.5">
