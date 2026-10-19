@@ -1,8 +1,7 @@
-
 "use client"
 
 import * as React from "react"
-import { Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Heart, Zap, Target, Shield, Flame, Cloud, Ghost, LogOut } from "lucide-react"
+import { Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Heart, Zap, Target, Shield, Flame, Cloud, Ghost } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
@@ -13,9 +12,6 @@ import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { Calendar } from "@/components/ui/calendar"
 import { Switch } from "@/components/ui/switch"
-import { useAuth, useUser } from "@/firebase"
-import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Dialog,
   DialogContent,
@@ -55,10 +51,8 @@ const TRANSLATIONS = {
     version: "الإصدار 1.0.0",
     selectIcon: "اختر رمزاً",
     profile: "الملف الشخصي",
-    signInWithGoogle: "تسجيل الدخول باستخدام جوجل",
-    signOut: "تسجيل الخروج",
     welcome: "مرحباً",
-    syncNote: "سيتم حفظ بياناتك سحابياً عند تسجيل الدخول"
+    localNote: "يتم حفظ بياناتك محلياً على هذا الجهاز"
   },
   en: {
     title: "Recovery",
@@ -81,10 +75,8 @@ const TRANSLATIONS = {
     version: "Version 1.0.0",
     selectIcon: "Select Icon",
     profile: "Profile",
-    signInWithGoogle: "Sign in with Google",
-    signOut: "Sign Out",
     welcome: "Welcome",
-    syncNote: "Your data will be synced to the cloud when signed in"
+    localNote: "Your data is saved locally on this device"
   }
 }
 
@@ -103,8 +95,6 @@ const AVAILABLE_ICONS = [
 
 export function RecoveryTrackerApp() {
   const { toast } = useToast()
-  const auth = useAuth()
-  const { user, loading: authLoading } = useUser()
   const [mounted, setMounted] = React.useState(false)
   const [isHistoryOpen, setIsHistoryOpen] = React.useState(false)
   const [isSetupOpen, setIsSetupOpen] = React.useState(false)
@@ -156,26 +146,6 @@ export function RecoveryTrackerApp() {
       } catch (e) { console.error("Parse error") }
     }
   }, [])
-
-  const handleSignIn = async () => {
-    const provider = new GoogleAuthProvider()
-    try {
-      await signInWithPopup(auth, provider)
-      toast({ title: language === 'ar' ? "تم تسجيل الدخول بنجاح" : "Signed in successfully" })
-    } catch (error) {
-      console.error(error)
-      toast({ variant: "destructive", title: language === 'ar' ? "فشل تسجيل الدخول" : "Sign in failed" })
-    }
-  }
-
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth)
-      toast({ title: language === 'ar' ? "تم تسجيل الخروج" : "Signed out" })
-    } catch (error) {
-      console.error(error)
-    }
-  }
 
   const activeHabit = React.useMemo(() => habits.find(h => h.id === activeHabitId), [habits, activeHabitId]);
 
@@ -241,14 +211,7 @@ export function RecoveryTrackerApp() {
     <div className="flex flex-col h-full w-full overflow-hidden bg-slate-50 dark:bg-slate-950" dir={isAr ? 'rtl' : 'ltr'}>
       <header className="h-14 flex items-center justify-between px-6 z-40 shrink-0 border-b bg-background/50 backdrop-blur-md">
         <Button variant="ghost" size="icon" className="rounded-full text-slate-400" onClick={() => setIsProfileOpen(true)}>
-          {user ? (
-            <Avatar className="h-6 w-6">
-              <AvatarImage src={user.photoURL || undefined} />
-              <AvatarFallback><UserIcon className="h-4 w-4" /></AvatarFallback>
-            </Avatar>
-          ) : (
-            <UserIcon className="h-5 w-5" />
-          )}
+          <UserIcon className="h-5 w-5" />
         </Button>
         <h1 className="text-lg font-black tracking-tighter">{t.title}</h1>
         <Button variant="ghost" size="icon" className="rounded-full text-slate-400" onClick={() => setIsSettingsOpen(true)}>
@@ -408,45 +371,17 @@ export function RecoveryTrackerApp() {
         title={t.profile}
       >
         <div className="flex flex-col items-center justify-center space-y-6 pt-4">
-          {user ? (
-            <div className="w-full space-y-6 flex flex-col items-center">
-              <Avatar className="h-20 w-20 border-4 border-white shadow-xl">
-                <AvatarImage src={user.photoURL || undefined} />
-                <AvatarFallback className="text-2xl font-black uppercase">{user.displayName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div className="text-center">
-                <h3 className="text-xl font-black tracking-tighter">{t.welcome}, {user.displayName || user.email?.split('@')[0]}</h3>
-                <p className="text-slate-400 text-xs mt-1 font-medium">{user.email}</p>
-              </div>
-              <Button 
-                variant="outline" 
-                className="w-full h-14 rounded-2xl font-black border-2 gap-2 text-red-500 hover:bg-red-50"
-                onClick={handleSignOut}
-              >
-                <LogOut className="h-5 w-5" />
-                {t.signOut}
-              </Button>
+          <div className="w-full space-y-6 flex flex-col items-center">
+            <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center">
+              <UserIcon className="h-10 w-10 text-slate-300" />
             </div>
-          ) : (
-            <div className="w-full space-y-6 flex flex-col items-center">
-              <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center">
-                <UserIcon className="h-10 w-10 text-slate-300" />
-              </div>
-              <div className="text-center px-4">
-                <h3 className="text-lg font-black tracking-tighter mb-2">{isAr ? "مزامنة البيانات" : "Data Synchronization"}</h3>
-                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-relaxed">
-                  {t.syncNote}
-                </p>
-              </div>
-              <Button 
-                className="w-full h-14 rounded-2xl font-black bg-slate-800 text-white shadow-xl hover:bg-slate-900 active:scale-95 transition-all flex items-center justify-center gap-3"
-                onClick={handleSignIn}
-              >
-                <Globe className="h-5 w-5" />
-                {t.signInWithGoogle}
-              </Button>
+            <div className="text-center px-4">
+              <h3 className="text-lg font-black tracking-tighter mb-2">{t.welcome}</h3>
+              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-relaxed">
+                {t.localNote}
+              </p>
             </div>
-          )}
+          </div>
         </div>
       </SidePanel>
 
