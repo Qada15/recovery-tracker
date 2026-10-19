@@ -33,7 +33,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // تم تغيير lang إلى "en" لفرض الأرقام الغربية 0-9 مع الحفاظ على dir="rtl" للتخطيط العربي
+  // استخدام lang="en" كإشارة عالمية للمتصفح لاستخدام الأرقام الغربية 0-9
   return (
     <html lang="en" dir="rtl" suppressHydrationWarning className={inter.variable}>
       <head suppressHydrationWarning>

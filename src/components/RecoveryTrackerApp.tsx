@@ -279,7 +279,7 @@ export function RecoveryTrackerApp() {
               <div dir="ltr" className="w-full">
                 <Input 
                   type="date" 
-                  lang="en-US"
+                  lang="en-GB"
                   value={profile.birthDate} 
                   max={today?.toISOString().split('T')[0]}
                   onChange={(e) => updateProfile({ birthDate: e.target.value })} 
@@ -287,7 +287,8 @@ export function RecoveryTrackerApp() {
                   style={{ 
                     fontFamily: 'sans-serif',
                     fontVariantNumeric: 'lining-nums tabular-nums',
-                    unicodeBidi: 'plaintext'
+                    direction: 'ltr',
+                    textAlign: 'right'
                   }}
                 />
               </div>
@@ -503,7 +504,7 @@ export function RecoveryTrackerApp() {
                  <div dir="ltr" className="w-full">
                     <Input 
                       type="date" 
-                      lang="en-US"
+                      lang="en-GB"
                       value={profile.birthDate} 
                       max={today?.toISOString().split('T')[0]}
                       onChange={(e) => updateProfile({ birthDate: e.target.value })} 
@@ -511,7 +512,8 @@ export function RecoveryTrackerApp() {
                       style={{ 
                         fontFamily: 'sans-serif',
                         fontVariantNumeric: 'lining-nums tabular-nums',
-                        unicodeBidi: 'plaintext'
+                        direction: 'ltr',
+                        textAlign: 'right'
                       }}
                     />
                  </div>

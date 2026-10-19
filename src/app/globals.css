@@ -54,9 +54,9 @@
     @apply border-border;
     /* فرض الأرقام الغربية 0-9 بشكل قاطع باستخدام سمات OpenType */
     font-variant-numeric: lining-nums tabular-nums !important;
-    -moz-font-feature-settings: "lnum" 1, "tnum" 1 !important;
-    -webkit-font-feature-settings: "lnum" 1, "tnum" 1 !important;
     font-feature-settings: "lnum" 1, "tnum" 1 !important;
+    -webkit-font-feature-settings: "lnum" 1, "tnum" 1 !important;
+    font-synthesis: none !important;
   }
 
   body {
@@ -64,29 +64,31 @@
     font-family: var(--font-inter), system-ui, -apple-system, sans-serif !important;
   }
 
-  /* حل نهائي وجذري لحقول التاريخ لمنع تعريب الأرقام داخلياً في المتصفحات */
+  /* حل نهائي وجذري لحقول التاريخ لمنع تعريب الأرقام داخلياً */
   input[type="date"], 
   input[type="datetime-local"], 
   input[type="time"],
-  input[type="month"] {
+  input[type="month"],
+  .tabular-nums {
     direction: ltr !important;
-    text-align: right !important;
-    font-family: sans-serif !important;
     unicode-bidi: bidi-override !important;
+    font-family: 'Inter', system-ui, sans-serif !important;
+    font-variant-numeric: lining-nums tabular-nums !important;
   }
 
-  /* استهداف العناصر الداخلية لمتصفحات WebKit (Chrome, Safari, Edge) */
+  /* استهداف الأجزاء الداخلية لمتصفحات WebKit (Chrome, Safari) */
   input[type="date"]::-webkit-datetime-edit,
   input[type="date"]::-webkit-datetime-edit-fields-wrapper,
   input[type="date"]::-webkit-datetime-edit-text,
   input[type="date"]::-webkit-datetime-edit-month-field,
   input[type="date"]::-webkit-datetime-edit-day-field,
   input[type="date"]::-webkit-datetime-edit-year-field {
+    font-family: 'Inter', system-ui, sans-serif !important;
     font-variant-numeric: lining-nums !important;
     font-feature-settings: "lnum" 1 !important;
     -webkit-font-feature-settings: "lnum" 1 !important;
-    font-family: sans-serif !important;
-    color: currentColor;
+    direction: ltr !important;
+    unicode-bidi: bidi-override !important;
   }
 
   html, body {
