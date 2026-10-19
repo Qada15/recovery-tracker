@@ -52,25 +52,26 @@
 @layer base {
   * {
     @apply border-border;
-    /* Force Western Arabic Numerals (0-9) globally using OpenType features */
+    /* فرض الأرقام الغربية 0-9 بشكل قاطع باستخدام سمات OpenType */
     font-variant-numeric: lining-nums tabular-nums !important;
     -moz-font-feature-settings: "lnum" 1, "tnum" 1 !important;
     -webkit-font-feature-settings: "lnum" 1, "tnum" 1 !important;
     font-feature-settings: "lnum" 1, "tnum" 1 !important;
   }
 
-  /* Target all numeric displays and inputs */
-  body, input, select, textarea, button, .tabular-nums {
-    /* Use a font stack that prioritizes Western numerals and system-ui fallback */
-    font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji" !important;
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-inter), system-ui, -apple-system, sans-serif !important;
   }
 
-  /* Special handling for native date pickers and inputs to prevent localization of digits */
-  input[type="date"] {
+  /* معالجة حقول التاريخ لمنع تعريب الأرقام داخلياً */
+  input[type="date"], 
+  input[type="datetime-local"], 
+  input[type="time"] {
     direction: ltr !important;
-    unicode-bidi: plaintext !important;
     text-align: right !important;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-family: sans-serif !important;
+    unicode-bidi: plaintext !important;
   }
 
   html, body {
@@ -81,9 +82,6 @@
     -webkit-tap-highlight-color: transparent;
     position: relative;
     touch-action: manipulation;
-  }
-  body {
-    @apply bg-background text-foreground;
   }
 }
 

@@ -1,4 +1,3 @@
-
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
@@ -34,8 +33,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // تم تغيير lang إلى "en" لفرض الأرقام الغربية 0-9 مع الحفاظ على dir="rtl" للتخطيط العربي
   return (
-    <html lang="ar" dir="rtl" suppressHydrationWarning className={inter.variable}>
+    <html lang="en" dir="rtl" suppressHydrationWarning className={inter.variable}>
       <head suppressHydrationWarning>
         <meta name="theme-color" content="#ffffff" />
       </head>
