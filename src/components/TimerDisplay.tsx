@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { History, MoreVertical, Settings2, RotateCcw, RefreshCw, Sparkles, Heart, Zap, Moon, Sun, Target, Shield, Flame, Cloud, Ghost, Trash2 } from "lucide-react"
+import { History, MoreVertical, Settings2, RotateCcw, RefreshCw, Sparkles, Heart, Zap, Moon, Sun, Target, Shield, Flame, Cloud, Ghost, Trash2, Trophy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -24,8 +24,19 @@ const ICON_MAP = {
   Sparkles, Heart, Zap, Moon, Sun, Target, Shield, Flame, Cloud, Ghost
 }
 
+const CHALLENGES = [
+  { days: 3, labelAr: "تحدي 3 أيام", labelEn: "3 Days Challenge" },
+  { days: 7, labelAr: "تحدي أسبوع", labelEn: "1 Week Challenge" },
+  { days: 14, labelAr: "تحدي أسبوعين", labelEn: "2 Weeks Challenge" },
+  { days: 30, labelAr: "تحدي شهر", labelEn: "1 Month Challenge" },
+  { days: 60, labelAr: "تحدي شهرين", labelEn: "2 Months Challenge" },
+  { days: 90, labelAr: "تحدي 3 أشهر", labelEn: "3 Months Challenge" },
+  { days: 180, labelAr: "تحدي 6 أشهر", labelEn: "6 Months Challenge" },
+  { days: 365, labelAr: "تحدي سنة", labelEn: "1 Year Challenge" },
+]
+
 const LiveClock = React.memo(({ startDate, language }: { startDate: Date; language: 'ar' | 'en' }) => {
-  const [elapsed, setElapsed] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+  const [elapsed, setElapsed] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0, totalMs: 0 })
   const isAr = language === 'ar'
 
   React.useEffect(() => {
@@ -37,7 +48,8 @@ const LiveClock = React.memo(({ startDate, language }: { startDate: Date; langua
         seconds: Math.floor((d / 1000) % 60),
         minutes: Math.floor((d / 1000 / 60) % 60),
         hours: Math.floor((d / (1000 * 60 * 60)) % 24),
-        days: Math.floor(d / (1000 * 60 * 60 * 24))
+        days: Math.floor(d / (1000 * 60 * 60 * 24)),
+        totalMs: d
       })
     }
     updateTimer()
@@ -45,7 +57,31 @@ const LiveClock = React.memo(({ startDate, language }: { startDate: Date; langua
     return () => clearInterval(interval)
   }, [startDate])
 
-  // تحديد أكبر وحدة زمنية غير صفرية لعرضها في الدائرة
+  const challengeInfo = React.useMemo(() => {
+    const currentDays = elapsed.totalMs / (1000 * 60 * 60 * 24)
+    const nextChallengeIndex = CHALLENGES.findIndex(c => c.days > currentDays)
+    
+    if (nextChallengeIndex === -1) {
+      return { 
+        label: isAr ? "بطل التعافي" : "Recovery Hero", 
+        progress: 100,
+        targetDays: CHALLENGES[CHALLENGES.length - 1].days 
+      }
+    }
+
+    const nextChallenge = CHALLENGES[nextChallengeIndex]
+    const prevDays = nextChallengeIndex === 0 ? 0 : CHALLENGES[nextChallengeIndex - 1].days
+    const range = nextChallenge.days - prevDays
+    const currentInRange = currentDays - prevDays
+    const progress = Math.min(100, (currentInRange / range) * 100)
+
+    return {
+      label: isAr ? nextChallenge.labelAr : nextChallenge.labelEn,
+      progress,
+      targetDays: nextChallenge.days
+    }
+  }, [elapsed.totalMs, isAr])
+
   const displayUnit = React.useMemo(() => {
     if (elapsed.days > 0) return { value: elapsed.days, label: isAr ? "يوم" : "Day" }
     if (elapsed.hours > 0) return { value: elapsed.hours, label: isAr ? "ساعة" : "Hour" }
@@ -53,14 +89,45 @@ const LiveClock = React.memo(({ startDate, language }: { startDate: Date; langua
     return { value: elapsed.seconds, label: isAr ? "ثانية" : "Sec" }
   }, [elapsed, isAr])
 
+  // حساب محيط الدائرة للتقدم
+  const radius = 84
+  const circumference = 2 * Math.PI * radius
+  const strokeDashoffset = circumference - (challengeInfo.progress / 100) * circumference
+
   return (
     <div className="w-full flex flex-col items-center shrink-0">
-      {/* Largest time unit in a circle */}
       <div className="relative flex items-center justify-center mb-6">
-        <div className="w-44 h-44 rounded-full border-8 border-primary/10 flex flex-col items-center justify-center bg-white dark:bg-slate-900 shadow-2xl relative overflow-hidden">
-          {/* Subtle background glow */}
+        {/* Progress Ring */}
+        <svg className="absolute w-52 h-52 -rotate-90 pointer-events-none">
+          <circle
+            cx="104"
+            cy="104"
+            r={radius}
+            stroke="currentColor"
+            strokeWidth="8"
+            fill="transparent"
+            className="text-slate-100 dark:text-slate-800"
+          />
+          <circle
+            cx="104"
+            cy="104"
+            r={radius}
+            stroke="currentColor"
+            strokeWidth="8"
+            fill="transparent"
+            strokeDasharray={circumference}
+            style={{ 
+              strokeDashoffset,
+              transition: 'stroke-dashoffset 1s linear'
+            }}
+            strokeLinecap="round"
+            className="text-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.5)]"
+          />
+        </svg>
+
+        {/* Inner Circle Content */}
+        <div className="w-40 h-40 rounded-full flex flex-col items-center justify-center bg-white dark:bg-slate-900 shadow-xl relative overflow-hidden">
           <div className="absolute inset-0 bg-primary/5 animate-pulse" />
-          
           <span className="text-7xl font-black text-primary tabular-nums leading-none relative z-10">
             {displayUnit.value}
           </span>
@@ -70,20 +137,27 @@ const LiveClock = React.memo(({ startDate, language }: { startDate: Date; langua
         </div>
       </div>
 
-      <div className="w-full max-w-[220px] flex justify-center gap-4 py-3 bg-slate-50 dark:bg-slate-800/40 rounded-2xl mb-6 border border-slate-100 dark:border-slate-800 shadow-sm">
-        <div className="text-center">
-          <span className="text-xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.hours}</span>
-          <p className="text-[7px] font-black uppercase opacity-40 mt-0.5">{isAr ? "ساعة" : "H"}</p>
+      {/* Challenge Label */}
+      <div className="flex flex-col items-center mb-6">
+        <div className="flex items-center gap-1.5 px-4 py-1.5 bg-primary/10 rounded-full mb-2">
+          <Trophy className="h-3 w-3 text-primary" />
+          <span className="text-[10px] font-black uppercase tracking-wider text-primary">{challengeInfo.label}</span>
         </div>
-        <span className="text-xl font-black text-slate-300 self-start mt-[-2px]">:</span>
-        <div className="text-center">
-          <span className="text-xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.minutes}</span>
-          <p className="text-[7px] font-black uppercase opacity-40 mt-0.5">{isAr ? "دقيقة" : "M"}</p>
-        </div>
-        <span className="text-xl font-black text-slate-300 self-start mt-[-2px]">:</span>
-        <div className="text-center">
-          <span className="text-xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.seconds}</span>
-          <p className="text-[7px] font-black uppercase opacity-40 mt-0.5">{isAr ? "ثانية" : "S"}</p>
+        <div className="w-full max-w-[220px] flex justify-center gap-4 py-3 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
+          <div className="text-center">
+            <span className="text-xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.hours}</span>
+            <p className="text-[7px] font-black uppercase opacity-40 mt-0.5">{isAr ? "ساعة" : "H"}</p>
+          </div>
+          <span className="text-xl font-black text-slate-300 self-start mt-[-2px]">:</span>
+          <div className="text-center">
+            <span className="text-xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.minutes}</span>
+            <p className="text-[7px] font-black uppercase opacity-40 mt-0.5">{isAr ? "دقيقة" : "M"}</p>
+          </div>
+          <span className="text-xl font-black text-slate-300 self-start mt-[-2px]">:</span>
+          <div className="text-center">
+            <span className="text-xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.seconds}</span>
+            <p className="text-[7px] font-black uppercase opacity-40 mt-0.5">{isAr ? "ثانية" : "S"}</p>
+          </div>
         </div>
       </div>
     </div>
