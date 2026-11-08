@@ -1,7 +1,8 @@
+
 "use client"
 
 import * as React from "react"
-import { History, MoreVertical, Settings2, RotateCcw, RefreshCw, Sparkles, Heart, Zap, Moon, Sun, Target, Shield, Flame, Cloud, Ghost, Trash2, Trophy, Check } from "lucide-react"
+import { History, MoreVertical, Settings2, RotateCcw, RefreshCw, Sparkles, Heart, Zap, Moon, Sun, Target, Shield, Flame, Cloud, Ghost, Trash2, Trophy, Check, Cigarette, Coffee, Candy, Wine, Dices, Smartphone, Skull, Ban } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -20,7 +21,8 @@ import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
 const ICON_MAP = {
-  Sparkles, Heart, Zap, Moon, Sun, Target, Shield, Flame, Cloud, Ghost
+  Sparkles, Heart, Zap, Moon, Sun, Target, Shield, Flame, Cloud, Ghost,
+  Cigarette, Coffee, Candy, Wine, Dices, Smartphone, Skull, Ban
 }
 
 const AVAILABLE_COLORS = [
@@ -214,7 +216,6 @@ export const TimerDisplay = React.memo(({
 
   return (
     <div className="w-full flex flex-col items-center h-full max-w-[480px] mx-auto overflow-hidden">
-      {/* Header section */}
       <div className="w-full flex items-center justify-between px-6 pt-6 mb-4 shrink-0">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -248,12 +249,10 @@ export const TimerDisplay = React.memo(({
         </div>
       </div>
 
-      {/* Main Clock section */}
       <div className="flex-1 w-full flex flex-col items-center justify-center min-h-0">
         <LiveClock startDate={externalStartDate} language={language} color={externalAccentColor} />
       </div>
 
-      {/* Bottom Action Section - Reduced padding to stay above tabs */}
       <div className="w-full px-6 pb-6 shrink-0">
         <Button 
           onClick={onOpenHistory} 
@@ -263,7 +262,6 @@ export const TimerDisplay = React.memo(({
         </Button>
       </div>
 
-      {/* Settings Dialog */}
       <Dialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
         <DialogContent className="rounded-[2.5rem] p-6 max-w-[340px] z-[100]">
           <DialogHeader><DialogTitle className="text-center font-black text-lg">{isAr ? "تعديل العداد" : "Edit Tracker"}</DialogTitle></DialogHeader>

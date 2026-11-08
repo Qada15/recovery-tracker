@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Target, Shield, Flame, Cloud, Ghost, Calendar as CalendarIcon, UserCog, AppWindow, ArrowRight, Heart, Zap, Check } from "lucide-react"
+import { Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Target, Shield, Flame, Cloud, Ghost, Calendar as CalendarIcon, UserCog, AppWindow, ArrowRight, Heart, Zap, Check, Cigarette, Coffee, Candy, Wine, Dices, Smartphone, Skull, Ban } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
@@ -125,16 +125,18 @@ const TRANSLATIONS = {
 }
 
 const AVAILABLE_ICONS = [
-  { name: 'Sparkles', icon: Sparkles },
-  { name: 'Heart', icon: Heart },
-  { name: 'Zap', icon: Zap },
-  { name: 'Moon', icon: Moon },
-  { name: 'Sun', icon: Sun },
-  { name: 'Target', icon: Target },
-  { name: 'Shield', icon: Shield },
+  { name: 'Cigarette', icon: Cigarette },
+  { name: 'Coffee', icon: Coffee },
+  { name: 'Candy', icon: Candy },
+  { name: 'Wine', icon: Wine },
+  { name: 'Dices', icon: Dices },
+  { name: 'Smartphone', icon: Smartphone },
+  { name: 'Skull', icon: Skull },
+  { name: 'Ban', icon: Ban },
   { name: 'Flame', icon: Flame },
-  { name: 'Cloud', icon: Cloud },
-  { name: 'Ghost', icon: Ghost },
+  { name: 'Shield', icon: Shield },
+  { name: 'Target', icon: Target },
+  { name: 'Sparkles', icon: Sparkles },
 ]
 
 const AVAILABLE_COLORS = [
@@ -243,7 +245,7 @@ export function RecoveryTrackerApp() {
   const [profile, setProfile] = React.useState<UserProfile>({ name: "", surname: "", birthDate: "", gender: "" })
 
   const [tempName, setTempName] = React.useState("")
-  const [tempIcon, setTempIcon] = React.useState("Sparkles")
+  const [tempIcon, setTempIcon] = React.useState("Cigarette")
   const [tempColor, setTempColor] = React.useState(AVAILABLE_COLORS[0])
   
   const [today, setToday] = React.useState<Date | null>(null)
@@ -340,7 +342,7 @@ export function RecoveryTrackerApp() {
     setIsSetupOpen(false)
     setSetupStep('name')
     setTempName("")
-    setTempIcon("Sparkles")
+    setTempIcon("Cigarette")
     setTempColor(AVAILABLE_COLORS[0])
   }, [habits, tempName, tempIcon, tempColor])
 
@@ -469,7 +471,6 @@ export function RecoveryTrackerApp() {
               />
             </div>
             
-            {/* التباعد لضمان عدم تغطية شريط التبويبات للزر */}
             <div className="h-28 shrink-0" />
           </div>
         ) : (
@@ -481,7 +482,6 @@ export function RecoveryTrackerApp() {
           </div>
         )}
 
-        {/* شريط التبويبات السفلي المطور (Dock Design) */}
         {habits.length > 0 && (
           <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[90%] max-w-sm">
             <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 rounded-[2.5rem] shadow-2xl p-2 flex items-center gap-2 overflow-hidden">
@@ -712,10 +712,10 @@ export function RecoveryTrackerApp() {
                 <div className="text-center mb-2">
                    <p className="text-[9px] font-black uppercase tracking-widest opacity-40">{t.selectIcon}</p>
                 </div>
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-4 gap-2 max-h-[200px] overflow-y-auto p-1">
                   {AVAILABLE_ICONS.map((item) => (
-                    <button key={item.name} onClick={() => setTempIcon(item.name)} className={`h-10 w-10 rounded-lg flex items-center justify-center transition-all ${tempIcon === item.name ? 'bg-primary text-white shadow-md' : 'bg-secondary/40 text-slate-400'}`}>
-                      <item.icon className="h-4 w-4" />
+                    <button key={item.name} onClick={() => setTempIcon(item.name)} className={`h-12 w-12 rounded-xl flex items-center justify-center transition-all ${tempIcon === item.name ? 'bg-primary text-white shadow-md scale-105' : 'bg-secondary/40 text-slate-400'}`}>
+                      <item.icon className="h-5 w-5" />
                     </button>
                   ))}
                 </div>
