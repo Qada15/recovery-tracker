@@ -46,7 +46,7 @@ export const JourneyLog = React.memo(({
   const [today, setToday] = React.useState<Date | null>(null)
   const [isTimePickerOpen, setIsTimePickerOpen] = React.useState(false)
   const [pickerMode, setPickerMode] = React.useState<'hours' | 'minutes'>('hours')
-  const [tempTime, setTempTime] = React.useState({ hours: 0, minutes: 0 })
+  const [tempTime, setTempTime] = React.useState({ hours12: 12, period: 'AM' as 'AM' | 'PM', minutes: 0 })
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -59,7 +59,6 @@ export const JourneyLog = React.memo(({
   const stats = React.useMemo(() => {
     if (!today || resetDates.length === 0) return { highest: 0, previous: 0 }
     
-    // الحصول على التواريخ الفريدة للانتكاسات مرتبة زمنياً
     const uniqueTimestamps = Array.from(new Set(
       resetDates.map(d => startOfDay(d).getTime())
     )).sort((a, b) => a - b)
@@ -69,17 +68,13 @@ export const JourneyLog = React.memo(({
     const uniqueEvents = uniqueTimestamps.map(t => new Date(t))
 
     const streaks: number[] = []
-    // حساب الفترات (Streaks) بين كل انتكاسة والتي تليها
     for (let i = 0; i < uniqueEvents.length - 1; i++) {
       const diff = differenceInDays(uniqueEvents[i + 1], uniqueEvents[i])
       streaks.push(Math.max(0, diff))
     }
     
-    // آخر انتكاسة مسجلة هي نقطة البداية للعداد الحالي
     const latestReset = uniqueEvents[uniqueEvents.length - 1]
     const isTodayRelapse = resetDates.some(rd => isSameDay(startOfDay(rd), today))
-    
-    // العداد الحالي يحسب من تاريخ آخر انتكاسة حتى اليوم
     const currentStreak = isTodayRelapse ? 0 : differenceInDays(today, latestReset)
     
     const allStreaks = [...streaks, currentStreak]
@@ -123,7 +118,12 @@ export const JourneyLog = React.memo(({
   const handleOpenTimePicker = () => {
     if (!selectedDay) return
     const record = resetDates.find(d => isSameDay(d, selectedDay)) || selectedDay
-    setTempTime({ hours: record.getHours(), minutes: record.getMinutes() })
+    const h24 = record.getHours()
+    const period = h24 >= 12 ? 'PM' : 'AM'
+    let h12 = h24 % 12
+    if (h12 === 0) h12 = 12
+    
+    setTempTime({ hours12: h12, period, minutes: record.getMinutes() })
     setPickerMode('hours')
     setIsTimePickerOpen(true)
   }
@@ -131,7 +131,11 @@ export const JourneyLog = React.memo(({
   const handleSaveTime = () => {
     if (!selectedDay) return
     const oldRecord = resetDates.find(d => isSameDay(d, selectedDay)) || selectedDay
-    const newDate = setMinutes(setHours(selectedDay, tempTime.hours), tempTime.minutes)
+    
+    let h24 = tempTime.hours12 % 12
+    if (tempTime.period === 'PM') h24 += 12
+    
+    const newDate = setMinutes(setHours(selectedDay, h24), tempTime.minutes)
     onUpdateTime(oldRecord, newDate)
     setIsTimePickerOpen(false)
   }
@@ -175,11 +179,9 @@ export const JourneyLog = React.memo(({
               month={currentMonth}
               onMonthChange={(m) => {
                  const now = new Date();
-                 // منع التمرير لما قبل شهر الميلاد
                  if (birthDate && isBefore(m, startOfDay(new Date(birthDate.getFullYear(), birthDate.getMonth(), 1)))) {
                    return;
                  }
-                 // منع التمرير للأشهر المستقبلية
                  if (m.getFullYear() > now.getFullYear() || (m.getFullYear() === now.getFullYear() && m.getMonth() > now.getMonth())) {
                    return;
                  }
@@ -187,7 +189,7 @@ export const JourneyLog = React.memo(({
               }}
               disabled={[{ after: today }, ...(birthDate ? [{ before: birthDate }] : [])]} 
               fromDate={birthDate || undefined}
-              toMonth={today} // تقييد المكون نفسه برمجياً لمنع عرض أزرار الأشهر المستقبلية
+              toMonth={today}
               modifiers={modifiers as any}
               modifiersClassNames={MODIFIERS_STYLES}
               className="scale-[0.85] origin-top"
@@ -222,19 +224,19 @@ export const JourneyLog = React.memo(({
           <div className="py-2">
             <CircularTimePicker 
               mode={pickerMode} 
-              value={pickerMode === 'hours' ? tempTime.hours : tempTime.minutes}
-              onChange={(v) => setTempTime(prev => ({ ...prev, [pickerMode]: v }))}
+              value={pickerMode === 'hours' ? tempTime.hours12 : tempTime.minutes}
+              period={tempTime.period}
+              language={language}
+              onChange={(v) => setTempTime(prev => ({ ...prev, [pickerMode === 'hours' ? 'hours12' : 'minutes']: v }))}
+              onPeriodChange={(p) => setTempTime(prev => ({ ...prev, period: p }))}
               onComplete={() => {
                 if (pickerMode === 'hours') setPickerMode('minutes')
-                else handleSaveTime()
               }}
             />
           </div>
           <div className="flex gap-2">
              <Button variant="outline" onClick={() => setIsTimePickerOpen(false)} className="flex-1 rounded-xl h-10 font-black">{isAr ? "إلغاء" : "Cancel"}</Button>
-             {pickerMode === 'minutes' && (
-               <Button onClick={handleSaveTime} className="flex-1 rounded-xl h-10 font-black bg-primary">{isAr ? "حفظ" : "Save"}</Button>
-             )}
+             <Button onClick={handleSaveTime} className="flex-1 rounded-xl h-10 font-black bg-primary">{isAr ? "حفظ" : "Save"}</Button>
           </div>
         </DialogContent>
       </Dialog>
