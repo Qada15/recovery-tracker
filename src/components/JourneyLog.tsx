@@ -229,14 +229,20 @@ export const JourneyLog = React.memo(({
               language={language}
               onChange={(v) => setTempTime(prev => ({ ...prev, [pickerMode === 'hours' ? 'hours12' : 'minutes']: v }))}
               onPeriodChange={(p) => setTempTime(prev => ({ ...prev, period: p }))}
-              onComplete={() => {
-                if (pickerMode === 'hours') setPickerMode('minutes')
-              }}
             />
           </div>
           <div className="flex gap-2">
-             <Button variant="outline" onClick={() => setIsTimePickerOpen(false)} className="flex-1 rounded-xl h-10 font-black">{isAr ? "إلغاء" : "Cancel"}</Button>
-             <Button onClick={handleSaveTime} className="flex-1 rounded-xl h-10 font-black bg-primary">{isAr ? "حفظ" : "Save"}</Button>
+             {pickerMode === 'hours' ? (
+               <>
+                 <Button variant="outline" onClick={() => setIsTimePickerOpen(false)} className="flex-1 rounded-xl h-10 font-black">{isAr ? "إلغاء" : "Cancel"}</Button>
+                 <Button onClick={() => setPickerMode('minutes')} className="flex-1 rounded-xl h-10 font-black bg-primary">{isAr ? "التالي" : "Next"}</Button>
+               </>
+             ) : (
+               <>
+                 <Button variant="outline" onClick={() => setPickerMode('hours')} className="flex-1 rounded-xl h-10 font-black">{isAr ? "السابق" : "Back"}</Button>
+                 <Button onClick={handleSaveTime} className="flex-1 rounded-xl h-10 font-black bg-primary">{isAr ? "حفظ" : "Save"}</Button>
+               </>
+             )}
           </div>
         </DialogContent>
       </Dialog>

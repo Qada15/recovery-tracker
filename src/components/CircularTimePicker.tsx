@@ -9,7 +9,7 @@ interface CircularTimePickerProps {
   period?: 'AM' | 'PM'
   onChange: (value: number) => void
   onPeriodChange?: (period: 'AM' | 'PM') => void
-  onComplete: () => void
+  onComplete?: () => void
   language: 'ar' | 'en'
 }
 
@@ -64,7 +64,7 @@ export function CircularTimePicker({
   const onPointerUp = () => {
     if (isDragging.current) {
       isDragging.current = false
-      setTimeout(onComplete, 200)
+      // تمت إزالة الانتقال التلقائي بناءً على طلب المستخدم
     }
   }
 
@@ -132,6 +132,7 @@ export function CircularTimePicker({
       {mode === 'hours' && onPeriodChange && (
         <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl w-full max-w-[200px] shadow-inner">
           <button 
+            type="button"
             onClick={() => onPeriodChange('AM')}
             className={cn(
               "flex-1 h-10 rounded-xl font-black text-xs transition-all",
@@ -141,6 +142,7 @@ export function CircularTimePicker({
             {isAr ? "صباحاً" : "AM"}
           </button>
           <button 
+            type="button"
             onClick={() => onPeriodChange('PM')}
             className={cn(
               "flex-1 h-10 rounded-xl font-black text-xs transition-all",
