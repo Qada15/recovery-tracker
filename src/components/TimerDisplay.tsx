@@ -25,13 +25,14 @@ const ICON_MAP = {
   Cigarette, Coffee, Candy, Wine, Dices, Smartphone, Skull, Ban
 }
 
+// لوحة الألوان الباردة المتطابقة
 const AVAILABLE_COLORS = [
-  "hsl(212 100% 45%)", // Blue
-  "hsl(160 84% 39%)",  // Emerald
-  "hsl(346 84% 61%)",  // Rose
-  "hsl(38 92% 50%)",   // Amber
-  "hsl(262 83% 58%)",  // Violet
-  "hsl(215 25% 27%)",  // Slate
+  "hsl(217 91% 60%)", // Blue
+  "hsl(160 84% 39%)", // Emerald
+  "hsl(190 90% 45%)", // Teal/Cyan
+  "hsl(230 70% 60%)", // Indigo
+  "hsl(260 75% 65%)", // Violet
+  "hsl(215 20% 45%)", // Slate/Cool Gray
 ]
 
 const CHALLENGES = [

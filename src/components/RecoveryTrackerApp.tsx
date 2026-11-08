@@ -140,12 +140,12 @@ const AVAILABLE_ICONS = [
 ]
 
 const AVAILABLE_COLORS = [
-  "hsl(212 100% 45%)", // Blue
-  "hsl(160 84% 39%)",  // Emerald
-  "hsl(346 84% 61%)",  // Rose
-  "hsl(38 92% 50%)",   // Amber
-  "hsl(262 83% 58%)",  // Violet
-  "hsl(215 25% 27%)",  // Slate
+  "hsl(217 91% 60%)",
+  "hsl(160 84% 39%)",
+  "hsl(190 90% 45%)",
+  "hsl(230 70% 60%)",
+  "hsl(260 75% 65%)",
+  "hsl(215 20% 45%)",
 ]
 
 function TripleDateInput({ 

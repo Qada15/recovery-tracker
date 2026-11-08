@@ -1,5 +1,15 @@
 # Common Errors & Pitfalls
 
+- [When Typecheck Fails](#when-typecheck-fails): Lines 13-15
+- [Genkit v1.x vs Pre-1.0 Migration](#genkit-v1x-vs-pre-10-migration): Lines 17-113
+- [Zod & Schema Errors](#zod--schema-errors): Lines 115-121
+- [Tool Usage](#tool-usage): Lines 123-126
+- [Handling Failures in Tool Loops](#handling-failures-in-tool-loops): Lines 128-159
+- [Multimodal & Image Generation](#multimodal--image-generation): Lines 161-169
+- [Audio & Speech Generation](#audio--speech-generation): Lines 171-176
+
+---
+
 ## When Typecheck Fails
 
 **Before searching source code or docs**, check the sections below. Many type errors are caused by deprecated APIs or incorrect imports.
@@ -27,28 +37,28 @@ Genkit v1.x introduced significant API changes. This section covers critical syn
 - **Correct**: Use plugin-specific model factories or string identifiers (prefaced by plugin name).
   ```ts
   // Using model factory (v1.x - Preferred)
-  await ai.generate({ model: googleAI.model('gemini-2.5-flash'), ... });
+  await ai.generate({ model: googleAI.model('gemini-flash-latest'), ... });
 
   // Using string identifier
-  await ai.generate({ model: 'googleai/gemini-2.5-flash', ...});
+  await ai.generate({ model: 'googleai/gemini-flash-latest', ...});
   // Or
-  await ai.generate({ model: 'vertexai/gemini-2.5-flash', ...});
+  await ai.generate({ model: 'vertexai/gemini-flash-latest', ...});
   ```
 - **Incorrect**: Using imported model objects directly or string identifiers without plugin name.
   ```ts
   await ai.generate({ model: gemini15Pro, ... }); // INCORRECT (Pre-1.0)
-  await ai.generate({ model: 'gemini-2.5-flash', ... }); // INCORRECT (No plugin prefix)
+  await ai.generate({ model: 'gemini-flash-latest', ... }); // INCORRECT (No plugin prefix)
   ```
 
 ### Model Selection (Gemini)
 
-- **Preferred**: Use `gemini-2.5-*` models for best performance and features.
+- **Preferred**: Use latest model aliases (e.g. `gemini-flash-latest`) for best performance and features.
   ```ts
-  model: googleAI.model('gemini-2.5-flash') // PREFERRED
+  model: googleAI.model('gemini-flash-latest') // PREFERRED
   ```
-- **DEPRECATED**: `gemini-1.5-*` models are deprecated and will throw errors.
+- **DEPRECATED**: Versioned legacy models (like `gemini-1.5-flash` or `gemini-2.5-flash`) should be updated to latest aliases.
   ```ts
-  model: googleAI.model('gemini-1.5-flash') // ERROR (Deprecated)
+  model: googleAI.model('gemini-1.5-flash') // DEPRECATED (Use gemini-flash-latest instead)
   ```
 
 ### Response Access
@@ -98,6 +108,7 @@ Genkit v1.x introduced significant API changes. This section covers critical syn
 - **Incorrect (Pre-1.0)**: Importing `defineFlow` globally.
   ```ts
   import { defineFlow } from "@genkit-ai/flow"; // INCORRECT
+  ```
 
 You should never import `@genkit-ai/flow`, `@genkit-ai/ai` or `@genkit-ai/core` packages directly.
 
@@ -114,9 +125,42 @@ You should never import `@genkit-ai/flow`, `@genkit-ai/ai` or `@genkit-ai/core` 
 - **Tool Not Found**: Ensure tools are registered in the `tools` array of `generate` or provided via plugins.
 - **MCP Tools**: Use the `ServerName:tool_name` format when referencing MCP tools.
 
+## Handling Failures in Tool Loops
+
+- **Don't throw away finished tool rounds.** By default `generate()` throws on a
+  model/tool/middleware failure or at `maxTurns`. Since `genkit` 1.43.0,
+  `throwOnError: false` returns the failure on the response along with
+  `messages` up to the last completed tool round, so you can retry without
+  re-running tools that already succeeded:
+  ```ts
+  const opts = { model: googleAI.model('gemini-flash-latest'), tools: [getWeather], throwOnError: false };
+  let res = await ai.generate({ ...opts, prompt: 'What should I wear in Tokyo?' });
+  if (res.finishReason === 'failed' || res.finishReason === 'aborted') {
+    console.warn(res.error?.status, res.error?.message); // e.g. INTERNAL, tool "getWeather" failed
+    res = await ai.generate({ ...opts, messages: res.messages }); // safe to resend
+  }
+  ```
+  `aborted` means the caller stopped it (abort signal, timeout, `maxTurns`);
+  `failed` means something broke. Errors before the request resolves (unknown
+  model/tool, invalid options) still throw.
+- **Agents: retry a failed turn with `send({})`.** A failed agent turn throws
+  `AgentError` (from `genkit/beta/client`), but the chat has already adopted the
+  resume point. `await chat.send({})` re-runs the turn from there:
+  ```ts
+  try {
+    await chat.send('Book the full itinerary.');
+  } catch (err) {
+    if (err instanceof AgentError) await chat.send({});
+    else throw err;
+  }
+  ```
+- **Recoverable domain errors belong in tool output.** Return
+  `{ ok: false, reason: '...' }` from the tool when the model can fix the input;
+  throw only when the system can't continue.
+
 ## Multimodal & Image Generation
 
-- **Missing responseModalities**: When using image generation models (like `gemini-2.5-flash-image`), you **MUST** specify the response modalities in the config.
+- **Missing responseModalities**: When using image generation models (like `gemini-nano-banana-2.1`), you **MUST** specify the response modalities in the config.
   ```ts
   config: {
     responseModalities: ["TEXT", "IMAGE"]
