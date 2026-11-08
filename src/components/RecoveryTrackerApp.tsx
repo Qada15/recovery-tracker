@@ -436,7 +436,7 @@ export function RecoveryTrackerApp() {
         </Button>
       </header>
 
-      <main className="flex-1 w-full flex flex-col items-center px-4 overflow-hidden">
+      <main className="flex-1 w-full flex flex-col items-center px-4 overflow-hidden relative">
         {activeHabit && activeHabitData ? (
           <div className="w-full flex flex-col items-center h-full max-w-[480px]">
             <div className="text-center py-2 shrink-0">
@@ -468,31 +468,9 @@ export function RecoveryTrackerApp() {
                 language={language}
               />
             </div>
-
-            <div className="w-full py-4 shrink-0">
-              <div className="flex items-center gap-3 overflow-x-auto pb-1 custom-scrollbar px-4 w-full justify-center">
-                <button onClick={() => { setIsSetupOpen(true); setSetupStep('name'); }} className="shrink-0 w-12 h-12 rounded-[1rem] bg-slate-800 text-white flex items-center justify-center shadow-md active:scale-95 transition-transform">
-                  <Plus className="h-5 w-5" />
-                </button>
-                {habits.map((habit) => {
-                  const HabitIcon = AVAILABLE_ICONS.find(i => i.name === habit.icon)?.icon || Sparkles;
-                  return (
-                    <button
-                      key={habit.id}
-                      onClick={() => { setActiveHabitId(habit.id); saveToStorage(STORAGE_KEYS.ACTIVE_HABIT_ID, habit.id); }}
-                      className={`shrink-0 h-16 w-14 rounded-[1rem] flex flex-col items-center justify-center gap-0.5 border-2 transition-all ${
-                        activeHabitId === habit.id ? "bg-white dark:bg-slate-900 border-slate-800 dark:border-white text-slate-800 dark:text-white shadow-lg" : "bg-transparent border-transparent text-slate-400 opacity-50"
-                      }`}
-                    >
-                      <div className="w-6 h-6 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
-                         <HabitIcon className="h-3 w-3" style={{ color: habit.color }} />
-                      </div>
-                      <span className="text-[7px] font-black uppercase tracking-tighter truncate w-full px-1 text-center">{habit.name}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
+            
+            {/* التباعد لضمان عدم تغطية شريط التبويبات للزر */}
+            <div className="h-28 shrink-0" />
           </div>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center space-y-6">
@@ -500,6 +478,46 @@ export function RecoveryTrackerApp() {
               <Plus className="h-10 w-10" />
             </button>
             <p className="text-slate-400 font-black uppercase tracking-widest text-[9px]">{t.addHabit}</p>
+          </div>
+        )}
+
+        {/* شريط التبويبات السفلي المطور (Dock Design) */}
+        {habits.length > 0 && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[90%] max-w-sm">
+            <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 rounded-[2.5rem] shadow-2xl p-2 flex items-center gap-2 overflow-hidden">
+              <button 
+                onClick={() => { setIsSetupOpen(true); setSetupStep('name'); }} 
+                className="shrink-0 w-12 h-12 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shadow-lg active:scale-90 transition-all"
+              >
+                <Plus className="h-6 w-6" />
+              </button>
+              
+              <div className="flex-1 flex items-center gap-2 overflow-x-auto custom-scrollbar scroll-smooth">
+                {habits.map((habit) => {
+                  const HabitIcon = AVAILABLE_ICONS.find(i => i.name === habit.icon)?.icon || Sparkles;
+                  const isActive = activeHabitId === habit.id;
+                  return (
+                    <button
+                      key={habit.id}
+                      onClick={() => { setActiveHabitId(habit.id); saveToStorage(STORAGE_KEYS.ACTIVE_HABIT_ID, habit.id); }}
+                      className={cn(
+                        "shrink-0 h-12 px-4 rounded-full flex items-center gap-2 transition-all duration-300 relative overflow-hidden",
+                        isActive 
+                          ? "bg-slate-100 dark:bg-slate-800 shadow-inner" 
+                          : "opacity-40 hover:opacity-100"
+                      )}
+                    >
+                      <HabitIcon className="h-5 w-5" style={{ color: habit.color }} />
+                      {isActive && (
+                        <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
+                          {habit.name}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           </div>
         )}
       </main>
