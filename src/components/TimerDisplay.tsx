@@ -103,11 +103,11 @@ const LiveClock = React.memo(({ startDate, language, color }: { startDate: Date;
 
   return (
     <div className="w-full flex flex-col items-center shrink-0">
-      <div className="relative flex items-center justify-center mb-8">
-        <svg className="absolute w-60 h-60 -rotate-90 pointer-events-none">
+      <div className="relative flex items-center justify-center mb-6">
+        <svg className="absolute w-56 h-56 -rotate-90 pointer-events-none">
           <circle
-            cx="120"
-            cy="120"
+            cx="112"
+            cy="112"
             r={radius}
             stroke="currentColor"
             strokeWidth="10"
@@ -115,8 +115,8 @@ const LiveClock = React.memo(({ startDate, language, color }: { startDate: Date;
             className="text-slate-200 dark:text-slate-800"
           />
           <circle
-            cx="120"
-            cy="120"
+            cx="112"
+            cy="112"
             r={radius}
             stroke={color}
             strokeWidth="10"
@@ -131,23 +131,23 @@ const LiveClock = React.memo(({ startDate, language, color }: { startDate: Date;
           />
         </svg>
 
-        <div className="w-44 h-44 rounded-full flex flex-col items-center justify-center bg-white dark:bg-slate-900 shadow-2xl relative overflow-hidden">
+        <div className="w-40 h-40 rounded-full flex flex-col items-center justify-center bg-white dark:bg-slate-900 shadow-2xl relative overflow-hidden">
           <div className="absolute inset-0 opacity-5 animate-pulse" style={{ backgroundColor: color }} />
-          <span className="text-8xl font-black tabular-nums leading-none relative z-10" style={{ color: color }}>
+          <span className="text-7xl font-black tabular-nums leading-none relative z-10" style={{ color: color }}>
             {displayUnit.value}
           </span>
-          <span className="text-sm font-black text-slate-400 uppercase tracking-widest mt-2 relative z-10">
+          <span className="text-xs font-black text-slate-400 uppercase tracking-widest mt-2 relative z-10">
             {displayUnit.label}
           </span>
         </div>
       </div>
 
-      <div className="flex flex-col items-center mb-8 w-full max-w-sm px-4">
-        <div className="flex items-center gap-1.5 px-6 py-2 rounded-full mb-4 shadow-sm" style={{ backgroundColor: `${color}1A` }}>
+      <div className="flex flex-col items-center mb-6 w-full max-w-sm px-4">
+        <div className="flex items-center gap-1.5 px-6 py-2 rounded-full mb-3 shadow-sm" style={{ backgroundColor: `${color}1A` }}>
           <Trophy className="h-4 w-4" style={{ color: color }} />
-          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: color }}>{challengeInfo.label}</span>
+          <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: color }}>{challengeInfo.label}</span>
         </div>
-        <div className="w-full grid grid-cols-5 items-center gap-2 py-4 px-6 bg-white dark:bg-slate-900 rounded-3xl border shadow-sm">
+        <div className="w-full grid grid-cols-5 items-center gap-2 py-3 px-6 bg-white dark:bg-slate-900 rounded-3xl border shadow-sm">
           <div className="text-center">
             <span className="text-2xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.hours}</span>
             <p className="text-[8px] font-black uppercase opacity-40 mt-1">{isAr ? "ساعة" : "H"}</p>
@@ -213,16 +213,16 @@ export const TimerDisplay = React.memo(({
   }, [tempHabitName, tempColor, onUpdateName, onUpdateColor])
 
   return (
-    <div className="w-full flex flex-col items-center h-full max-w-[480px] mx-auto py-6">
-      {/* Header section without container box */}
-      <div className="w-full flex items-center justify-between px-6 mb-10 shrink-0">
+    <div className="w-full flex flex-col items-center h-full max-w-[480px] mx-auto overflow-hidden">
+      {/* Header section */}
+      <div className="w-full flex items-center justify-between px-6 pt-6 mb-4 shrink-0">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 hover:bg-slate-50 transition-colors">
-              <MoreVertical className="h-6 w-6 text-slate-500" />
+              <MoreVertical className="h-5 w-5 text-slate-500" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align={isAr ? "end" : "start"} className="rounded-2xl w-56 p-2 z-[60]">
+          <DropdownMenuContent align={isAr ? "end" : "start"} className="rounded-2xl w-52 p-2 z-[60]">
             <DropdownMenuItem onClick={onReset} className="text-red-500 font-black p-3 text-xs focus:bg-red-50 dark:focus:bg-red-950">
               <RefreshCw className="h-4 w-4 ml-2" /> {isAr ? "تصفير العداد" : "Reset Tracker"}
             </DropdownMenuItem>
@@ -240,23 +240,26 @@ export const TimerDisplay = React.memo(({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <div className="flex items-center gap-4">
-          <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tight truncate max-w-[200px]">{externalHabitName}</h3>
-          <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center shadow-sm border border-slate-100 dark:border-slate-800">
-            <IconComponent className="h-6 w-6" style={{ color: externalAccentColor }} />
+        <div className="flex items-center gap-3">
+          <h3 className="text-lg font-black text-slate-800 dark:text-white tracking-tight truncate max-w-[180px]">{externalHabitName}</h3>
+          <div className="w-10 h-10 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center shadow-sm border border-slate-100 dark:border-slate-800">
+            <IconComponent className="h-5 w-5" style={{ color: externalAccentColor }} />
           </div>
         </div>
       </div>
 
       {/* Main Clock section */}
-      <div className="flex-1 w-full flex flex-col items-center justify-center">
+      <div className="flex-1 w-full flex flex-col items-center justify-center min-h-0">
         <LiveClock startDate={externalStartDate} language={language} color={externalAccentColor} />
       </div>
 
-      {/* Bottom Action Section */}
-      <div className="w-full px-6 py-4 shrink-0 mt-auto">
-        <Button onClick={onOpenHistory} className="w-full h-18 rounded-[2.2rem] bg-slate-900 dark:bg-slate-800 text-white font-black text-xl flex items-center justify-center gap-4 shadow-2xl active:scale-[0.97] transition-all hover:bg-slate-800 dark:hover:bg-slate-700 py-6">
-          <History className="h-7 w-7" /> {isAr ? "سجل الرحلة" : "Journey Log"}
+      {/* Bottom Action Section - Reduced padding to stay above tabs */}
+      <div className="w-full px-6 pb-6 shrink-0">
+        <Button 
+          onClick={onOpenHistory} 
+          className="w-full h-16 rounded-[2rem] bg-slate-900 dark:bg-slate-800 text-white font-black text-lg flex items-center justify-center gap-4 shadow-xl active:scale-[0.97] transition-all hover:bg-slate-800 dark:hover:bg-slate-700"
+        >
+          <History className="h-6 w-6" /> {isAr ? "سجل الرحلة" : "Journey Log"}
         </Button>
       </div>
 
