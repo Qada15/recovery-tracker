@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -98,70 +97,70 @@ const LiveClock = React.memo(({ startDate, language, color }: { startDate: Date;
     return { value: elapsed.seconds, label: isAr ? "ثانية" : "Sec" }
   }, [elapsed, isAr])
 
-  const radius = 84
+  const radius = 90
   const circumference = 2 * Math.PI * radius
   const strokeDashoffset = circumference - (challengeInfo.progress / 100) * circumference
 
   return (
     <div className="w-full flex flex-col items-center shrink-0">
-      <div className="relative flex items-center justify-center mb-6">
-        <svg className="absolute w-52 h-52 -rotate-90 pointer-events-none">
+      <div className="relative flex items-center justify-center mb-8">
+        <svg className="absolute w-60 h-60 -rotate-90 pointer-events-none">
           <circle
-            cx="104"
-            cy="104"
+            cx="120"
+            cy="120"
             r={radius}
             stroke="currentColor"
-            strokeWidth="8"
+            strokeWidth="10"
             fill="transparent"
-            className="text-slate-100 dark:text-slate-800"
+            className="text-slate-200 dark:text-slate-800"
           />
           <circle
-            cx="104"
-            cy="104"
+            cx="120"
+            cy="120"
             r={radius}
             stroke={color}
-            strokeWidth="8"
+            strokeWidth="10"
             fill="transparent"
             strokeDasharray={circumference}
             style={{ 
               strokeDashoffset,
               transition: 'stroke-dashoffset 1s linear',
-              filter: `drop-shadow(0 0 8px ${color})`
+              filter: `drop-shadow(0 0 12px ${color})`
             }}
             strokeLinecap="round"
           />
         </svg>
 
-        <div className="w-40 h-40 rounded-full flex flex-col items-center justify-center bg-white dark:bg-slate-900 shadow-xl relative overflow-hidden">
+        <div className="w-44 h-44 rounded-full flex flex-col items-center justify-center bg-white dark:bg-slate-900 shadow-2xl relative overflow-hidden">
           <div className="absolute inset-0 opacity-5 animate-pulse" style={{ backgroundColor: color }} />
-          <span className="text-7xl font-black tabular-nums leading-none relative z-10" style={{ color: color }}>
+          <span className="text-8xl font-black tabular-nums leading-none relative z-10" style={{ color: color }}>
             {displayUnit.value}
           </span>
-          <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest mt-2 relative z-10">
+          <span className="text-sm font-black text-slate-400 uppercase tracking-widest mt-2 relative z-10">
             {displayUnit.label}
           </span>
         </div>
       </div>
 
-      <div className="flex flex-col items-center mb-6">
-        <div className="flex items-center gap-1.5 px-4 py-1.5 rounded-full mb-2" style={{ backgroundColor: `${color}1A` }}>
-          <Trophy className="h-3 w-3" style={{ color: color }} />
-          <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: color }}>{challengeInfo.label}</span>
+      <div className="flex flex-col items-center mb-8 w-full max-w-sm px-4">
+        <div className="flex items-center gap-1.5 px-6 py-2 rounded-full mb-4 shadow-sm" style={{ backgroundColor: `${color}1A` }}>
+          <Trophy className="h-4 w-4" style={{ color: color }} />
+          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: color }}>{challengeInfo.label}</span>
         </div>
-        <div className="w-full max-w-[220px] flex justify-center gap-4 py-3 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
+        <div className="w-full grid grid-cols-5 items-center gap-2 py-4 px-6 bg-white dark:bg-slate-900 rounded-3xl border shadow-sm">
           <div className="text-center">
-            <span className="text-xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.hours}</span>
-            <p className="text-[7px] font-black uppercase opacity-40 mt-0.5">{isAr ? "ساعة" : "H"}</p>
+            <span className="text-2xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.hours}</span>
+            <p className="text-[8px] font-black uppercase opacity-40 mt-1">{isAr ? "ساعة" : "H"}</p>
           </div>
-          <span className="text-xl font-black text-slate-300 self-start mt-[-2px]">:</span>
+          <span className="text-xl font-black text-slate-300 text-center">:</span>
           <div className="text-center">
-            <span className="text-xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.minutes}</span>
-            <p className="text-[7px] font-black uppercase opacity-40 mt-0.5">{isAr ? "دقيقة" : "M"}</p>
+            <span className="text-2xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.minutes}</span>
+            <p className="text-[8px] font-black uppercase opacity-40 mt-1">{isAr ? "دقيقة" : "M"}</p>
           </div>
-          <span className="text-xl font-black text-slate-300 self-start mt-[-2px]">:</span>
+          <span className="text-xl font-black text-slate-300 text-center">:</span>
           <div className="text-center">
-            <span className="text-xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.seconds}</span>
-            <p className="text-[7px] font-black uppercase opacity-40 mt-0.5">{isAr ? "ثانية" : "S"}</p>
+            <span className="text-2xl font-black text-slate-700 dark:text-slate-200 tabular-nums">{elapsed.seconds}</span>
+            <p className="text-[8px] font-black uppercase opacity-40 mt-1">{isAr ? "ثانية" : "S"}</p>
           </div>
         </div>
       </div>
@@ -214,49 +213,56 @@ export const TimerDisplay = React.memo(({
   }, [tempHabitName, tempColor, onUpdateName, onUpdateColor])
 
   return (
-    <div className="w-full flex flex-col items-center overflow-hidden h-full">
-      <div className="w-full max-w-[400px] bg-white dark:bg-slate-900 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-100 dark:border-slate-800 p-8 flex flex-col items-center overflow-hidden">
-        <div className="w-full flex items-center justify-between mb-8 shrink-0">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-colors">
-                <MoreVertical className="h-6 w-6 text-slate-400" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="rounded-2xl w-52 p-2">
-              <DropdownMenuItem onClick={onReset} className="text-red-500 font-black p-3 text-xs focus:bg-red-50 dark:focus:bg-red-950">
-                <RefreshCw className="h-4 w-4 ml-2" /> {isAr ? "تصفير العداد" : "Reset Tracker"}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setShowSettingsDialog(true)} className="p-3 font-black text-xs">
-                <Settings2 className="h-4 w-4 ml-2" /> {isAr ? "تعديل العداد" : "Edit Tracker"}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={onClearData} className="text-orange-500 font-black p-3 text-xs focus:bg-orange-50 dark:focus:bg-orange-950">
-                <RotateCcw className="h-4 w-4 ml-2" /> {isAr ? "حذف السجلات" : "Clear Records"}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onDelete} className="text-red-600 font-black p-3 text-xs focus:bg-red-100 dark:focus:bg-red-900">
-                <Trash2 className="h-4 w-4 ml-2" /> {isAr ? "حذف العداد نهائياً" : "Delete Habit"}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <div className="flex items-center gap-3">
-            <h3 className="text-lg font-black text-slate-800 dark:text-white tracking-tight truncate max-w-[160px]">{externalHabitName}</h3>
-            <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center shadow-sm">
-              <IconComponent className="h-5 w-5" style={{ color: externalAccentColor }} />
-            </div>
+    <div className="w-full flex flex-col items-center h-full max-w-[480px] mx-auto py-6">
+      {/* Header section without container box */}
+      <div className="w-full flex items-center justify-between px-6 mb-10 shrink-0">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 hover:bg-slate-50 transition-colors">
+              <MoreVertical className="h-6 w-6 text-slate-500" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align={isAr ? "end" : "start"} className="rounded-2xl w-56 p-2 z-[60]">
+            <DropdownMenuItem onClick={onReset} className="text-red-500 font-black p-3 text-xs focus:bg-red-50 dark:focus:bg-red-950">
+              <RefreshCw className="h-4 w-4 ml-2" /> {isAr ? "تصفير العداد" : "Reset Tracker"}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setShowSettingsDialog(true)} className="p-3 font-black text-xs">
+              <Settings2 className="h-4 w-4 ml-2" /> {isAr ? "تعديل العداد" : "Edit Tracker"}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onClearData} className="text-orange-500 font-black p-3 text-xs focus:bg-orange-50 dark:focus:bg-orange-950">
+              <RotateCcw className="h-4 w-4 ml-2" /> {isAr ? "حذف السجلات" : "Clear Records"}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onDelete} className="text-red-600 font-black p-3 text-xs focus:bg-red-100 dark:focus:bg-red-900">
+              <Trash2 className="h-4 w-4 ml-2" /> {isAr ? "حذف العداد نهائياً" : "Delete Habit"}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <div className="flex items-center gap-4">
+          <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tight truncate max-w-[200px]">{externalHabitName}</h3>
+          <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center shadow-sm border border-slate-100 dark:border-slate-800">
+            <IconComponent className="h-6 w-6" style={{ color: externalAccentColor }} />
           </div>
         </div>
+      </div>
 
+      {/* Main Clock section */}
+      <div className="flex-1 w-full flex flex-col items-center justify-center">
         <LiveClock startDate={externalStartDate} language={language} color={externalAccentColor} />
+      </div>
 
-        <Button onClick={onOpenHistory} className="w-full h-16 rounded-[2rem] bg-slate-900 dark:bg-slate-800 text-white font-black text-lg flex items-center justify-center gap-3 shadow-xl active:scale-[0.98] transition-all shrink-0 hover:bg-slate-800 dark:hover:bg-slate-700">
-          <History className="h-6 w-6" /> {isAr ? "سجل الرحلة" : "Journey Log"}
+      {/* Bottom Action Section */}
+      <div className="w-full px-6 py-4 shrink-0 mt-auto">
+        <Button onClick={onOpenHistory} className="w-full h-18 rounded-[2.2rem] bg-slate-900 dark:bg-slate-800 text-white font-black text-xl flex items-center justify-center gap-4 shadow-2xl active:scale-[0.97] transition-all hover:bg-slate-800 dark:hover:bg-slate-700 py-6">
+          <History className="h-7 w-7" /> {isAr ? "سجل الرحلة" : "Journey Log"}
         </Button>
       </div>
 
+      {/* Settings Dialog */}
       <Dialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
-        <DialogContent className="rounded-[2.5rem] p-6 max-w-[340px]">
+        <DialogContent className="rounded-[2.5rem] p-6 max-w-[340px] z-[100]">
           <DialogHeader><DialogTitle className="text-center font-black text-lg">{isAr ? "تعديل العداد" : "Edit Tracker"}</DialogTitle></DialogHeader>
           <div className="space-y-6 py-4">
             <div className="space-y-2">
