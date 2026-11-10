@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Target, Shield, Flame, Cloud, Ghost, Calendar as CalendarIcon, UserCog, AppWindow, ArrowRight, Heart, Zap, Check, Cigarette, Coffee, Candy, Wine, Dices, Smartphone, Skull, Ban } from "lucide-react"
+import { Home, Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Target, Shield, Flame, Cloud, Ghost, Calendar as CalendarIcon, UserCog, AppWindow, ArrowRight, Heart, Zap, Check, Cigarette, Coffee, Candy, Wine, Dices, Smartphone, Skull, Ban } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
@@ -75,7 +75,8 @@ const TRANSLATIONS = {
     day: "يوم",
     month: "شهر",
     year: "سنة",
-    next: "التالي"
+    next: "التالي",
+    home: "الرئيسية"
   },
   en: {
     title: "Recovery",
@@ -120,7 +121,8 @@ const TRANSLATIONS = {
     day: "Day",
     month: "Month",
     year: "Year",
-    next: "Next"
+    next: "Next",
+    home: "Home"
   }
 }
 
@@ -428,22 +430,12 @@ export function RecoveryTrackerApp() {
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden bg-slate-50 dark:bg-slate-950" dir={isAr ? 'rtl' : 'ltr'}>
-      <header className="h-14 flex items-center justify-between px-6 z-40 shrink-0 border-b bg-background/50 backdrop-blur-md">
-        <Button variant="ghost" size="icon" className="rounded-full text-slate-400" onClick={() => setIsProfileOpen(true)}>
-          <UserIcon className="h-5 w-5" />
-        </Button>
-        <h1 className="text-lg font-black tracking-tighter">{t.title}</h1>
-        <Button variant="ghost" size="icon" className="rounded-full text-slate-400" onClick={() => setIsSettingsOpen(true)}>
-          <Settings className="h-5 w-5" />
-        </Button>
-      </header>
-
       <main className="flex-1 w-full flex flex-col items-center px-4 overflow-hidden relative">
         {activeHabit && activeHabitData ? (
           <div className="w-full flex flex-col items-center h-full max-w-[480px]">
-            <div className="text-center py-2 shrink-0">
-              <h2 className="text-xl font-black tracking-tighter">{t.subtitle}</h2>
-              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{t.motivation}</p>
+            <div className="text-center py-4 shrink-0 mt-8">
+              <h1 className="text-2xl font-black tracking-tighter mb-1">{t.title}</h1>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t.motivation}</p>
             </div>
 
             <div className="flex-1 w-full flex flex-col justify-center overflow-hidden">
@@ -475,51 +467,83 @@ export function RecoveryTrackerApp() {
           </div>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center space-y-6">
-            <button onClick={() => { setIsSetupOpen(true); setSetupStep('name'); }} className="w-24 h-24 rounded-[2rem] bg-slate-800 dark:bg-slate-900 text-white shadow-xl flex items-center justify-center active:scale-95 transition-transform">
+            <button onClick={() => { setIsSetupOpen(true); setSetupStep('name'); }} className="w-24 h-24 rounded-[2.5rem] bg-slate-800 dark:bg-slate-900 text-white shadow-xl flex items-center justify-center active:scale-95 transition-transform">
               <Plus className="h-10 w-10" />
             </button>
-            <p className="text-slate-400 font-black uppercase tracking-widest text-[9px]">{t.addHabit}</p>
+            <div className="text-center space-y-1">
+              <h2 className="text-xl font-black tracking-tighter">{t.onboardingTitle}</h2>
+              <p className="text-slate-400 font-black uppercase tracking-widest text-[9px]">{t.addHabit}</p>
+            </div>
           </div>
         )}
 
-        {habits.length > 0 && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[90%] max-w-sm">
-            <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 rounded-[2.5rem] shadow-2xl p-2 flex items-center gap-2 overflow-hidden">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[95%] max-w-md">
+          <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 rounded-[2.5rem] shadow-2xl p-2 flex items-center gap-1 overflow-hidden">
+            
+            <button 
+              onClick={() => { setActiveHabitId(null); saveToStorage(STORAGE_KEYS.ACTIVE_HABIT_ID, ""); }}
+              className={cn(
+                "shrink-0 w-12 h-12 rounded-full flex flex-col items-center justify-center transition-all",
+                activeHabitId === null ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg" : "text-slate-400"
+              )}
+            >
+              <Home className="h-5 w-5" />
+            </button>
+
+            <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-800 shrink-0 mx-1" />
+
+            <div className="flex-1 flex items-center gap-2 overflow-x-auto custom-scrollbar scroll-smooth px-1">
+              {habits.map((habit) => {
+                const HabitIcon = AVAILABLE_ICONS.find(i => i.name === habit.icon)?.icon || Sparkles;
+                const isActive = activeHabitId === habit.id;
+                return (
+                  <button
+                    key={habit.id}
+                    onClick={() => { setActiveHabitId(habit.id); saveToStorage(STORAGE_KEYS.ACTIVE_HABIT_ID, habit.id); }}
+                    className={cn(
+                      "shrink-0 h-12 px-4 rounded-full flex items-center gap-2 transition-all duration-300 relative",
+                      isActive 
+                        ? "bg-slate-100 dark:bg-slate-800/50 shadow-inner ring-1 ring-slate-200 dark:ring-slate-700" 
+                        : "opacity-40 hover:opacity-100"
+                    )}
+                  >
+                    <HabitIcon className="h-5 w-5" style={{ color: habit.color }} />
+                    {isActive && (
+                      <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
+                        {habit.name}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-800 shrink-0 mx-1" />
+
+            <div className="flex items-center gap-1">
               <button 
                 onClick={() => { setIsSetupOpen(true); setSetupStep('name'); }} 
-                className="shrink-0 w-12 h-12 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shadow-lg active:scale-90 transition-all"
+                className="w-12 h-12 rounded-full text-slate-400 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
               >
                 <Plus className="h-6 w-6" />
               </button>
               
-              <div className="flex-1 flex items-center gap-2 overflow-x-auto custom-scrollbar scroll-smooth">
-                {habits.map((habit) => {
-                  const HabitIcon = AVAILABLE_ICONS.find(i => i.name === habit.icon)?.icon || Sparkles;
-                  const isActive = activeHabitId === habit.id;
-                  return (
-                    <button
-                      key={habit.id}
-                      onClick={() => { setActiveHabitId(habit.id); saveToStorage(STORAGE_KEYS.ACTIVE_HABIT_ID, habit.id); }}
-                      className={cn(
-                        "shrink-0 h-12 px-4 rounded-full flex items-center gap-2 transition-all duration-300 relative overflow-hidden",
-                        isActive 
-                          ? "bg-slate-100 dark:bg-slate-800 shadow-inner" 
-                          : "opacity-40 hover:opacity-100"
-                      )}
-                    >
-                      <HabitIcon className="h-5 w-5" style={{ color: habit.color }} />
-                      {isActive && (
-                        <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
-                          {habit.name}
-                        </span>
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
+              <button 
+                onClick={() => setIsProfileOpen(true)}
+                className="w-12 h-12 rounded-full text-slate-400 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+              >
+                <UserIcon className="h-5 w-5" />
+              </button>
+
+              <button 
+                onClick={() => setIsSettingsOpen(true)}
+                className="w-12 h-12 rounded-full text-slate-400 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+              >
+                <Settings className="h-5 w-5" />
+              </button>
             </div>
           </div>
-        )}
+        </div>
       </main>
 
       <JourneyLog 
