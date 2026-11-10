@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -629,12 +628,44 @@ export function RecoveryTrackerApp() {
         {activeView === 'settings' && renderSettingsView()}
       </main>
 
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-md">
-        <nav className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border border-white/20 dark:border-slate-800/50 rounded-[2.5rem] shadow-2xl p-2 flex items-center justify-around">
-          <button onClick={() => setActiveView('home')} className={cn("w-14 h-14 rounded-full flex flex-col items-center justify-center transition-all duration-500", activeView === 'home' ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl scale-110" : "text-slate-400 hover:text-slate-600")}><Home className="h-6 w-6" /></button>
-          <button onClick={() => setActiveView('trackers')} className={cn("w-14 h-14 rounded-full flex flex-col items-center justify-center transition-all duration-500", activeView === 'trackers' ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl scale-110" : "text-slate-400 hover:text-slate-600")}><LayoutGrid className="h-6 w-6" /></button>
-          <button onClick={() => setActiveView('profile')} className={cn("w-14 h-14 rounded-full flex flex-col items-center justify-center transition-all duration-500", activeView === 'profile' ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl scale-110" : "text-slate-400 hover:text-slate-600")}><UserIcon className="h-6 w-6" /></button>
-          <button onClick={() => setActiveView('settings')} className={cn("w-14 h-14 rounded-full flex flex-col items-center justify-center transition-all duration-500", activeView === 'settings' ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl scale-110" : "text-slate-400 hover:text-slate-600")}><Settings className="h-6 w-6" /></button>
+      <div className="shrink-0 w-full bg-white dark:bg-slate-900 border-t z-[100] pb-safe">
+        <nav className="flex items-center justify-around h-16 w-full max-w-lg mx-auto">
+          <button 
+            onClick={() => setActiveView('home')} 
+            className={cn(
+              "flex-1 h-full flex flex-col items-center justify-center transition-colors",
+              activeView === 'home' ? "text-primary" : "text-slate-400"
+            )}
+          >
+            <Home className="h-6 w-6" />
+          </button>
+          <button 
+            onClick={() => setActiveView('trackers')} 
+            className={cn(
+              "flex-1 h-full flex flex-col items-center justify-center transition-colors",
+              activeView === 'trackers' ? "text-primary" : "text-slate-400"
+            )}
+          >
+            <LayoutGrid className="h-6 w-6" />
+          </button>
+          <button 
+            onClick={() => setActiveView('profile')} 
+            className={cn(
+              "flex-1 h-full flex flex-col items-center justify-center transition-colors",
+              activeView === 'profile' ? "text-primary" : "text-slate-400"
+            )}
+          >
+            <UserIcon className="h-6 w-6" />
+          </button>
+          <button 
+            onClick={() => setActiveView('settings')} 
+            className={cn(
+              "flex-1 h-full flex flex-col items-center justify-center transition-colors",
+              activeView === 'settings' ? "text-primary" : "text-slate-400"
+            )}
+          >
+            <Settings className="h-6 w-6" />
+          </button>
         </nav>
       </div>
 
