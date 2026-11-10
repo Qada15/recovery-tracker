@@ -2,11 +2,10 @@
 "use client"
 
 import * as React from "react"
-import { Home, Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Target, Shield, Flame, Cloud, Ghost, Calendar as CalendarIcon, UserCog, AppWindow, ArrowRight, Heart, Zap, Check, Cigarette, Coffee, Candy, Wine, Dices, Smartphone, Skull, Ban } from "lucide-react"
+import { Home, Settings, User as UserIcon, Plus, Sparkles, Globe, Trash2, Info, Moon, Sun, Target, Shield, Flame, Cloud, Ghost, Calendar as CalendarIcon, UserCog, AppWindow, ArrowRight, Heart, Zap, Check, Cigarette, Coffee, Candy, Wine, Dices, Smartphone, Skull, Ban, LayoutGrid, ChevronLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
-import { SidePanel } from "@/components/SidePanel"
 import { saveToStorage, getFromStorage, STORAGE_KEYS, clearAllStorage, type Habit, type UserProfile } from "@/lib/storage"
 import { parseISO, isSameDay, startOfDay, isBefore, format, intervalToDuration, isValid, setYear, setMonth, setDate } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
@@ -34,7 +33,6 @@ import {
 const TRANSLATIONS = {
   ar: {
     title: "نقاهة",
-    subtitle: "المتابعة",
     motivation: "أنت تبلي بلاءً حسنًا!",
     addHabit: "إضافة عداد جديد",
     setupTitle: "إعداد العداد",
@@ -76,11 +74,13 @@ const TRANSLATIONS = {
     month: "شهر",
     year: "سنة",
     next: "التالي",
-    home: "الرئيسية"
+    home: "الرئيسية",
+    trackers: "العدادات",
+    noTrackers: "لا توجد عدادات حالياً",
+    clickToAdd: "اضغط لإضافة عداد جديد"
   },
   en: {
     title: "Recovery",
-    subtitle: "Tracking",
     motivation: "You are doing great!",
     addHabit: "Add New Tracker",
     setupTitle: "Setup Tracker",
@@ -122,7 +122,10 @@ const TRANSLATIONS = {
     month: "Month",
     year: "Year",
     next: "Next",
-    home: "Home"
+    home: "Home",
+    trackers: "Trackers",
+    noTrackers: "No trackers found",
+    clickToAdd: "Add a new tracker"
   }
 }
 
@@ -149,6 +152,8 @@ const AVAILABLE_COLORS = [
   "hsl(260 75% 65%)",
   "hsl(215 20% 45%)",
 ]
+
+type AppView = 'home' | 'trackers' | 'profile' | 'settings';
 
 function TripleDateInput({ 
   value, 
@@ -231,10 +236,9 @@ function TripleDateInput({
 export function RecoveryTrackerApp() {
   const { toast } = useToast()
   const [mounted, setMounted] = React.useState(false)
+  const [activeView, setActiveView] = React.useState<AppView>('home')
   const [isHistoryOpen, setIsHistoryOpen] = React.useState(false)
   const [isSetupOpen, setIsSetupOpen] = React.useState(false)
-  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false)
-  const [isProfileOpen, setIsProfileOpen] = React.useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
   const [isClearDataOpen, setIsClearDataOpen] = React.useState(false)
   const [isFactoryResetOpen, setIsFactoryResetOpen] = React.useState(false)
@@ -346,6 +350,7 @@ export function RecoveryTrackerApp() {
     setTempName("")
     setTempIcon("Cigarette")
     setTempColor(AVAILABLE_COLORS[0])
+    setActiveView('home')
   }, [habits, tempName, tempIcon, tempColor])
 
   const updateProfile = (updates: Partial<UserProfile>) => {
@@ -428,123 +433,250 @@ export function RecoveryTrackerApp() {
     )
   }
 
-  return (
-    <div className="flex flex-col h-full w-full overflow-hidden bg-slate-50 dark:bg-slate-950" dir={isAr ? 'rtl' : 'ltr'}>
-      <main className="flex-1 w-full flex flex-col items-center px-4 overflow-hidden relative">
-        {activeHabit && activeHabitData ? (
-          <div className="w-full flex flex-col items-center h-full max-w-[480px]">
-            <div className="text-center py-4 shrink-0 mt-8">
-              <h1 className="text-2xl font-black tracking-tighter mb-1">{t.title}</h1>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t.motivation}</p>
-            </div>
+  const renderHomeView = () => {
+    if (activeHabit && activeHabitData) {
+      return (
+        <div className="w-full h-full flex flex-col items-center">
+          <div className="text-center py-6 shrink-0 mt-8">
+            <h1 className="text-2xl font-black tracking-tighter mb-1">{t.title}</h1>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t.motivation}</p>
+          </div>
+          <div className="flex-1 w-full flex flex-col justify-center overflow-hidden">
+            <TimerDisplay 
+              externalStartDate={activeHabitData.startDate} 
+              externalHabitName={activeHabit.name}
+              externalHabitIcon={activeHabit.icon}
+              externalAccentColor={activeHabit.color}
+              resetDates={activeHabitData.resetDates}
+              onOpenHistory={() => setIsHistoryOpen(true)}
+              onUpdateName={(name) => handleUpdateActiveHabit({ name })}
+              onUpdateColor={(color) => handleUpdateActiveHabit({ color })}
+              onReset={() => {
+                const now = new Date()
+                const currentResets = activeHabit.resetDates.map(d => parseISO(d))
+                const newResets = [...currentResets, now].sort((a, b) => a.getTime() - b.getTime())
+                handleUpdateActiveHabit({
+                  startDate: now.toISOString(),
+                  resetDates: newResets.map(d => d.toISOString())
+                })
+              }}
+              onDelete={() => setIsDeleteDialogOpen(true)}
+              onClearData={() => setIsClearDataOpen(true)}
+              language={language}
+            />
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center space-y-6">
+        <button onClick={() => { setActiveView('trackers'); }} className="w-24 h-24 rounded-[2.5rem] bg-slate-800 dark:bg-slate-900 text-white shadow-xl flex items-center justify-center active:scale-95 transition-transform">
+          <Target className="h-10 w-10" />
+        </button>
+        <div className="text-center space-y-1">
+          <h2 className="text-xl font-black tracking-tighter">{t.onboardingTitle}</h2>
+          <p className="text-slate-400 font-black uppercase tracking-widest text-[9px]">{isAr ? "انتقل لصفحة العدادات للبدء" : "Go to Trackers to start"}</p>
+        </div>
+      </div>
+    );
+  };
 
-            <div className="flex-1 w-full flex flex-col justify-center overflow-hidden">
-              <TimerDisplay 
-                externalStartDate={activeHabitData.startDate} 
-                externalHabitName={activeHabit.name}
-                externalHabitIcon={activeHabit.icon}
-                externalAccentColor={activeHabit.color}
-                resetDates={activeHabitData.resetDates}
-                onOpenHistory={() => setIsHistoryOpen(true)}
-                onUpdateName={(name) => handleUpdateActiveHabit({ name })}
-                onUpdateColor={(color) => handleUpdateActiveHabit({ color })}
-                onReset={() => {
-                  const now = new Date()
-                  const currentResets = activeHabit.resetDates.map(d => parseISO(d))
-                  const newResets = [...currentResets, now].sort((a, b) => a.getTime() - b.getTime())
-                  handleUpdateActiveHabit({
-                    startDate: now.toISOString(),
-                    resetDates: newResets.map(d => d.toISOString())
-                  })
-                }}
-                onDelete={() => setIsDeleteDialogOpen(true)}
-                onClearData={() => setIsClearDataOpen(true)}
-                language={language}
-              />
-            </div>
-            
-            <div className="h-28 shrink-0" />
+  const renderTrackersView = () => (
+    <div className="w-full h-full flex flex-col p-6 overflow-hidden">
+      <header className="shrink-0 flex items-center justify-between mb-8 pt-4">
+        <h2 className="text-3xl font-black tracking-tighter">{t.trackers}</h2>
+        <Button onClick={() => { setIsSetupOpen(true); setSetupStep('name'); }} size="icon" className="h-12 w-12 rounded-2xl bg-slate-900 text-white shadow-lg">
+          <Plus className="h-6 w-6" />
+        </Button>
+      </header>
+
+      <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pb-24">
+        {habits.length === 0 ? (
+          <div className="h-64 flex flex-col items-center justify-center text-center opacity-40">
+            <LayoutGrid className="h-12 w-12 mb-4" />
+            <p className="text-sm font-black uppercase tracking-widest">{t.noTrackers}</p>
+            <p className="text-[10px] mt-1">{t.clickToAdd}</p>
           </div>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center space-y-6">
-            <button onClick={() => { setIsSetupOpen(true); setSetupStep('name'); }} className="w-24 h-24 rounded-[2.5rem] bg-slate-800 dark:bg-slate-900 text-white shadow-xl flex items-center justify-center active:scale-95 transition-transform">
-              <Plus className="h-10 w-10" />
-            </button>
-            <div className="text-center space-y-1">
-              <h2 className="text-xl font-black tracking-tighter">{t.onboardingTitle}</h2>
-              <p className="text-slate-400 font-black uppercase tracking-widest text-[9px]">{t.addHabit}</p>
-            </div>
-          </div>
+          habits.map((habit) => {
+            const HabitIcon = AVAILABLE_ICONS.find(i => i.name === habit.icon)?.icon || Sparkles;
+            const isActive = activeHabitId === habit.id;
+            return (
+              <button
+                key={habit.id}
+                onClick={() => { setActiveHabitId(habit.id); saveToStorage(STORAGE_KEYS.ACTIVE_HABIT_ID, habit.id); setActiveView('home'); }}
+                className={cn(
+                  "w-full p-5 rounded-[2rem] flex items-center gap-4 transition-all border-2 text-right",
+                  isActive ? "bg-white dark:bg-slate-900 border-primary/20 shadow-xl scale-[1.02]" : "bg-white/50 dark:bg-slate-900/50 border-transparent hover:bg-white dark:hover:bg-slate-900"
+                )}
+              >
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner shrink-0" style={{ backgroundColor: `${habit.color}15` }}>
+                  <HabitIcon className="h-7 w-7" style={{ color: habit.color }} />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-lg font-black tracking-tight">{habit.name}</h4>
+                  <p className="text-[10px] font-black uppercase tracking-widest opacity-40">
+                    {isAr ? "انقر للبدء" : "Click to view"}
+                  </p>
+                </div>
+                {isActive && <div className="w-2 h-2 rounded-full bg-primary" />}
+              </button>
+            )
+          })
         )}
+      </div>
+    </div>
+  );
 
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[95%] max-w-md">
-          <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 rounded-[2.5rem] shadow-2xl p-2 flex items-center gap-1 overflow-hidden">
-            
-            <button 
-              onClick={() => { setActiveHabitId(null); saveToStorage(STORAGE_KEYS.ACTIVE_HABIT_ID, ""); }}
-              className={cn(
-                "shrink-0 w-12 h-12 rounded-full flex flex-col items-center justify-center transition-all",
-                activeHabitId === null ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg" : "text-slate-400"
-              )}
-            >
-              <Home className="h-5 w-5" />
-            </button>
+  const renderProfileView = () => (
+    <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center space-y-10">
+      <div className="relative">
+        <div className="w-32 h-32 rounded-[3rem] bg-white dark:bg-slate-900 flex items-center justify-center shadow-2xl border">
+          <UserIcon className="h-14 w-14 text-slate-300" />
+        </div>
+        <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-primary flex items-center justify-center border-4 border-background shadow-lg">
+          <Sparkles className="h-4 w-4 text-white" />
+        </div>
+      </div>
 
-            <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-800 shrink-0 mx-1" />
+      <div className="space-y-1">
+        <h2 className="text-3xl font-black tracking-tighter">{profile.name} {profile.surname}</h2>
+        <p className="text-xs font-black uppercase tracking-widest text-slate-400">{profile.gender === 'male' ? t.male : t.female}</p>
+      </div>
 
-            <div className="flex-1 flex items-center gap-2 overflow-x-auto custom-scrollbar scroll-smooth px-1">
-              {habits.map((habit) => {
-                const HabitIcon = AVAILABLE_ICONS.find(i => i.name === habit.icon)?.icon || Sparkles;
-                const isActive = activeHabitId === habit.id;
-                return (
-                  <button
-                    key={habit.id}
-                    onClick={() => { setActiveHabitId(habit.id); saveToStorage(STORAGE_KEYS.ACTIVE_HABIT_ID, habit.id); }}
-                    className={cn(
-                      "shrink-0 h-12 px-4 rounded-full flex items-center gap-2 transition-all duration-300 relative",
-                      isActive 
-                        ? "bg-slate-100 dark:bg-slate-800/50 shadow-inner ring-1 ring-slate-200 dark:ring-slate-700" 
-                        : "opacity-40 hover:opacity-100"
-                    )}
-                  >
-                    <HabitIcon className="h-5 w-5" style={{ color: habit.color }} />
-                    {isActive && (
-                      <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
-                        {habit.name}
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
+      {age && (
+        <div className="w-full max-w-xs space-y-4">
+          <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30">{t.age}</h3>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border shadow-sm">
+              <div className="text-2xl font-black text-primary tabular-nums">{age.years}</div>
+              <div className="text-[8px] font-black uppercase opacity-40 mt-1">{t.years}</div>
             </div>
-
-            <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-800 shrink-0 mx-1" />
-
-            <div className="flex items-center gap-1">
-              <button 
-                onClick={() => { setIsSetupOpen(true); setSetupStep('name'); }} 
-                className="w-12 h-12 rounded-full text-slate-400 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
-              >
-                <Plus className="h-6 w-6" />
-              </button>
-              
-              <button 
-                onClick={() => setIsProfileOpen(true)}
-                className="w-12 h-12 rounded-full text-slate-400 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
-              >
-                <UserIcon className="h-5 w-5" />
-              </button>
-
-              <button 
-                onClick={() => setIsSettingsOpen(true)}
-                className="w-12 h-12 rounded-full text-slate-400 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
-              >
-                <Settings className="h-5 w-5" />
-              </button>
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border shadow-sm">
+              <div className="text-2xl font-black text-primary tabular-nums">{age.months}</div>
+              <div className="text-[8px] font-black uppercase opacity-40 mt-1">{t.months}</div>
+            </div>
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border shadow-sm">
+              <div className="text-2xl font-black text-primary tabular-nums">{age.days}</div>
+              <div className="text-[8px] font-black uppercase opacity-40 mt-1">{t.days}</div>
             </div>
           </div>
         </div>
+      )}
+
+      <div className="pt-8 opacity-40">
+        <p className="text-[9px] font-black uppercase tracking-widest leading-relaxed">
+          {t.localNote}
+        </p>
+      </div>
+    </div>
+  );
+
+  const renderSettingsView = () => (
+    <div className="w-full h-full flex flex-col p-6 overflow-hidden">
+      <header className="shrink-0 mb-8 pt-4">
+        <h2 className="text-3xl font-black tracking-tighter">{t.settings}</h2>
+      </header>
+
+      <div className="flex-1 overflow-y-auto custom-scrollbar space-y-8 pb-24">
+        <div className="space-y-4">
+          <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
+            <UserCog className="h-3 w-3" /> {t.profileInfo}
+          </h3>
+          <div className="space-y-4 bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border shadow-sm">
+            <div className="space-y-1.5">
+              <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userName}</label>
+              <Input value={profile.name} onChange={(e) => updateProfile({ name: e.target.value })} className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userSurname}</label>
+              <Input value={profile.surname} onChange={(e) => updateProfile({ surname: e.target.value })} className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.birthDate}</label>
+              <TripleDateInput value={profile.birthDate} onChange={(val) => updateProfile({ birthDate: val })} labels={{ day: t.day, month: t.month, year: t.year }} />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
+            <AppWindow className="h-3 w-3" /> {t.appSettings}
+          </h3>
+          <div className="space-y-4 bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border shadow-sm">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-sm">{t.language}</span>
+              <Button variant="ghost" className="rounded-xl font-bold" onClick={toggleLanguage}>
+                {language === 'ar' ? "English" : "العربية"}
+              </Button>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-sm">{t.darkMode}</span>
+              <Switch checked={theme === 'dark'} onCheckedChange={toggleTheme} />
+            </div>
+            <div className="pt-4 border-t">
+              <Button variant="destructive" className="w-full h-12 rounded-xl font-black bg-red-500/10 text-red-500 hover:bg-red-500/20 border-none" onClick={() => setIsFactoryResetOpen(true)}>
+                <Trash2 className="h-4 w-4 ml-2" /> {t.factoryReset}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col h-full w-full overflow-hidden bg-slate-50 dark:bg-slate-950" dir={isAr ? 'rtl' : 'ltr'}>
+      <main className="flex-1 w-full relative overflow-hidden">
+        {activeView === 'home' && renderHomeView()}
+        {activeView === 'trackers' && renderTrackersView()}
+        {activeView === 'profile' && renderProfileView()}
+        {activeView === 'settings' && renderSettingsView()}
       </main>
+
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-md">
+        <nav className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border border-white/20 dark:border-slate-800/50 rounded-[2.5rem] shadow-2xl p-2 flex items-center justify-around">
+          <button 
+            onClick={() => setActiveView('home')}
+            className={cn(
+              "w-14 h-14 rounded-full flex flex-col items-center justify-center transition-all duration-500",
+              activeView === 'home' ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl scale-110" : "text-slate-400 hover:text-slate-600"
+            )}
+          >
+            <Home className="h-6 w-6" />
+          </button>
+
+          <button 
+            onClick={() => setActiveView('trackers')}
+            className={cn(
+              "w-14 h-14 rounded-full flex flex-col items-center justify-center transition-all duration-500",
+              activeView === 'trackers' ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl scale-110" : "text-slate-400 hover:text-slate-600"
+            )}
+          >
+            <LayoutGrid className="h-6 w-6" />
+          </button>
+
+          <button 
+            onClick={() => setActiveView('profile')}
+            className={cn(
+              "w-14 h-14 rounded-full flex flex-col items-center justify-center transition-all duration-500",
+              activeView === 'profile' ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl scale-110" : "text-slate-400 hover:text-slate-600"
+            )}
+          >
+            <UserIcon className="h-6 w-6" />
+          </button>
+
+          <button 
+            onClick={() => setActiveView('settings')}
+            className={cn(
+              "w-14 h-14 rounded-full flex flex-col items-center justify-center transition-all duration-500",
+              activeView === 'settings' ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl scale-110" : "text-slate-400 hover:text-slate-600"
+            )}
+          >
+            <Settings className="h-6 w-6" />
+          </button>
+        </nav>
+      </div>
 
       <JourneyLog 
         isOpen={isHistoryOpen} 
@@ -586,143 +718,8 @@ export function RecoveryTrackerApp() {
         }}
       />
 
-      <SidePanel
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        side={isAr ? "left" : "right"}
-        title={t.settings}
-      >
-        <div className="space-y-8 pb-10">
-          <div className="space-y-4">
-            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
-              <UserCog className="h-3 w-3" /> {t.profileInfo}
-            </h3>
-            <div className="space-y-3 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-3xl border border-slate-100 dark:border-slate-800">
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userName}</label>
-                <Input value={profile.name} onChange={(e) => updateProfile({ name: e.target.value })} placeholder="..." className="h-10 rounded-xl font-bold bg-white dark:bg-slate-900 border-none shadow-sm" />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userSurname}</label>
-                <Input value={profile.surname} onChange={(e) => updateProfile({ surname: e.target.value })} placeholder="..." className="h-10 rounded-xl font-bold bg-white dark:bg-slate-900 border-none shadow-sm" />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.birthDate}</label>
-                <TripleDateInput 
-                  value={profile.birthDate} 
-                  onChange={(val) => updateProfile({ birthDate: val })} 
-                  labels={{ day: t.day, month: t.month, year: t.year }}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.gender}</label>
-                <Select value={profile.gender} onValueChange={(v: any) => updateProfile({ gender: v })}>
-                  <SelectTrigger className="h-10 rounded-xl font-bold bg-white dark:bg-slate-900 border-none shadow-sm">
-                    <SelectValue placeholder="..." />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-2xl">
-                    <SelectItem value="male" className="font-bold">{t.male}</SelectItem>
-                    <SelectItem value="female" className="font-bold">{t.female}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2">
-              <AppWindow className="h-3 w-3" /> {t.appSettings}
-            </h3>
-            <div className="space-y-3 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-3xl border border-slate-100 dark:border-slate-800">
-              <div className="space-y-2">
-                <h3 className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.language}</h3>
-                <Button variant="outline" className="w-full h-10 rounded-xl font-bold justify-between px-4 border-none bg-white dark:bg-slate-900 shadow-sm" onClick={toggleLanguage}>
-                  <Globe className="h-4 w-4 opacity-40" />
-                  <span>{language === 'ar' ? "English" : "العربية"}</span>
-                </Button>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.theme}</h3>
-                <div className="w-full h-10 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-between px-4 shadow-sm">
-                  <div className="flex items-center gap-2">
-                    {theme === 'dark' ? <Moon className="h-4 w-4 text-slate-400" /> : <Sun className="h-4 w-4 text-orange-500" />}
-                    <span className="font-bold text-sm">{t.darkMode}</span>
-                  </div>
-                  <Switch checked={theme === 'dark'} onCheckedChange={toggleTheme} className="scale-75" />
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <Button variant="destructive" className="w-full h-10 rounded-xl font-bold justify-between px-4 bg-red-500/10 text-red-500 border-none hover:bg-red-500/20" onClick={() => setIsFactoryResetOpen(true)}>
-                  <Trash2 className="h-4 w-4" />
-                  <span>{t.factoryReset}</span>
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-4 border-t opacity-40 flex items-center justify-between">
-             <div className="flex items-center gap-2">
-              <Info className="h-3 w-3" />
-              <div className="text-[9px] font-black uppercase tabular-nums">{t.version}</div>
-             </div>
-             <Heart className="h-3 w-3 text-red-500 fill-red-500" />
-          </div>
-        </div>
-      </SidePanel>
-
-      <SidePanel
-        isOpen={isProfileOpen}
-        onClose={() => setIsProfileOpen(false)}
-        side={isAr ? "left" : "right"}
-        title={t.profile}
-      >
-        <div className="flex flex-col space-y-8 items-center text-center">
-           <div className="relative">
-              <div className="w-24 h-24 rounded-[2.5rem] bg-slate-100 dark:bg-slate-800 flex items-center justify-center shadow-inner">
-                 <UserIcon className="h-10 w-10 text-slate-400" />
-              </div>
-              <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-primary flex items-center justify-center border-4 border-background shadow-lg">
-                <Sparkles className="h-3 w-3 text-white" />
-              </div>
-           </div>
-
-           <div className="space-y-1">
-              <h2 className="text-2xl font-black tracking-tight">{profile.name} {profile.surname}</h2>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{profile.gender === 'male' ? t.male : t.female}</p>
-           </div>
-
-           {age && (
-             <div className="w-full space-y-3">
-               <h3 className="text-[9px] font-black uppercase tracking-widest opacity-30">{t.age}</h3>
-               <div className="grid grid-cols-3 gap-2">
-                 <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
-                   <div className="text-xl font-black text-primary tabular-nums">{age.years}</div>
-                   <div className="text-[8px] font-black uppercase opacity-40 mt-1">{t.years}</div>
-                 </div>
-                 <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
-                   <div className="text-xl font-black text-primary tabular-nums">{age.months}</div>
-                   <div className="text-[8px] font-black uppercase opacity-40 mt-1">{t.months}</div>
-                 </div>
-                 <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
-                   <div className="text-xl font-black text-primary tabular-nums">{age.days}</div>
-                   <div className="text-[8px] font-black uppercase opacity-40 mt-1">{t.days}</div>
-                 </div>
-               </div>
-             </div>
-           )}
-
-           <div className="w-full pt-4 opacity-40">
-              <p className="text-[8px] font-black uppercase tracking-widest leading-relaxed">
-                 {t.localNote}
-              </p>
-           </div>
-        </div>
-      </SidePanel>
-
       <Dialog open={isSetupOpen} onOpenChange={setIsSetupOpen}>
-        <DialogContent className="rounded-[2rem] p-5 max-w-[340px] max-h-[90vh] overflow-hidden flex flex-col z-[100]">
+        <DialogContent className="rounded-[2.5rem] p-5 max-w-[340px] max-h-[90vh] overflow-hidden flex flex-col z-[200]">
           <DialogHeader><DialogTitle className="text-center font-black">{t.setupTitle}</DialogTitle></DialogHeader>
           <div className="flex-1 flex flex-col items-center justify-center overflow-hidden py-2">
             {setupStep === 'name' && (
@@ -779,21 +776,21 @@ export function RecoveryTrackerApp() {
       </Dialog>
 
       <AlertDialog open={isClearDataOpen} onOpenChange={setIsClearDataOpen}>
-        <AlertDialogContent className="rounded-[2rem] max-w-[300px] z-[110]">
+        <AlertDialogContent className="rounded-[2rem] max-w-[300px] z-[210]">
           <AlertDialogHeader><AlertDialogTitle className="font-black text-sm">{isAr ? "حذف سجلات العداد" : "Clear Habit History"}</AlertDialogTitle><AlertDialogDescription className="text-xs">{t.confirmClear}</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter className="flex-row gap-2 mt-2"><AlertDialogCancel className="rounded-xl flex-1 mt-0 text-xs">{t.cancel}</AlertDialogCancel><AlertDialogAction onClick={() => { if (!activeHabit) return; const now = new Date(); handleUpdateActiveHabit({ startDate: now.toISOString(), resetDates: [now.toISOString()] }); setIsClearDataOpen(false); toast({ title: t.historyCleared }); }} className="bg-orange-500 rounded-xl flex-1 text-xs">{t.save}</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="rounded-[2rem] max-w-[300px] z-[110]">
+        <AlertDialogContent className="rounded-[2rem] max-w-[300px] z-[210]">
           <AlertDialogHeader><AlertDialogTitle className="font-black text-sm">{isAr ? "تأكيد الحذف" : "Confirm Delete"}</AlertDialogTitle><AlertDialogDescription className="text-xs">{t.confirmDelete}</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter className="flex-row gap-2 mt-2"><AlertDialogCancel className="rounded-xl flex-1 mt-0 text-xs">{t.cancel}</AlertDialogCancel><AlertDialogAction onClick={() => { const newHabits = habits.filter(h => h.id !== activeHabitId); setHabits(newHabits); saveToStorage(STORAGE_KEYS.HABITS, JSON.stringify(newHabits)); setActiveHabitId(newHabits[0]?.id || null); setIsDeleteDialogOpen(false); }} className="bg-red-500 rounded-xl flex-1 text-xs">{isAr ? "حذف" : "Delete"}</AlertDialogAction></AlertDialogFooter>
+          <AlertDialogFooter className="flex-row gap-2 mt-2"><AlertDialogCancel className="rounded-xl flex-1 mt-0 text-xs">{t.cancel}</AlertDialogCancel><AlertDialogAction onClick={() => { const newHabits = habits.filter(h => h.id !== activeHabitId); setHabits(newHabits); saveToStorage(STORAGE_KEYS.HABITS, JSON.stringify(newHabits)); setActiveHabitId(newHabits[0]?.id || null); setIsDeleteDialogOpen(false); setActiveView('trackers'); }} className="bg-red-500 rounded-xl flex-1 text-xs">{isAr ? "حذف" : "Delete"}</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       <AlertDialog open={isFactoryResetOpen} onOpenChange={setIsFactoryResetOpen}>
-        <AlertDialogContent className="rounded-[2rem] max-w-[300px] z-[110]">
+        <AlertDialogContent className="rounded-[2rem] max-w-[300px] z-[210]">
           <AlertDialogHeader><AlertDialogTitle className="font-black text-red-500 text-sm">{t.factoryReset}</AlertDialogTitle><AlertDialogDescription className="text-xs">{t.resetWarning}</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter className="flex-row gap-2 mt-2"><AlertDialogCancel className="rounded-xl flex-1 mt-0 text-xs">{t.cancel}</AlertDialogCancel><AlertDialogAction onClick={clearAllStorage} className="bg-red-500 rounded-xl flex-1 text-xs">{isAr ? "تأكيد" : "Confirm"}</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
