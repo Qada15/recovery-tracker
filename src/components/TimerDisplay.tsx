@@ -169,7 +169,6 @@ interface TimerDisplayProps {
   externalHabitIcon?: string
   externalAccentColor: string
   resetDates: Date[]
-  onOpenHistory: () => void
   language: 'ar' | 'en'
 }
 
@@ -177,11 +176,8 @@ export const TimerDisplay = React.memo(({
   externalStartDate, 
   externalHabitName, 
   externalAccentColor,
-  onOpenHistory,
   language
 }: TimerDisplayProps) => {
-  const isAr = language === 'ar'
-
   return (
     <div className="w-full flex flex-col items-center h-full max-w-[480px] mx-auto overflow-hidden">
       <div className="w-full flex items-center justify-center px-6 pt-6 mb-4 shrink-0">
@@ -192,15 +188,6 @@ export const TimerDisplay = React.memo(({
 
       <div className="flex-1 w-full flex flex-col items-center justify-center min-h-0">
         <LiveClock startDate={externalStartDate} language={language} color={externalAccentColor} />
-      </div>
-
-      <div className="w-full px-6 pb-6 shrink-0">
-        <Button 
-          onClick={onOpenHistory} 
-          className="w-full h-16 rounded-[2rem] bg-slate-900 dark:bg-slate-800 text-white font-black text-lg flex items-center justify-center gap-4 shadow-xl active:scale-[0.97] transition-all hover:bg-slate-800 dark:hover:bg-slate-700"
-        >
-          <History className="h-6 w-6" /> {isAr ? "سجل الرحلة" : "Journey Log"}
-        </Button>
       </div>
     </div>
   )

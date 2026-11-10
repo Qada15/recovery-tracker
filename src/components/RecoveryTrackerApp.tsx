@@ -1,7 +1,8 @@
+
 "use client"
 
 import * as React from "react"
-import { Home, Settings, User as UserIcon, Plus, Sparkles, Trash2, Moon, Sun, Target, Shield, Flame, Cloud, Ghost, UserCog, AppWindow, ArrowRight, Check, Cigarette, Coffee, Candy, Wine, Dices, Smartphone, Skull, Ban, LayoutGrid, MoreVertical, RefreshCw, RotateCcw, Settings2 } from "lucide-react"
+import { Home, Settings, User as UserIcon, Plus, Sparkles, Trash2, Moon, Sun, Target, Shield, Flame, Cloud, Ghost, UserCog, AppWindow, ArrowRight, Check, Cigarette, Coffee, Candy, Wine, Dices, Smartphone, Skull, Ban, LayoutGrid, MoreVertical, RefreshCw, RotateCcw, Settings2, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
@@ -89,7 +90,8 @@ const TRANSLATIONS = {
     habitColor: "لون العداد",
     resetTracker: "تصفير العداد",
     clearRecords: "حذف السجلات",
-    deleteHabit: "حذف العداد نهائياً"
+    deleteHabit: "حذف العداد نهائياً",
+    journeyLog: "سجل الرحلة"
   },
   en: {
     title: "Recovery Tracker",
@@ -143,7 +145,8 @@ const TRANSLATIONS = {
     habitColor: "Habit Color",
     resetTracker: "Reset Tracker",
     clearRecords: "Clear Records",
-    deleteHabit: "Delete Habit"
+    deleteHabit: "Delete Habit",
+    journeyLog: "Journey Log"
   }
 }
 
@@ -444,9 +447,11 @@ export function RecoveryTrackerApp() {
     if (activeHabit && activeHabitData) {
       return (
         <div className="w-full h-full flex flex-col items-center">
-          <div className="w-full px-6 py-4 shrink-0 mt-6 text-left">
-            <h1 className="text-2xl font-black tracking-tighter mb-1 text-left">{t.title}</h1>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-left">{t.motivation}</p>
+          <div className="w-full px-6 py-4 shrink-0 mt-6 flex justify-between items-start">
+             <div className="text-left">
+              <h1 className="text-2xl font-black tracking-tighter mb-1">Recovery Tracker</h1>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t.motivation}</p>
+             </div>
           </div>
           <div className="flex-1 w-full flex flex-col justify-center overflow-hidden">
             <TimerDisplay 
@@ -454,7 +459,6 @@ export function RecoveryTrackerApp() {
               externalHabitName={activeHabit.name}
               externalAccentColor={activeHabit.color}
               resetDates={activeHabitData.resetDates}
-              onOpenHistory={() => setIsHistoryOpen(true)}
               language={language}
             />
           </div>
@@ -467,7 +471,7 @@ export function RecoveryTrackerApp() {
           <Target className="h-10 w-10" />
         </button>
         <div className="text-center space-y-1">
-          <h2 className="text-xl font-black tracking-tighter">{t.onboardingTitle}</h2>
+          <h2 className="text-xl font-black tracking-tighter">Recovery Tracker</h2>
           <p className="text-slate-400 font-black uppercase tracking-widest text-[9px]">{isAr ? "انتقل لصفحة العدادات للبدء" : "Go to Trackers to start"}</p>
         </div>
       </div>
@@ -630,6 +634,7 @@ export function RecoveryTrackerApp() {
 
       <div className="shrink-0 w-full bg-white dark:bg-slate-900 border-t z-[100] pb-safe">
         <nav className="flex items-center h-16 w-full">
+          {/* Settings - Far Left */}
           <button 
             onClick={() => setActiveView('settings')} 
             className={cn(
@@ -639,15 +644,8 @@ export function RecoveryTrackerApp() {
           >
             <Settings className="h-6 w-6" />
           </button>
-          <button 
-            onClick={() => setActiveView('profile')} 
-            className={cn(
-              "flex-1 h-full flex items-center justify-center transition-all",
-              activeView === 'profile' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
-            )}
-          >
-            <UserIcon className="h-6 w-6" />
-          </button>
+
+          {/* Trackers */}
           <button 
             onClick={() => setActiveView('trackers')} 
             className={cn(
@@ -657,6 +655,29 @@ export function RecoveryTrackerApp() {
           >
             <LayoutGrid className="h-6 w-6" />
           </button>
+
+          {/* Profile - Middle */}
+          <button 
+            onClick={() => setActiveView('profile')} 
+            className={cn(
+              "flex-1 h-full flex items-center justify-center transition-all",
+              activeView === 'profile' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
+            )}
+          >
+            <UserIcon className="h-6 w-6" />
+          </button>
+
+          {/* Journey Log / Calendar */}
+          <button 
+            onClick={() => setIsHistoryOpen(true)} 
+            className={cn(
+              "flex-1 h-full flex items-center justify-center transition-all text-slate-400"
+            )}
+          >
+            <Calendar className="h-6 w-6" />
+          </button>
+
+          {/* Home - Far Right */}
           <button 
             onClick={() => setActiveView('home')} 
             className={cn(
