@@ -624,6 +624,7 @@ export function RecoveryTrackerApp() {
   const renderHistoryView = () => (
     <div className="w-full h-full flex flex-col overflow-hidden">
       <JourneyLog 
+        habitName={activeHabit?.name || ""}
         startDate={activeHabitData?.startDate || new Date()}
         birthDate={userBirthDate}
         resetDates={activeHabitData?.resetDates || []}

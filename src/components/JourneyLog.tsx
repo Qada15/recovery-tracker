@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { Trash2, ChevronLeft, AlertCircle, Trophy, History as HistoryIcon, Clock } from "lucide-react"
+import { Trash2, ChevronLeft, AlertCircle, Trophy, History as HistoryIcon, Clock, Calendar as CalendarIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { startOfDay, isBefore, isSameDay, max, isAfter, differenceInDays, setHours, setMinutes } from "date-fns"
@@ -20,6 +20,7 @@ const MODIFIERS_STYLES = {
 }
 
 interface JourneyLogProps {
+  habitName: string
   startDate: Date
   birthDate: Date | null
   resetDates: Date[]
@@ -30,6 +31,7 @@ interface JourneyLogProps {
 }
 
 export const JourneyLog = React.memo(({ 
+  habitName,
   startDate, 
   birthDate,
   resetDates,
@@ -142,8 +144,16 @@ export const JourneyLog = React.memo(({
 
   return (
     <div className="w-full h-full flex flex-col bg-slate-50/50 dark:bg-slate-950/50" dir={isAr ? 'rtl' : 'ltr'}>
-      <header className="w-full h-14 border-b flex items-center justify-center px-6 bg-white dark:bg-slate-900 shrink-0 z-10 shadow-sm">
-        <h2 className="text-lg font-black uppercase tracking-tight">{isAr ? "سجل الرحلة" : "Journey Log"}</h2>
+      <header className="w-full h-16 border-b flex items-center justify-between px-6 bg-white dark:bg-slate-900 shrink-0 z-10 shadow-sm">
+        <div className="flex flex-col">
+          <h2 className="text-lg font-black uppercase tracking-tight leading-none mb-1">
+            {isAr ? "سجل الرحلة" : "Journey Log"}
+          </h2>
+          <span className="text-[10px] font-black text-primary uppercase tracking-widest opacity-60">
+            {habitName}
+          </span>
+        </div>
+        <CalendarIcon className="h-5 w-5 text-slate-300" />
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-between p-4 overflow-hidden">
