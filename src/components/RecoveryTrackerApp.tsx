@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -444,7 +445,7 @@ export function RecoveryTrackerApp() {
     if (activeHabit && activeHabitData) {
       return (
         <div className="w-full h-full flex flex-col items-center">
-          <div className="text-center py-6 shrink-0 mt-8">
+          <div className="text-center py-4 shrink-0 mt-6">
             <h1 className="text-2xl font-black tracking-tighter mb-1">{t.title}</h1>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t.motivation}</p>
           </div>
@@ -629,12 +630,12 @@ export function RecoveryTrackerApp() {
       </main>
 
       <div className="shrink-0 w-full bg-white dark:bg-slate-900 border-t z-[100] pb-safe">
-        <nav className="flex items-center justify-around h-16 w-full max-w-lg mx-auto">
+        <nav className="flex items-center h-16 w-full">
           <button 
             onClick={() => setActiveView('home')} 
             className={cn(
-              "flex-1 h-full flex flex-col items-center justify-center transition-colors",
-              activeView === 'home' ? "text-primary" : "text-slate-400"
+              "flex-1 h-full flex items-center justify-center transition-all",
+              activeView === 'home' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
             )}
           >
             <Home className="h-6 w-6" />
@@ -642,8 +643,8 @@ export function RecoveryTrackerApp() {
           <button 
             onClick={() => setActiveView('trackers')} 
             className={cn(
-              "flex-1 h-full flex flex-col items-center justify-center transition-colors",
-              activeView === 'trackers' ? "text-primary" : "text-slate-400"
+              "flex-1 h-full flex items-center justify-center transition-all",
+              activeView === 'trackers' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
             )}
           >
             <LayoutGrid className="h-6 w-6" />
@@ -651,8 +652,8 @@ export function RecoveryTrackerApp() {
           <button 
             onClick={() => setActiveView('profile')} 
             className={cn(
-              "flex-1 h-full flex flex-col items-center justify-center transition-colors",
-              activeView === 'profile' ? "text-primary" : "text-slate-400"
+              "flex-1 h-full flex items-center justify-center transition-all",
+              activeView === 'profile' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
             )}
           >
             <UserIcon className="h-6 w-6" />
@@ -660,8 +661,8 @@ export function RecoveryTrackerApp() {
           <button 
             onClick={() => setActiveView('settings')} 
             className={cn(
-              "flex-1 h-full flex flex-col items-center justify-center transition-colors",
-              activeView === 'settings' ? "text-primary" : "text-slate-400"
+              "flex-1 h-full flex items-center justify-center transition-all",
+              activeView === 'settings' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
             )}
           >
             <Settings className="h-6 w-6" />
