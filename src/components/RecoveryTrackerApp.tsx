@@ -174,7 +174,7 @@ const AVAILABLE_COLORS = [
   "hsl(215 20% 45%)",
 ]
 
-type AppView = 'home' | 'trackers' | 'profile' | 'settings';
+type AppView = 'home' | 'trackers' | 'profile' | 'settings' | 'history';
 
 function TripleDateInput({ 
   value, 
@@ -258,7 +258,6 @@ export function RecoveryTrackerApp() {
   const { toast } = useToast()
   const [mounted, setMounted] = React.useState(false)
   const [activeView, setActiveView] = React.useState<AppView>('home')
-  const [isHistoryOpen, setIsHistoryOpen] = React.useState(false)
   const [isSetupOpen, setIsSetupOpen] = React.useState(false)
   
   const [editingHabitId, setEditingHabitId] = React.useState<string | null>(null)
@@ -622,6 +621,38 @@ export function RecoveryTrackerApp() {
     </div>
   );
 
+  const renderHistoryView = () => (
+    <div className="w-full h-full flex flex-col overflow-hidden">
+      <JourneyLog 
+        startDate={activeHabitData?.startDate || new Date()}
+        birthDate={userBirthDate}
+        resetDates={activeHabitData?.resetDates || []}
+        language={language}
+        onReset={(date) => {
+          if (!activeHabit) return;
+          const currentResets = activeHabit.resetDates.map(d => parseISO(d));
+          const newResets = [...currentResets, date].sort((a, b) => a.getTime() - b.getTime());
+          handleUpdateHabit(activeHabit.id, { startDate: newResets[newResets.length - 1].toISOString(), resetDates: newResets.map(d => d.toISOString()) });
+        }} 
+        onRemoveReset={(date) => {
+           if (!activeHabit) return;
+           const newResets = activeHabit.resetDates.filter(d => !isSameDay(parseISO(d), date));
+           if (newResets.length === 0) return;
+           const sorted = newResets.map(d => parseISO(d)).sort((a, b) => a.getTime() - b.getTime());
+           handleUpdateHabit(activeHabit.id, { startDate: sorted[sorted.length - 1].toISOString(), resetDates: sorted.map(d => d.toISOString()) });
+        }}
+        onUpdateTime={(oldDate, newDate) => {
+          if (!activeHabit) return;
+          const newResets = activeHabit.resetDates.map(d => {
+            const current = parseISO(d);
+            return current.getTime() === oldDate.getTime() ? newDate.toISOString() : d;
+          }).sort((a, b) => parseISO(a).getTime() - parseISO(b).getTime());
+          handleUpdateHabit(activeHabit.id, { startDate: newResets[newResets.length - 1], resetDates: newResets });
+        }}
+      />
+    </div>
+  );
+
   return (
     <div className="flex flex-col h-full w-full overflow-hidden bg-slate-50 dark:bg-slate-950" dir={isAr ? 'rtl' : 'ltr'}>
       <main className="flex-1 w-full relative overflow-hidden">
@@ -629,6 +660,7 @@ export function RecoveryTrackerApp() {
         {activeView === 'trackers' && renderTrackersView()}
         {activeView === 'profile' && renderProfileView()}
         {activeView === 'settings' && renderSettingsView()}
+        {activeView === 'history' && renderHistoryView()}
       </main>
 
       <div className="shrink-0 w-full bg-white dark:bg-slate-900 border-t z-[100] pb-safe">
@@ -646,9 +678,10 @@ export function RecoveryTrackerApp() {
 
           {/* Journey Log / Calendar */}
           <button 
-            onClick={() => setIsHistoryOpen(true)} 
+            onClick={() => setActiveView('history')} 
             className={cn(
-              "flex-1 h-full flex items-center justify-center transition-all text-slate-400"
+              "flex-1 h-full flex items-center justify-center transition-all",
+              activeView === 'history' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
             )}
           >
             <Calendar className="h-6 w-6" />
@@ -688,36 +721,6 @@ export function RecoveryTrackerApp() {
           </button>
         </nav>
       </div>
-
-      <JourneyLog 
-        isOpen={isHistoryOpen} 
-        onClose={() => setIsHistoryOpen(false)} 
-        startDate={activeHabitData?.startDate || new Date()}
-        birthDate={userBirthDate}
-        resetDates={activeHabitData?.resetDates || []}
-        language={language}
-        onReset={(date) => {
-          if (!activeHabit) return;
-          const currentResets = activeHabit.resetDates.map(d => parseISO(d));
-          const newResets = [...currentResets, date].sort((a, b) => a.getTime() - b.getTime());
-          handleUpdateHabit(activeHabit.id, { startDate: newResets[newResets.length - 1].toISOString(), resetDates: newResets.map(d => d.toISOString()) });
-        }} 
-        onRemoveReset={(date) => {
-           if (!activeHabit) return;
-           const newResets = activeHabit.resetDates.filter(d => !isSameDay(parseISO(d), date));
-           if (newResets.length === 0) return;
-           const sorted = newResets.map(d => parseISO(d)).sort((a, b) => a.getTime() - b.getTime());
-           handleUpdateHabit(activeHabit.id, { startDate: sorted[sorted.length - 1].toISOString(), resetDates: sorted.map(d => d.toISOString()) });
-        }}
-        onUpdateTime={(oldDate, newDate) => {
-          if (!activeHabit) return;
-          const newResets = activeHabit.resetDates.map(d => {
-            const current = parseISO(d);
-            return current.getTime() === oldDate.getTime() ? newDate.toISOString() : d;
-          }).sort((a, b) => parseISO(a).getTime() - parseISO(b).getTime());
-          handleUpdateHabit(activeHabit.id, { startDate: newResets[newResets.length - 1], resetDates: newResets });
-        }}
-      />
 
       <Dialog open={isSetupOpen} onOpenChange={setIsSetupOpen}>
         <DialogContent className="rounded-[2.5rem] p-5 max-w-[340px] max-h-[90vh] overflow-hidden flex flex-col z-[200]">

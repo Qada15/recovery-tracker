@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -19,8 +20,6 @@ const MODIFIERS_STYLES = {
 }
 
 interface JourneyLogProps {
-  isOpen: boolean
-  onClose: () => void
   startDate: Date
   birthDate: Date | null
   resetDates: Date[]
@@ -31,8 +30,6 @@ interface JourneyLogProps {
 }
 
 export const JourneyLog = React.memo(({ 
-  isOpen, 
-  onClose, 
   startDate, 
   birthDate,
   resetDates,
@@ -144,19 +141,12 @@ export const JourneyLog = React.memo(({
   if (!today || !currentMonth) return null
 
   return (
-    <div 
-      className={`fixed inset-0 z-[100] bg-background flex flex-col transition-all duration-500 pointer-events-auto overflow-hidden ${isOpen ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'}`} 
-      dir={isAr ? 'rtl' : 'ltr'}
-    >
-      <header className="w-full h-14 border-b flex items-center justify-between px-6 bg-white dark:bg-slate-900 shrink-0 z-10 shadow-sm">
-        <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full h-10 w-10">
-          <ChevronLeft className={`h-8 w-8 ${isAr ? 'rotate-180' : ''}`} />
-        </Button>
+    <div className="w-full h-full flex flex-col bg-slate-50/50 dark:bg-slate-950/50" dir={isAr ? 'rtl' : 'ltr'}>
+      <header className="w-full h-14 border-b flex items-center justify-center px-6 bg-white dark:bg-slate-900 shrink-0 z-10 shadow-sm">
         <h2 className="text-lg font-black uppercase tracking-tight">{isAr ? "سجل الرحلة" : "Journey Log"}</h2>
-        <div className="w-10" />
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-between p-4 overflow-hidden bg-slate-50/50 dark:bg-slate-950/50">
+      <main className="flex-1 flex flex-col items-center justify-between p-4 overflow-hidden">
         <div className="w-full max-w-[380px] grid grid-cols-2 gap-3 mb-2 shrink-0">
           <div className="bg-amber-500/5 border-2 border-amber-500/20 rounded-2xl p-2 flex flex-col items-center justify-center text-center">
             <Trophy className="h-4 w-4 text-amber-500 mb-1" />
