@@ -2,38 +2,29 @@
 "use client"
 
 import * as React from "react"
-import { History, MoreVertical, Settings2, RotateCcw, RefreshCw, Sparkles, Heart, Zap, Moon, Sun, Target, Shield, Flame, Cloud, Ghost, Trash2, Trophy, Check, Cigarette, Coffee, Candy, Wine, Dices, Smartphone, Skull, Ban } from "lucide-react"
+import { History, Trophy, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { cn } from "@/lib/utils"
 
 const ICON_MAP = {
-  Sparkles, Heart, Zap, Moon, Sun, Target, Shield, Flame, Cloud, Ghost,
-  Cigarette, Coffee, Candy, Wine, Dices, Smartphone, Skull, Ban
+  Sparkles: (props: any) => <Sparkles {...props} />,
+  Heart: (props: any) => import("lucide-react").then(m => <m.Heart {...props} />),
+  Zap: (props: any) => import("lucide-react").then(m => <m.Zap {...props} />),
+  Moon: (props: any) => import("lucide-react").then(m => <m.Moon {...props} />),
+  Sun: (props: any) => import("lucide-react").then(m => <m.Sun {...props} />),
+  Target: (props: any) => import("lucide-react").then(m => <m.Target {...props} />),
+  Shield: (props: any) => import("lucide-react").then(m => <m.Shield {...props} />),
+  Flame: (props: any) => import("lucide-react").then(m => <m.Flame {...props} />),
+  Cloud: (props: any) => import("lucide-react").then(m => <m.Cloud {...props} />),
+  Ghost: (props: any) => import("lucide-react").then(m => <m.Ghost {...props} />),
+  Cigarette: (props: any) => import("lucide-react").then(m => <m.Cigarette {...props} />),
+  Coffee: (props: any) => import("lucide-react").then(m => <m.Coffee {...props} />),
+  Candy: (props: any) => import("lucide-react").then(m => <m.Candy {...props} />),
+  Wine: (props: any) => import("lucide-react").then(m => <m.Wine {...props} />),
+  Dices: (props: any) => import("lucide-react").then(m => <m.Dices {...props} />),
+  Smartphone: (props: any) => import("lucide-react").then(m => <m.Smartphone {...props} />),
+  Skull: (props: any) => import("lucide-react").then(m => <m.Skull {...props} />),
+  Ban: (props: any) => import("lucide-react").then(m => <m.Ban {...props} />),
 }
-
-// لوحة الألوان الباردة المتطابقة
-const AVAILABLE_COLORS = [
-  "hsl(217 91% 60%)", // Blue
-  "hsl(160 84% 39%)", // Emerald
-  "hsl(190 90% 45%)", // Teal/Cyan
-  "hsl(230 70% 60%)", // Indigo
-  "hsl(260 75% 65%)", // Violet
-  "hsl(215 20% 45%)", // Slate/Cool Gray
-]
 
 const CHALLENGES = [
   { days: 3, labelAr: "تحدي 3 أيام", labelEn: "3 Days Challenge" },
@@ -179,75 +170,24 @@ interface TimerDisplayProps {
   externalAccentColor: string
   resetDates: Date[]
   onOpenHistory: () => void
-  onUpdateName: (name: string) => void
-  onUpdateColor: (color: string) => void
-  onReset: () => void
-  onDelete: () => void
-  onClearData: () => void
   language: 'ar' | 'en'
 }
 
 export const TimerDisplay = React.memo(({ 
   externalStartDate, 
   externalHabitName, 
-  externalHabitIcon = 'Sparkles',
   externalAccentColor,
   onOpenHistory,
-  onUpdateName,
-  onUpdateColor,
-  onReset,
-  onDelete,
-  onClearData,
   language
 }: TimerDisplayProps) => {
-  const [showSettingsDialog, setShowSettingsDialog] = React.useState(false)
-  const [tempHabitName, setTempHabitName] = React.useState(externalHabitName)
-  const [tempColor, setTempColor] = React.useState(externalAccentColor)
-  
   const isAr = language === 'ar'
-  const IconComponent = ICON_MAP[externalHabitIcon as keyof typeof ICON_MAP] || Sparkles
-  
-  const handleSaveSettings = React.useCallback(() => {
-    if (tempHabitName.trim()) {
-      onUpdateName(tempHabitName)
-    }
-    onUpdateColor(tempColor)
-    setShowSettingsDialog(false)
-  }, [tempHabitName, tempColor, onUpdateName, onUpdateColor])
 
   return (
     <div className="w-full flex flex-col items-center h-full max-w-[480px] mx-auto overflow-hidden">
-      <div className="w-full flex items-center justify-between px-6 pt-6 mb-4 shrink-0">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 hover:bg-slate-50 transition-colors">
-              <MoreVertical className="h-5 w-5 text-slate-500" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align={isAr ? "end" : "start"} className="rounded-2xl w-52 p-2 z-[60]">
-            <DropdownMenuItem onClick={onReset} className="text-red-500 font-black p-3 text-xs focus:bg-red-50 dark:focus:bg-red-950">
-              <RefreshCw className="h-4 w-4 ml-2" /> {isAr ? "تصفير العداد" : "Reset Tracker"}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setShowSettingsDialog(true)} className="p-3 font-black text-xs">
-              <Settings2 className="h-4 w-4 ml-2" /> {isAr ? "تعديل العداد" : "Edit Tracker"}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onClearData} className="text-orange-500 font-black p-3 text-xs focus:bg-orange-50 dark:focus:bg-orange-950">
-              <RotateCcw className="h-4 w-4 ml-2" /> {isAr ? "حذف السجلات" : "Clear Records"}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onDelete} className="text-red-600 font-black p-3 text-xs focus:bg-red-100 dark:focus:bg-red-900">
-              <Trash2 className="h-4 w-4 ml-2" /> {isAr ? "حذف العداد نهائياً" : "Delete Habit"}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <div className="flex items-center gap-3">
-          <h3 className="text-lg font-black text-slate-800 dark:text-white tracking-tight truncate max-w-[180px]">{externalHabitName}</h3>
-          <div className="w-10 h-10 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center shadow-sm border border-slate-100 dark:border-slate-800">
-            <IconComponent className="h-5 w-5" style={{ color: externalAccentColor }} />
-          </div>
-        </div>
+      <div className="w-full flex items-center justify-center px-6 pt-6 mb-4 shrink-0">
+        <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tighter truncate max-w-[280px]">
+          {externalHabitName}
+        </h3>
       </div>
 
       <div className="flex-1 w-full flex flex-col items-center justify-center min-h-0">
@@ -262,42 +202,6 @@ export const TimerDisplay = React.memo(({
           <History className="h-6 w-6" /> {isAr ? "سجل الرحلة" : "Journey Log"}
         </Button>
       </div>
-
-      <Dialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
-        <DialogContent className="rounded-[2.5rem] p-6 max-w-[340px] z-[100]">
-          <DialogHeader><DialogTitle className="text-center font-black text-lg">{isAr ? "تعديل العداد" : "Edit Tracker"}</DialogTitle></DialogHeader>
-          <div className="space-y-6 py-4">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest opacity-40 px-1">{isAr ? "اسم العداد" : "Habit Name"}</label>
-              <Input 
-                value={tempHabitName} 
-                onChange={(e) => setTempHabitName(e.target.value)} 
-                className="text-center font-black h-12 rounded-xl text-base bg-slate-50 border-none" 
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest opacity-40 px-1">{isAr ? "لون العداد" : "Habit Color"}</label>
-              <div className="grid grid-cols-3 gap-2">
-                {AVAILABLE_COLORS.map((color) => (
-                  <button 
-                    key={color} 
-                    onClick={() => setTempColor(color)} 
-                    className={cn(
-                      "h-10 rounded-xl flex items-center justify-center transition-all border-4",
-                      tempColor === color ? "border-slate-800 scale-105" : "border-transparent opacity-60"
-                    )}
-                    style={{ backgroundColor: color }}
-                  >
-                    {tempColor === color && <Check className="h-4 w-4 text-white" />}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-          <Button onClick={handleSaveSettings} className="w-full h-12 rounded-xl font-black text-base shadow-lg">{isAr ? "حفظ التغييرات" : "Save Changes"}</Button>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 })
