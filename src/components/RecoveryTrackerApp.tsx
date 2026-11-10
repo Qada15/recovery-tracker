@@ -261,7 +261,6 @@ export function RecoveryTrackerApp() {
   const [isHistoryOpen, setIsHistoryOpen] = React.useState(false)
   const [isSetupOpen, setIsSetupOpen] = React.useState(false)
   
-  // Management States
   const [editingHabitId, setEditingHabitId] = React.useState<string | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
@@ -447,7 +446,7 @@ export function RecoveryTrackerApp() {
     if (activeHabit && activeHabitData) {
       return (
         <div className="w-full h-full flex flex-col items-center">
-          <div className="w-full px-6 py-4 shrink-0 mt-6 flex justify-between items-start">
+          <div className="w-full px-6 py-4 shrink-0 mt-6 flex justify-start items-start" dir="ltr">
              <div className="text-left">
               <h1 className="text-2xl font-black tracking-tighter mb-1">Recovery Tracker</h1>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t.motivation}</p>
@@ -634,26 +633,25 @@ export function RecoveryTrackerApp() {
 
       <div className="shrink-0 w-full bg-white dark:bg-slate-900 border-t z-[100] pb-safe">
         <nav className="flex items-center h-16 w-full">
-          {/* Settings - Far Left */}
+          {/* Home - Far Right (First in RTL) */}
           <button 
-            onClick={() => setActiveView('settings')} 
+            onClick={() => setActiveView('home')} 
             className={cn(
               "flex-1 h-full flex items-center justify-center transition-all",
-              activeView === 'settings' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
+              activeView === 'home' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
             )}
           >
-            <Settings className="h-6 w-6" />
+            <Home className="h-6 w-6" />
           </button>
 
-          {/* Trackers */}
+          {/* Journey Log / Calendar */}
           <button 
-            onClick={() => setActiveView('trackers')} 
+            onClick={() => setIsHistoryOpen(true)} 
             className={cn(
-              "flex-1 h-full flex items-center justify-center transition-all",
-              activeView === 'trackers' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
+              "flex-1 h-full flex items-center justify-center transition-all text-slate-400"
             )}
           >
-            <LayoutGrid className="h-6 w-6" />
+            <Calendar className="h-6 w-6" />
           </button>
 
           {/* Profile - Middle */}
@@ -667,25 +665,26 @@ export function RecoveryTrackerApp() {
             <UserIcon className="h-6 w-6" />
           </button>
 
-          {/* Journey Log / Calendar */}
+          {/* Trackers */}
           <button 
-            onClick={() => setIsHistoryOpen(true)} 
-            className={cn(
-              "flex-1 h-full flex items-center justify-center transition-all text-slate-400"
-            )}
-          >
-            <Calendar className="h-6 w-6" />
-          </button>
-
-          {/* Home - Far Right */}
-          <button 
-            onClick={() => setActiveView('home')} 
+            onClick={() => setActiveView('trackers')} 
             className={cn(
               "flex-1 h-full flex items-center justify-center transition-all",
-              activeView === 'home' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
+              activeView === 'trackers' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
             )}
           >
-            <Home className="h-6 w-6" />
+            <LayoutGrid className="h-6 w-6" />
+          </button>
+
+          {/* Settings - Far Left (Last in RTL) */}
+          <button 
+            onClick={() => setActiveView('settings')} 
+            className={cn(
+              "flex-1 h-full flex items-center justify-center transition-all",
+              activeView === 'settings' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
+            )}
+          >
+            <Settings className="h-6 w-6" />
           </button>
         </nav>
       </div>
