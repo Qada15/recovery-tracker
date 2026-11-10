@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -39,7 +38,7 @@ import {
 
 const TRANSLATIONS = {
   ar: {
-    title: "نقاهة",
+    title: "Recovery Tracker",
     motivation: "أنت تبلي بلاءً حسنًا!",
     addHabit: "إضافة عداد جديد",
     setupTitle: "إعداد العداد",
@@ -93,7 +92,7 @@ const TRANSLATIONS = {
     deleteHabit: "حذف العداد نهائياً"
   },
   en: {
-    title: "Recovery",
+    title: "Recovery Tracker",
     motivation: "You are doing great!",
     addHabit: "Add New Tracker",
     setupTitle: "Setup Tracker",
@@ -445,9 +444,9 @@ export function RecoveryTrackerApp() {
     if (activeHabit && activeHabitData) {
       return (
         <div className="w-full h-full flex flex-col items-center">
-          <div className="text-center py-4 shrink-0 mt-6">
-            <h1 className="text-2xl font-black tracking-tighter mb-1">{t.title}</h1>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t.motivation}</p>
+          <div className="w-full px-6 py-4 shrink-0 mt-6 text-left">
+            <h1 className="text-2xl font-black tracking-tighter mb-1 text-left">{t.title}</h1>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-left">{t.motivation}</p>
           </div>
           <div className="flex-1 w-full flex flex-col justify-center overflow-hidden">
             <TimerDisplay 
@@ -632,22 +631,13 @@ export function RecoveryTrackerApp() {
       <div className="shrink-0 w-full bg-white dark:bg-slate-900 border-t z-[100] pb-safe">
         <nav className="flex items-center h-16 w-full">
           <button 
-            onClick={() => setActiveView('home')} 
+            onClick={() => setActiveView('settings')} 
             className={cn(
               "flex-1 h-full flex items-center justify-center transition-all",
-              activeView === 'home' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
+              activeView === 'settings' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
             )}
           >
-            <Home className="h-6 w-6" />
-          </button>
-          <button 
-            onClick={() => setActiveView('trackers')} 
-            className={cn(
-              "flex-1 h-full flex items-center justify-center transition-all",
-              activeView === 'trackers' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
-            )}
-          >
-            <LayoutGrid className="h-6 w-6" />
+            <Settings className="h-6 w-6" />
           </button>
           <button 
             onClick={() => setActiveView('profile')} 
@@ -659,13 +649,22 @@ export function RecoveryTrackerApp() {
             <UserIcon className="h-6 w-6" />
           </button>
           <button 
-            onClick={() => setActiveView('settings')} 
+            onClick={() => setActiveView('trackers')} 
             className={cn(
               "flex-1 h-full flex items-center justify-center transition-all",
-              activeView === 'settings' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
+              activeView === 'trackers' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
             )}
           >
-            <Settings className="h-6 w-6" />
+            <LayoutGrid className="h-6 w-6" />
+          </button>
+          <button 
+            onClick={() => setActiveView('home')} 
+            className={cn(
+              "flex-1 h-full flex items-center justify-center transition-all",
+              activeView === 'home' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
+            )}
+          >
+            <Home className="h-6 w-6" />
           </button>
         </nav>
       </div>
