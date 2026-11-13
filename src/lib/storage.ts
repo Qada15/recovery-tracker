@@ -12,6 +12,7 @@ export interface UserProfile {
   birthDate: string;
   gender: 'male' | 'female' | '';
   photoURL?: string;
+  coverPhotoURL?: string;
 }
 
 export interface Habit {

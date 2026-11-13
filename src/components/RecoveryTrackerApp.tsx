@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Home, Settings, User as UserIcon, Plus, Sparkles, Trash2, Target, UserCog, AppWindow, ArrowRight, Check, Cigarette, Coffee, Candy, Wine, Dices, Smartphone, Skull, Ban, LayoutGrid, RefreshCw, RotateCcw, Settings2, Calendar, Camera, Upload } from "lucide-react"
+import { Home, Settings, User as UserIcon, Plus, Sparkles, Trash2, Target, UserCog, AppWindow, ArrowRight, Check, Cigarette, Coffee, Candy, Wine, Dices, Smartphone, Skull, Ban, LayoutGrid, RefreshCw, RotateCcw, Settings2, Calendar, Camera, Upload, Image as ImageIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
@@ -86,7 +86,8 @@ const TRANSLATIONS = {
     journeyLog: "سجل الرحلة",
     editProfile: "تعديل الملف الشخصي",
     saveChanges: "حفظ التغييرات",
-    changePhoto: "تغيير الصورة"
+    changePhoto: "تغيير الصورة",
+    changeCover: "تغيير الغلاف"
   },
   en: {
     title: "Recovery Tracker",
@@ -144,7 +145,8 @@ const TRANSLATIONS = {
     journeyLog: "Journey Log",
     editProfile: "Edit Profile",
     saveChanges: "Save Changes",
-    changePhoto: "Change Photo"
+    changePhoto: "Change Photo",
+    changeCover: "Change Cover"
   }
 }
 
@@ -274,7 +276,8 @@ export function RecoveryTrackerApp() {
     surname: "", 
     birthDate: "", 
     gender: "",
-    photoURL: "" 
+    photoURL: "",
+    coverPhotoURL: "" 
   })
 
   const [tempName, setTempName] = React.useState("")
@@ -283,6 +286,7 @@ export function RecoveryTrackerApp() {
   
   const [today, setToday] = React.useState<Date | null>(null)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
+  const fileInputCoverRef = React.useRef<HTMLInputElement>(null)
 
   React.useEffect(() => {
     setMounted(true)
@@ -395,6 +399,17 @@ export function RecoveryTrackerApp() {
     }
   }
 
+  const handleCoverPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        updateProfile({ coverPhotoURL: reader.result as string })
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   const toggleLanguage = () => {
     const newLang = language === 'ar' ? 'en' : 'ar'
     setLanguage(newLang)
@@ -462,7 +477,7 @@ export function RecoveryTrackerApp() {
                 <SelectTrigger className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none shadow-none">
                   <SelectValue placeholder="..." />
                 </SelectTrigger>
-                <SelectContent className="rounded-2xl">
+                <SelectContent className="rounded-2xl z-[300]">
                   <SelectItem value="male" className="font-bold">{t.male}</SelectItem>
                   <SelectItem value="female" className="font-bold">{t.female}</SelectItem>
                 </SelectContent>
@@ -644,46 +659,78 @@ export function RecoveryTrackerApp() {
   );
 
   const renderProfileView = () => (
-    <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center space-y-10 overflow-hidden" dir={isAr ? 'rtl' : 'ltr'}>
-      <div className="relative">
-        <div className="w-32 h-32 rounded-[3rem] bg-white dark:bg-slate-900 flex items-center justify-center shadow-2xl border overflow-hidden">
-          {profile.photoURL ? (
-            <img src={profile.photoURL} alt="Profile" className="w-full h-full object-cover" />
-          ) : (
-            <UserIcon className="h-14 w-14 text-slate-300" />
-          )}
-        </div>
+    <div className="w-full h-full flex flex-col items-center overflow-x-hidden overflow-y-auto custom-scrollbar" dir={isAr ? 'rtl' : 'ltr'}>
+      {/* Cover Photo Section */}
+      <div className="w-full h-48 bg-slate-200 dark:bg-slate-800 relative shrink-0">
+        {profile.coverPhotoURL ? (
+          <img src={profile.coverPhotoURL} alt="Cover" className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <ImageIcon className="h-12 w-12 text-slate-400 opacity-20" />
+          </div>
+        )}
         <button 
-          onClick={() => setIsProfileEditOpen(true)}
-          className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-primary flex items-center justify-center border-4 border-background shadow-lg hover:scale-110 active:scale-90 transition-transform"
+          onClick={() => fileInputCoverRef.current?.click()}
+          className="absolute bottom-4 left-4 bg-white/80 dark:bg-black/80 p-2 rounded-xl backdrop-blur-sm shadow-lg hover:scale-105 active:scale-95 transition-transform flex items-center gap-2"
         >
-          <Settings2 className="h-4 w-4 text-white" />
+          <Camera className="h-4 w-4" />
+          <span className="text-[8px] font-black uppercase tracking-widest">{t.changeCover}</span>
         </button>
+        <Input 
+          type="file" 
+          ref={fileInputCoverRef} 
+          className="hidden" 
+          accept="image/*" 
+          onChange={handleCoverPhotoUpload} 
+        />
       </div>
-      <div className="space-y-1">
-        <h2 className="text-3xl font-black tracking-tighter">{profile.name} {profile.surname}</h2>
-        <p className="text-xs font-black uppercase tracking-widest text-slate-400">{profile.gender === 'male' ? t.male : t.female}</p>
-      </div>
-      {age && (
-        <div className="w-full max-w-xs space-y-4">
-          <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30">{t.age}</h3>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border shadow-sm">
-              <div className="text-2xl font-black text-primary tabular-nums">{age.years}</div>
-              <div className="text-[8px] font-black uppercase opacity-40 mt-1">{t.years}</div>
-            </div>
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border shadow-sm">
-              <div className="text-2xl font-black text-primary tabular-nums">{age.months}</div>
-              <div className="text-[8px] font-black uppercase opacity-40 mt-1">{t.months}</div>
-            </div>
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border shadow-sm">
-              <div className="text-2xl font-black text-primary tabular-nums">{age.days}</div>
-              <div className="text-[8px] font-black uppercase opacity-40 mt-1">{t.days}</div>
+
+      {/* Profile Info Overlap Section */}
+      <div className="w-full px-8 -mt-16 flex flex-col items-center text-center space-y-6 pb-24">
+        <div className="relative">
+          <div className="w-32 h-32 rounded-[3rem] bg-white dark:bg-slate-900 flex items-center justify-center shadow-2xl border-4 border-white dark:border-slate-900 overflow-hidden">
+            {profile.photoURL ? (
+              <img src={profile.photoURL} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <UserIcon className="h-14 w-14 text-slate-300" />
+            )}
+          </div>
+          <button 
+            onClick={() => setIsProfileEditOpen(true)}
+            className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-primary flex items-center justify-center border-4 border-white dark:border-slate-900 shadow-lg hover:scale-110 active:scale-90 transition-transform"
+          >
+            <Settings2 className="h-4 w-4 text-white" />
+          </button>
+        </div>
+
+        <div className="space-y-1">
+          <h2 className="text-3xl font-black tracking-tighter">{profile.name} {profile.surname}</h2>
+          <p className="text-xs font-black uppercase tracking-widest text-slate-400">
+            {profile.gender === 'male' ? t.male : (profile.gender === 'female' ? t.female : "")}
+          </p>
+        </div>
+
+        {age && (
+          <div className="w-full max-w-xs space-y-4">
+            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30">{t.age}</h3>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border shadow-sm">
+                <div className="text-2xl font-black text-primary tabular-nums">{age.years}</div>
+                <div className="text-[8px] font-black uppercase opacity-40 mt-1">{t.years}</div>
+              </div>
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border shadow-sm">
+                <div className="text-2xl font-black text-primary tabular-nums">{age.months}</div>
+                <div className="text-[8px] font-black uppercase opacity-40 mt-1">{t.months}</div>
+              </div>
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border shadow-sm">
+                <div className="text-2xl font-black text-primary tabular-nums">{age.days}</div>
+                <div className="text-[8px] font-black uppercase opacity-40 mt-1">{t.days}</div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      <div className="pt-8 opacity-40"><p className="text-[9px] font-black uppercase tracking-widest leading-relaxed">{t.localNote}</p></div>
+        )}
+        <div className="pt-8 opacity-40"><p className="text-[9px] font-black uppercase tracking-widest leading-relaxed">{t.localNote}</p></div>
+      </div>
       
       <Dialog open={isProfileEditOpen} onOpenChange={setIsProfileEditOpen}>
         <DialogContent className="rounded-[2.5rem] p-6 max-w-[340px] z-[210] max-h-[85vh] overflow-y-auto custom-scrollbar">
@@ -731,7 +778,7 @@ export function RecoveryTrackerApp() {
                 <SelectTrigger className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none shadow-none">
                   <SelectValue placeholder="..." />
                 </SelectTrigger>
-                <SelectContent className="rounded-2xl">
+                <SelectContent className="rounded-2xl z-[300]">
                   <SelectItem value="male" className="font-bold">{t.male}</SelectItem>
                   <SelectItem value="female" className="font-bold">{t.female}</SelectItem>
                 </SelectContent>
