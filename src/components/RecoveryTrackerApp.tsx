@@ -184,7 +184,7 @@ function TripleDateInput({
   const [parts, setParts] = React.useState(() => {
     if (!value) return { day: "", month: "", year: "" };
     const d = new Date(value);
-    if (!isValid(d)) return { day: "", month: "", year: "" };
+    if (!isValid(d)) return { day: "", month: "" , year: "" };
     return {
       day: d.getDate().toString(),
       month: (d.getMonth() + 1).toString(),
