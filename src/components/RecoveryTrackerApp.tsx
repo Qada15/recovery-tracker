@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Home, Settings, User as UserIcon, Plus, Sparkles, Trash2, Target, UserCog, AppWindow, ArrowRight, Check, Cigarette, Coffee, Candy, Wine, Dices, Smartphone, Skull, Ban, LayoutGrid, RefreshCw, RotateCcw, Settings2, Calendar } from "lucide-react"
+import { Home, Settings, User as UserIcon, Plus, Sparkles, Trash2, Target, UserCog, AppWindow, ArrowRight, Check, Cigarette, Coffee, Candy, Wine, Dices, Smartphone, Skull, Ban, LayoutGrid, RefreshCw, RotateCcw, Settings2, Calendar, Camera, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
@@ -85,7 +85,8 @@ const TRANSLATIONS = {
     deleteHabit: "حذف",
     journeyLog: "سجل الرحلة",
     editProfile: "تعديل الملف الشخصي",
-    saveChanges: "حفظ التغييرات"
+    saveChanges: "حفظ التغييرات",
+    changePhoto: "تغيير الصورة"
   },
   en: {
     title: "Recovery Tracker",
@@ -142,7 +143,8 @@ const TRANSLATIONS = {
     deleteHabit: "Delete",
     journeyLog: "Journey Log",
     editProfile: "Edit Profile",
-    saveChanges: "Save Changes"
+    saveChanges: "Save Changes",
+    changePhoto: "Change Photo"
   }
 }
 
@@ -267,13 +269,20 @@ export function RecoveryTrackerApp() {
   const [theme, setTheme] = React.useState<'light' | 'dark'>('light')
   const [habits, setHabits] = React.useState<Habit[]>([])
   const [activeHabitId, setActiveHabitId] = React.useState<string | null>(null)
-  const [profile, setProfile] = React.useState<UserProfile>({ name: "", surname: "", birthDate: "", gender: "" })
+  const [profile, setProfile] = React.useState<UserProfile>({ 
+    name: "", 
+    surname: "", 
+    birthDate: "", 
+    gender: "",
+    photoURL: "" 
+  })
 
   const [tempName, setTempName] = React.useState("")
   const [tempIcon, setTempIcon] = React.useState("Cigarette")
   const [tempColor, setTempColor] = React.useState(AVAILABLE_COLORS[0])
   
   const [today, setToday] = React.useState<Date | null>(null)
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
 
   React.useEffect(() => {
     setMounted(true)
@@ -375,6 +384,17 @@ export function RecoveryTrackerApp() {
     saveToStorage(STORAGE_KEYS.USER_PROFILE, JSON.stringify(newProfile))
   }
 
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        updateProfile({ photoURL: reader.result as string })
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   const toggleLanguage = () => {
     const newLang = language === 'ar' ? 'en' : 'ar'
     setLanguage(newLang)
@@ -397,14 +417,33 @@ export function RecoveryTrackerApp() {
       <div className="fixed inset-0 z-[200] bg-background flex flex-col items-center justify-center p-6 text-center overflow-hidden" dir={isAr ? 'rtl' : 'ltr'}>
         <div className="w-full max-sm space-y-8">
           <header className="space-y-2">
-            <div className="mx-auto w-20 h-20 rounded-[2rem] bg-slate-900 flex items-center justify-center shadow-2xl mb-6">
-              <Sparkles className="h-10 w-10 text-orange-400" />
+            <div className="mx-auto relative group">
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                className="mx-auto w-24 h-24 rounded-[2rem] bg-slate-900 flex items-center justify-center shadow-2xl mb-6 cursor-pointer overflow-hidden border-4 border-white dark:border-slate-800"
+              >
+                {profile.photoURL ? (
+                  <img src={profile.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <UserIcon className="h-10 w-10 text-slate-400" />
+                )}
+                <div className="absolute inset-x-0 bottom-6 bg-black/40 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Camera className="h-4 w-4 text-white" />
+                </div>
+              </div>
+              <Input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                accept="image/*" 
+                onChange={handlePhotoUpload} 
+              />
             </div>
             <h1 className="text-3xl font-black tracking-tighter">{t.onboardingTitle}</h1>
             <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">{t.onboardingSub}</p>
           </header>
 
-          <div className="space-y-4 bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] shadow-xl border overflow-y-auto max-h-[60vh] custom-scrollbar">
+          <div className="space-y-4 bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] shadow-xl border overflow-y-auto max-h-[50vh] custom-scrollbar">
             <div className="space-y-1.5 text-right">
               <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userName}</label>
               <Input value={profile.name} onChange={(e) => updateProfile({ name: e.target.value })} placeholder="..." className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none" />
@@ -607,8 +646,12 @@ export function RecoveryTrackerApp() {
   const renderProfileView = () => (
     <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center space-y-10 overflow-hidden" dir={isAr ? 'rtl' : 'ltr'}>
       <div className="relative">
-        <div className="w-32 h-32 rounded-[3rem] bg-white dark:bg-slate-900 flex items-center justify-center shadow-2xl border">
-          <UserIcon className="h-14 w-14 text-slate-300" />
+        <div className="w-32 h-32 rounded-[3rem] bg-white dark:bg-slate-900 flex items-center justify-center shadow-2xl border overflow-hidden">
+          {profile.photoURL ? (
+            <img src={profile.photoURL} alt="Profile" className="w-full h-full object-cover" />
+          ) : (
+            <UserIcon className="h-14 w-14 text-slate-300" />
+          )}
         </div>
         <button 
           onClick={() => setIsProfileEditOpen(true)}
@@ -646,6 +689,30 @@ export function RecoveryTrackerApp() {
         <DialogContent className="rounded-[2.5rem] p-6 max-w-[340px] z-[210] max-h-[85vh] overflow-y-auto custom-scrollbar">
           <DialogHeader><DialogTitle className="text-center font-black text-lg">{t.editProfile}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4">
+            <div className="flex flex-col items-center justify-center space-y-2 mb-4">
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                className="w-20 h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden cursor-pointer relative group"
+              >
+                {profile.photoURL ? (
+                  <img src={profile.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <Camera className="h-6 w-6 text-slate-400" />
+                )}
+                <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Upload className="h-4 w-4 text-white" />
+                </div>
+              </div>
+              <span className="text-[8px] font-black uppercase tracking-widest opacity-40">{t.changePhoto}</span>
+              <Input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                accept="image/*" 
+                onChange={handlePhotoUpload} 
+              />
+            </div>
+
             <div className="space-y-1.5 text-right">
               <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userName}</label>
               <Input value={profile.name} onChange={(e) => updateProfile({ name: e.target.value })} placeholder="..." className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none" />
