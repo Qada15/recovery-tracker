@@ -308,7 +308,10 @@ export function RecoveryTrackerApp() {
     }
 
     if (savedProfile) {
-      try { setProfile(JSON.parse(savedProfile)) } catch (e) { console.error("Profile parse error") }
+      try { 
+        const parsed = JSON.parse(savedProfile);
+        setProfile(parsed);
+      } catch (e) { console.error("Profile parse error") }
     }
 
     if (savedHabits) {
@@ -442,7 +445,7 @@ export function RecoveryTrackerApp() {
                 ) : (
                   <UserIcon className="h-10 w-10 text-slate-400" />
                 )}
-                <div className="absolute inset-x-0 bottom-6 bg-black/40 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <Camera className="h-4 w-4 text-white" />
                 </div>
               </div>
@@ -660,7 +663,7 @@ export function RecoveryTrackerApp() {
 
   const renderProfileView = () => (
     <div className="w-full h-full flex flex-col items-center overflow-x-hidden overflow-y-auto custom-scrollbar" dir={isAr ? 'rtl' : 'ltr'}>
-      {/* Cover Photo Section */}
+      {/* Cover Photo Section - Facebook Style */}
       <div className="w-full h-48 bg-slate-200 dark:bg-slate-800 relative shrink-0">
         {profile.coverPhotoURL ? (
           <img src={profile.coverPhotoURL} alt="Cover" className="w-full h-full object-cover" />
@@ -733,7 +736,7 @@ export function RecoveryTrackerApp() {
       </div>
       
       <Dialog open={isProfileEditOpen} onOpenChange={setIsProfileEditOpen}>
-        <DialogContent className="rounded-[2.5rem] p-6 max-w-[340px] z-[210] max-h-[85vh] overflow-y-auto custom-scrollbar">
+        <DialogContent className="rounded-[2.5rem] p-6 max-w-[340px] z-[250] max-h-[85vh] overflow-y-auto custom-scrollbar">
           <DialogHeader><DialogTitle className="text-center font-black text-lg">{t.editProfile}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4">
             <div className="flex flex-col items-center justify-center space-y-2 mb-4">
@@ -775,7 +778,7 @@ export function RecoveryTrackerApp() {
             <div className="space-y-1.5 text-right">
               <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.gender}</label>
               <Select value={profile.gender} onValueChange={(v: any) => updateProfile({ gender: v })}>
-                <SelectTrigger className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none shadow-none">
+                <SelectTrigger className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none shadow-none focus:ring-0">
                   <SelectValue placeholder="..." />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl z-[300]">
