@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { Home, Settings, User as UserIcon, Plus, Sparkles, Trash2, Moon, Sun, Target, Shield, Flame, Cloud, Ghost, UserCog, AppWindow, ArrowRight, Check, Cigarette, Coffee, Candy, Wine, Dices, Smartphone, Skull, Ban, LayoutGrid, MoreVertical, RefreshCw, RotateCcw, Settings2, Calendar } from "lucide-react"
+import { Home, Settings, User as UserIcon, Plus, Sparkles, Trash2, Target, UserCog, AppWindow, ArrowRight, Check, Cigarette, Coffee, Candy, Wine, Dices, Smartphone, Skull, Ban, LayoutGrid, RefreshCw, RotateCcw, Settings2, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TimerDisplay } from "@/components/TimerDisplay"
 import { JourneyLog } from "@/components/JourneyLog"
@@ -29,13 +29,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
 
 const TRANSLATIONS = {
   ar: {
@@ -88,9 +81,9 @@ const TRANSLATIONS = {
     editHabit: "تعديل العداد",
     habitName: "اسم العداد",
     habitColor: "لون العداد",
-    resetTracker: "تصفير العداد",
-    clearRecords: "حذف السجلات",
-    deleteHabit: "حذف العداد نهائياً",
+    resetTracker: "تصفير",
+    clearRecords: "مسح السجل",
+    deleteHabit: "حذف",
     journeyLog: "سجل الرحلة"
   },
   en: {
@@ -143,9 +136,9 @@ const TRANSLATIONS = {
     editHabit: "Edit Tracker",
     habitName: "Habit Name",
     habitColor: "Habit Color",
-    resetTracker: "Reset Tracker",
-    clearRecords: "Clear Records",
-    deleteHabit: "Delete Habit",
+    resetTracker: "Reset",
+    clearRecords: "Clear History",
+    deleteHabit: "Delete",
     journeyLog: "Journey Log"
   }
 }
@@ -159,19 +152,15 @@ const AVAILABLE_ICONS = [
   { name: 'Smartphone', icon: Smartphone },
   { name: 'Skull', icon: Skull },
   { name: 'Ban', icon: Ban },
-  { name: 'Flame', icon: Flame },
-  { name: 'Shield', icon: Shield },
-  { name: 'Target', icon: Target },
-  { name: 'Sparkles', icon: Sparkles },
 ]
 
 const AVAILABLE_COLORS = [
-  "hsl(217 91% 60%)",
-  "hsl(160 84% 39%)",
-  "hsl(190 90% 45%)",
-  "hsl(230 70% 60%)",
-  "hsl(260 75% 65%)",
-  "hsl(215 20% 45%)",
+  "hsl(217 91% 60%)", // Blue
+  "hsl(160 84% 39%)", // Emerald
+  "hsl(190 90% 45%)", // Cyan
+  "hsl(230 70% 60%)", // Indigo
+  "hsl(260 75% 65%)", // Violet
+  "hsl(215 20% 45%)", // Slate/Cool Grey
 ]
 
 type AppView = 'home' | 'trackers' | 'profile' | 'settings' | 'history';
@@ -261,6 +250,8 @@ export function RecoveryTrackerApp() {
   const [isSetupOpen, setIsSetupOpen] = React.useState(false)
   
   const [editingHabitId, setEditingHabitId] = React.useState<string | null>(null)
+  const [expandedHabitId, setExpandedHabitId] = React.useState<string | null>(null)
+  
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
   const [isClearDataOpen, setIsClearDataOpen] = React.useState(false)
@@ -496,61 +487,108 @@ export function RecoveryTrackerApp() {
           habits.map((habit) => {
             const HabitIcon = AVAILABLE_ICONS.find(i => i.name === habit.icon)?.icon || Sparkles;
             const isActive = activeHabitId === habit.id;
+            const isExpanded = expandedHabitId === habit.id;
+
             return (
-              <div key={habit.id} className="relative group">
-                <button
-                  onClick={() => { setActiveHabitId(habit.id); saveToStorage(STORAGE_KEYS.ACTIVE_HABIT_ID, habit.id); setActiveView('home'); }}
-                  className={cn(
-                    "w-full p-5 rounded-[2rem] flex items-center gap-4 transition-all border-2 text-right",
-                    isActive ? "bg-white dark:bg-slate-900 border-primary/20 shadow-xl" : "bg-white/50 dark:bg-slate-900/50 border-transparent hover:bg-white dark:hover:bg-slate-900"
-                  )}
-                >
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner shrink-0" style={{ backgroundColor: `${habit.color}15` }}>
-                    <HabitIcon className="h-7 w-7" style={{ color: habit.color }} />
+              <div key={habit.id} className="flex flex-col space-y-2">
+                <div className="relative">
+                  <button
+                    onClick={() => { setActiveHabitId(habit.id); saveToStorage(STORAGE_KEYS.ACTIVE_HABIT_ID, habit.id); setActiveView('home'); }}
+                    className={cn(
+                      "w-full p-5 rounded-[2rem] flex items-center gap-4 transition-all border-2 text-right",
+                      isActive ? "bg-white dark:bg-slate-900 border-primary/20 shadow-xl" : "bg-white/50 dark:bg-slate-900/50 border-transparent hover:bg-white dark:hover:bg-slate-900"
+                    )}
+                  >
+                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner shrink-0" style={{ backgroundColor: `${habit.color}15` }}>
+                      <HabitIcon className="h-7 w-7" style={{ color: habit.color }} />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-lg font-black tracking-tight">{habit.name}</h4>
+                      <p className="text-[10px] font-black uppercase tracking-widest opacity-40">
+                        {isActive ? (isAr ? "نشط الآن" : "Active now") : (isAr ? "انقر للبدء" : "Click to view")}
+                      </p>
+                    </div>
+                  </button>
+                  
+                  <div className="absolute top-1/2 -translate-y-1/2 left-4">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setExpandedHabitId(isExpanded ? null : habit.id);
+                      }}
+                      className={cn(
+                        "h-10 w-10 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-all",
+                        isExpanded ? "bg-primary/10 text-primary rotate-90" : "text-slate-400"
+                      )}
+                    >
+                      <Settings2 className="h-5 w-5" />
+                    </button>
                   </div>
-                  <div className="flex-1">
-                    <h4 className="text-lg font-black tracking-tight">{habit.name}</h4>
-                    <p className="text-[10px] font-black uppercase tracking-widest opacity-40">
-                      {isActive ? (isAr ? "نشط الآن" : "Active now") : (isAr ? "انقر للبدء" : "Click to view")}
-                    </p>
-                  </div>
-                </button>
-                
-                <div className="absolute top-1/2 -translate-y-1/2 left-4">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="h-10 w-10 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                        <MoreVertical className="h-5 w-5 text-slate-400" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="rounded-2xl w-48 p-2 z-[210]">
-                      <DropdownMenuItem onClick={() => {
+                </div>
+
+                {/* Expanded Horizontal Options */}
+                <div className={cn(
+                  "overflow-hidden transition-all duration-300 ease-in-out px-2",
+                  isExpanded ? "max-h-24 opacity-100 mb-2" : "max-h-0 opacity-0 mb-0"
+                )}>
+                  <div className="flex items-center gap-2 py-3 bg-white/50 dark:bg-slate-900/50 rounded-3xl border border-dashed justify-around shadow-inner">
+                    {/* Reset Button */}
+                    <button 
+                      onClick={() => {
                         const now = new Date();
                         const currentResets = habit.resetDates.map(d => parseISO(d));
                         const newResets = [...currentResets, now].sort((a, b) => a.getTime() - b.getTime());
                         handleUpdateHabit(habit.id, { startDate: now.toISOString(), resetDates: newResets.map(d => d.toISOString()) });
-                      }} className="text-red-500 font-black p-3 text-xs">
-                        <RefreshCw className="h-4 w-4 ml-2" /> {t.resetTracker}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => {
+                        setExpandedHabitId(null);
+                        toast({ title: t.motivation });
+                      }}
+                      className="flex flex-col items-center gap-1 group"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 group-active:scale-90 transition-transform">
+                        <RefreshCw className="h-4 w-4" />
+                      </div>
+                      <span className="text-[8px] font-black uppercase opacity-60">{t.resetTracker}</span>
+                    </button>
+
+                    {/* Edit Button */}
+                    <button 
+                      onClick={() => {
                         setEditingHabitId(habit.id);
                         setTempName(habit.name);
                         setTempColor(habit.color);
                         setTempIcon(habit.icon || "Cigarette");
                         setIsEditDialogOpen(true);
-                      }} className="p-3 font-black text-xs">
-                        <Settings2 className="h-4 w-4 ml-2" /> {t.editHabit}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => { setEditingHabitId(habit.id); setIsClearDataOpen(true); }} className="text-orange-500 font-black p-3 text-xs">
-                        <RotateCcw className="h-4 w-4 ml-2" /> {t.clearRecords}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => { setEditingHabitId(habit.id); setIsDeleteDialogOpen(true); }} className="text-red-600 font-black p-3 text-xs">
-                        <Trash2 className="h-4 w-4 ml-2" /> {t.deleteHabit}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                      }}
+                      className="flex flex-col items-center gap-1 group"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-slate-500/10 flex items-center justify-center text-slate-500 group-active:scale-90 transition-transform">
+                        <Settings2 className="h-4 w-4" />
+                      </div>
+                      <span className="text-[8px] font-black uppercase opacity-60">{isAr ? "تعديل" : "Edit"}</span>
+                    </button>
+
+                    {/* Clear Button */}
+                    <button 
+                      onClick={() => { setEditingHabitId(habit.id); setIsClearDataOpen(true); }}
+                      className="flex flex-col items-center gap-1 group"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500 group-active:scale-90 transition-transform">
+                        <RotateCcw className="h-4 w-4" />
+                      </div>
+                      <span className="text-[8px] font-black uppercase opacity-60">{t.clearRecords}</span>
+                    </button>
+
+                    {/* Delete Button */}
+                    <button 
+                      onClick={() => { setEditingHabitId(habit.id); setIsDeleteDialogOpen(true); }}
+                      className="flex flex-col items-center gap-1 group"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-red-600/10 flex items-center justify-center text-red-600 group-active:scale-90 transition-transform">
+                        <Trash2 className="h-4 w-4" />
+                      </div>
+                      <span className="text-[8px] font-black uppercase opacity-60">{t.deleteHabit}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             )
@@ -604,9 +642,9 @@ export function RecoveryTrackerApp() {
         <div className="space-y-4">
           <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2"><UserCog className="h-3 w-3" /> {t.profileInfo}</h3>
           <div className="space-y-4 bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border shadow-sm">
-            <div className="space-y-1.5"><label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userName}</label><Input value={profile.name} onChange={(e) => updateProfile({ name: e.target.value })} className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none" /></div>
-            <div className="space-y-1.5"><label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userSurname}</label><Input value={profile.surname} onChange={(e) => updateProfile({ surname: e.target.value })} className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none" /></div>
-            <div className="space-y-1.5"><label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.birthDate}</label><TripleDateInput value={profile.birthDate} onChange={(val) => updateProfile({ birthDate: val })} labels={{ day: t.day, month: t.month, year: t.year }} /></div>
+            <div className="space-y-1.5 text-right"><label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userName}</label><Input value={profile.name} onChange={(e) => updateProfile({ name: e.target.value })} className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none" /></div>
+            <div className="space-y-1.5 text-right"><label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userSurname}</label><Input value={profile.surname} onChange={(e) => updateProfile({ surname: e.target.value })} className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none" /></div>
+            <div className="space-y-1.5 text-right"><label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.birthDate}</label><TripleDateInput value={profile.birthDate} onChange={(val) => updateProfile({ birthDate: val })} labels={{ day: t.day, month: t.month, year: t.year }} /></div>
           </div>
         </div>
         <div className="space-y-4">
@@ -665,13 +703,13 @@ export function RecoveryTrackerApp() {
       </main>
 
       <div className="shrink-0 w-full bg-white dark:bg-slate-900 border-t z-[100] pb-safe">
-        <nav className="flex items-center h-16 w-full">
-          {/* Home - Far Right (First in RTL) */}
+        <nav className="flex items-center h-16 w-full px-2" dir="rtl">
+          {/* Home - Right (First in RTL) */}
           <button 
             onClick={() => setActiveView('home')} 
             className={cn(
               "flex-1 h-full flex items-center justify-center transition-all",
-              activeView === 'home' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
+              activeView === 'home' ? "text-primary border-t-4 border-primary" : "text-slate-400"
             )}
           >
             <Home className="h-6 w-6" />
@@ -682,7 +720,7 @@ export function RecoveryTrackerApp() {
             onClick={() => setActiveView('history')} 
             className={cn(
               "flex-1 h-full flex items-center justify-center transition-all",
-              activeView === 'history' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
+              activeView === 'history' ? "text-primary border-t-4 border-primary" : "text-slate-400"
             )}
           >
             <Calendar className="h-6 w-6" />
@@ -693,7 +731,7 @@ export function RecoveryTrackerApp() {
             onClick={() => setActiveView('profile')} 
             className={cn(
               "flex-1 h-full flex items-center justify-center transition-all",
-              activeView === 'profile' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
+              activeView === 'profile' ? "text-primary border-t-4 border-primary" : "text-slate-400"
             )}
           >
             <UserIcon className="h-6 w-6" />
@@ -704,18 +742,18 @@ export function RecoveryTrackerApp() {
             onClick={() => setActiveView('trackers')} 
             className={cn(
               "flex-1 h-full flex items-center justify-center transition-all",
-              activeView === 'trackers' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
+              activeView === 'trackers' ? "text-primary border-t-4 border-primary" : "text-slate-400"
             )}
           >
             <LayoutGrid className="h-6 w-6" />
           </button>
 
-          {/* Settings - Far Left (Last in RTL) */}
+          {/* Settings - Left (Last in RTL) */}
           <button 
             onClick={() => setActiveView('settings')} 
             className={cn(
               "flex-1 h-full flex items-center justify-center transition-all",
-              activeView === 'settings' ? "bg-slate-50 dark:bg-slate-800 text-primary border-b-4 border-primary" : "text-slate-400"
+              activeView === 'settings' ? "text-primary border-t-4 border-primary" : "text-slate-400"
             )}
           >
             <Settings className="h-6 w-6" />
@@ -734,16 +772,15 @@ export function RecoveryTrackerApp() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Dialog for Trackers View */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="rounded-[2.5rem] p-6 max-w-[340px] z-[210]">
           <DialogHeader><DialogTitle className="text-center font-black text-lg">{t.editHabit}</DialogTitle></DialogHeader>
           <div className="space-y-6 py-4">
-            <div className="space-y-2">
+            <div className="space-y-2 text-right">
               <label className="text-[10px] font-black uppercase tracking-widest opacity-40 px-1">{t.habitName}</label>
               <Input value={tempName} onChange={(e) => setTempName(e.target.value)} className="text-center font-black h-12 rounded-xl text-base bg-slate-50 border-none" />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 text-right">
               <label className="text-[10px] font-black uppercase tracking-widest opacity-40 px-1">{t.habitColor}</label>
               <div className="grid grid-cols-3 gap-2">
                 {AVAILABLE_COLORS.map((color) => (
