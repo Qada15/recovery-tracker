@@ -43,3 +43,5 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firestore-debug.logmy-release.keystore
+my-release.keystore
+keystore.txt
