@@ -663,7 +663,7 @@ export function RecoveryTrackerApp() {
 
   const renderProfileView = () => (
     <div className="w-full h-full flex flex-col items-center overflow-x-hidden overflow-y-auto custom-scrollbar" dir={isAr ? 'rtl' : 'ltr'}>
-      {/* Cover Photo Section - Facebook Style */}
+      {/* Cover Photo Section */}
       <div className="w-full h-48 bg-slate-200 dark:bg-slate-800 relative shrink-0">
         {profile.coverPhotoURL ? (
           <img src={profile.coverPhotoURL} alt="Cover" className="w-full h-full object-cover" />
@@ -857,6 +857,7 @@ export function RecoveryTrackerApp() {
 
       <div className="shrink-0 w-full bg-white dark:bg-slate-900 border-t z-[100] pb-safe">
         <nav className="flex items-center h-16 w-full px-2">
+          {/* Bottom Nav: Home(Right) | History | Profile(Center) | Trackers | Settings(Left) */}
           <button 
             onClick={() => setActiveView('home')} 
             className={cn(
