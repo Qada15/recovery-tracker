@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -84,7 +83,9 @@ const TRANSLATIONS = {
     resetTracker: "تصفير",
     clearRecords: "مسح السجل",
     deleteHabit: "حذف",
-    journeyLog: "سجل الرحلة"
+    journeyLog: "سجل الرحلة",
+    editProfile: "تعديل الملف الشخصي",
+    saveChanges: "حفظ التغييرات"
   },
   en: {
     title: "Recovery Tracker",
@@ -139,7 +140,9 @@ const TRANSLATIONS = {
     resetTracker: "Reset",
     clearRecords: "Clear History",
     deleteHabit: "Delete",
-    journeyLog: "Journey Log"
+    journeyLog: "Journey Log",
+    editProfile: "Edit Profile",
+    saveChanges: "Save Changes"
   }
 }
 
@@ -257,6 +260,7 @@ export function RecoveryTrackerApp() {
   const [isClearDataOpen, setIsClearDataOpen] = React.useState(false)
   
   const [isFactoryResetOpen, setIsFactoryResetOpen] = React.useState(false)
+  const [isProfileEditOpen, setIsProfileEditOpen] = React.useState(false)
   const [setupStep, setSetupStep] = React.useState<'name' | 'icon' | 'color'>('name')
 
   const [language, setLanguage] = React.useState<'ar' | 'en'>('ar')
@@ -426,7 +430,10 @@ export function RecoveryTrackerApp() {
               </Select>
             </div>
           </div>
-          <p className="text-slate-400 text-[8px] font-bold uppercase tracking-widest leading-relaxed">{t.localNote}</p>
+          <Button onClick={() => {}} className="w-full h-14 rounded-xl font-black bg-slate-900 shadow-lg active:scale-95 transition-all mt-6">
+            {t.start}
+          </Button>
+          <p className="text-slate-400 text-[8px] font-bold uppercase tracking-widest leading-relaxed mt-4">{t.localNote}</p>
         </div>
       </div>
     )
@@ -530,13 +537,11 @@ export function RecoveryTrackerApp() {
                   </div>
                 </div>
 
-                {/* Expanded Horizontal Options */}
                 <div className={cn(
                   "overflow-hidden transition-all duration-300 ease-in-out px-2",
                   isExpanded ? "max-h-24 opacity-100 mb-2" : "max-h-0 opacity-0 mb-0"
                 )}>
                   <div className="flex items-center gap-2 py-3 bg-white/50 dark:bg-slate-900/50 rounded-3xl border border-dashed justify-around shadow-inner">
-                    {/* Reset Button */}
                     <button 
                       onClick={() => {
                         const now = new Date();
@@ -554,7 +559,6 @@ export function RecoveryTrackerApp() {
                       <span className="text-[8px] font-black uppercase opacity-60">{t.resetTracker}</span>
                     </button>
 
-                    {/* Edit Button */}
                     <button 
                       onClick={() => {
                         setEditingHabitId(habit.id);
@@ -571,7 +575,6 @@ export function RecoveryTrackerApp() {
                       <span className="text-[8px] font-black uppercase opacity-60">{isAr ? "تعديل" : "Edit"}</span>
                     </button>
 
-                    {/* Clear Button */}
                     <button 
                       onClick={() => { setEditingHabitId(habit.id); setIsClearDataOpen(true); }}
                       className="flex flex-col items-center gap-1 group"
@@ -582,7 +585,6 @@ export function RecoveryTrackerApp() {
                       <span className="text-[8px] font-black uppercase opacity-60">{t.clearRecords}</span>
                     </button>
 
-                    {/* Delete Button */}
                     <button 
                       onClick={() => { setEditingHabitId(habit.id); setIsDeleteDialogOpen(true); }}
                       className="flex flex-col items-center gap-1 group"
@@ -603,14 +605,17 @@ export function RecoveryTrackerApp() {
   );
 
   const renderProfileView = () => (
-    <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center space-y-10">
+    <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center space-y-10 overflow-hidden" dir={isAr ? 'rtl' : 'ltr'}>
       <div className="relative">
         <div className="w-32 h-32 rounded-[3rem] bg-white dark:bg-slate-900 flex items-center justify-center shadow-2xl border">
           <UserIcon className="h-14 w-14 text-slate-300" />
         </div>
-        <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-primary flex items-center justify-center border-4 border-background shadow-lg">
-          <Sparkles className="h-4 w-4 text-white" />
-        </div>
+        <button 
+          onClick={() => setIsProfileEditOpen(true)}
+          className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-primary flex items-center justify-center border-4 border-background shadow-lg hover:scale-110 active:scale-90 transition-transform"
+        >
+          <Settings2 className="h-4 w-4 text-white" />
+        </button>
       </div>
       <div className="space-y-1">
         <h2 className="text-3xl font-black tracking-tighter">{profile.name} {profile.surname}</h2>
@@ -636,6 +641,41 @@ export function RecoveryTrackerApp() {
         </div>
       )}
       <div className="pt-8 opacity-40"><p className="text-[9px] font-black uppercase tracking-widest leading-relaxed">{t.localNote}</p></div>
+      
+      <Dialog open={isProfileEditOpen} onOpenChange={setIsProfileEditOpen}>
+        <DialogContent className="rounded-[2.5rem] p-6 max-w-[340px] z-[210] max-h-[85vh] overflow-y-auto custom-scrollbar">
+          <DialogHeader><DialogTitle className="text-center font-black text-lg">{t.editProfile}</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-1.5 text-right">
+              <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userName}</label>
+              <Input value={profile.name} onChange={(e) => updateProfile({ name: e.target.value })} placeholder="..." className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none" />
+            </div>
+            <div className="space-y-1.5 text-right">
+              <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userSurname}</label>
+              <Input value={profile.surname} onChange={(e) => updateProfile({ surname: e.target.value })} placeholder="..." className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none" />
+            </div>
+            <div className="space-y-1.5 text-right">
+              <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.birthDate}</label>
+              <TripleDateInput value={profile.birthDate} onChange={(val) => updateProfile({ birthDate: val })} labels={{ day: t.day, month: t.month, year: t.year }} />
+            </div>
+            <div className="space-y-1.5 text-right">
+              <label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.gender}</label>
+              <Select value={profile.gender} onValueChange={(v: any) => updateProfile({ gender: v })}>
+                <SelectTrigger className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none shadow-none">
+                  <SelectValue placeholder="..." />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl">
+                  <SelectItem value="male" className="font-bold">{t.male}</SelectItem>
+                  <SelectItem value="female" className="font-bold">{t.female}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <Button onClick={() => setIsProfileEditOpen(false)} className="w-full h-12 rounded-xl font-black text-base shadow-lg bg-slate-900">
+            {t.saveChanges}
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 
@@ -643,14 +683,6 @@ export function RecoveryTrackerApp() {
     <div className="w-full h-full flex flex-col p-6 overflow-hidden">
       <header className="shrink-0 mb-8 pt-4"><h2 className="text-3xl font-black tracking-tighter">{t.settings}</h2></header>
       <div className="flex-1 overflow-y-auto custom-scrollbar space-y-8 pb-24">
-        <div className="space-y-4">
-          <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2"><UserCog className="h-3 w-3" /> {t.profileInfo}</h3>
-          <div className="space-y-4 bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border shadow-sm">
-            <div className="space-y-1.5 text-right"><label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userName}</label><Input value={profile.name} onChange={(e) => updateProfile({ name: e.target.value })} className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none" /></div>
-            <div className="space-y-1.5 text-right"><label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.userSurname}</label><Input value={profile.surname} onChange={(e) => updateProfile({ surname: e.target.value })} className="h-12 rounded-xl font-bold bg-slate-50 dark:bg-slate-800 border-none" /></div>
-            <div className="space-y-1.5 text-right"><label className="text-[9px] font-black uppercase tracking-widest opacity-40 px-1">{t.birthDate}</label><TripleDateInput value={profile.birthDate} onChange={(val) => updateProfile({ birthDate: val })} labels={{ day: t.day, month: t.month, year: t.year }} /></div>
-          </div>
-        </div>
         <div className="space-y-4">
           <h3 className="text-[10px] font-black uppercase tracking-widest opacity-30 flex items-center gap-2"><AppWindow className="h-3 w-3" /> {t.appSettings}</h3>
           <div className="space-y-4 bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border shadow-sm">
@@ -708,7 +740,6 @@ export function RecoveryTrackerApp() {
 
       <div className="shrink-0 w-full bg-white dark:bg-slate-900 border-t z-[100] pb-safe">
         <nav className="flex items-center h-16 w-full px-2">
-          {/* Home */}
           <button 
             onClick={() => setActiveView('home')} 
             className={cn(
@@ -719,7 +750,6 @@ export function RecoveryTrackerApp() {
             <Home className="h-6 w-6" />
           </button>
 
-          {/* Journey Log */}
           <button 
             onClick={() => setActiveView('history')} 
             className={cn(
@@ -730,7 +760,6 @@ export function RecoveryTrackerApp() {
             <Calendar className="h-6 w-6" />
           </button>
 
-          {/* Profile */}
           <button 
             onClick={() => setActiveView('profile')} 
             className={cn(
@@ -741,7 +770,6 @@ export function RecoveryTrackerApp() {
             <UserIcon className="h-6 w-6" />
           </button>
 
-          {/* Trackers */}
           <button 
             onClick={() => setActiveView('trackers')} 
             className={cn(
@@ -752,7 +780,6 @@ export function RecoveryTrackerApp() {
             <LayoutGrid className="h-6 w-6" />
           </button>
 
-          {/* Settings */}
           <button 
             onClick={() => setActiveView('settings')} 
             className={cn(
@@ -801,7 +828,7 @@ export function RecoveryTrackerApp() {
               setIsEditDialogOpen(false);
               setEditingHabitId(null);
             }
-          }} className="w-full h-12 rounded-xl font-black text-base shadow-lg">{isAr ? "حفظ التغييرات" : "Save Changes"}</Button>
+          }} className="w-full h-12 rounded-xl font-black text-base shadow-lg">{t.saveChanges}</Button>
         </DialogContent>
       </Dialog>
 
