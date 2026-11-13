@@ -180,13 +180,13 @@ export const TimerDisplay = React.memo(({
 }: TimerDisplayProps) => {
   return (
     <div className="w-full flex flex-col items-center h-full max-w-[480px] mx-auto overflow-hidden">
-      <div className="w-full flex items-center justify-center px-6 pt-6 mb-4 shrink-0">
+      <div className="w-full flex items-center justify-center px-6 pt-4 mb-2 shrink-0">
         <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tighter truncate max-w-[280px]">
           {externalHabitName}
         </h3>
       </div>
 
-      <div className="flex-1 w-full flex flex-col items-center justify-center min-h-0">
+      <div className="flex-1 w-full flex flex-col items-center justify-start pt-6 min-h-0">
         <LiveClock startDate={externalStartDate} language={language} color={externalAccentColor} />
       </div>
     </div>

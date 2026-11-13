@@ -451,7 +451,7 @@ export function RecoveryTrackerApp() {
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t.motivation}</p>
              </div>
           </div>
-          <div className="flex-1 w-full flex flex-col justify-center overflow-hidden">
+          <div className="flex-1 w-full flex flex-col justify-start pt-4 overflow-hidden">
             <TimerDisplay 
               externalStartDate={activeHabitData.startDate} 
               externalHabitName={activeHabit.name}
