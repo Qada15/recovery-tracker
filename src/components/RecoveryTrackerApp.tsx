@@ -468,7 +468,7 @@ export function RecoveryTrackerApp() {
   };
 
   const renderTrackersView = () => (
-    <div className="w-full h-full flex flex-col p-6 overflow-hidden">
+    <div className="w-full h-full flex flex-col p-6 overflow-hidden" dir={isAr ? 'rtl' : 'ltr'}>
       <header className="shrink-0 flex items-center justify-between mb-8 pt-4">
         <h2 className="text-3xl font-black tracking-tighter">{t.trackers}</h2>
         <Button onClick={() => { setIsSetupOpen(true); setSetupStep('name'); }} size="icon" className="h-12 w-12 rounded-2xl bg-slate-900 text-white shadow-lg">
@@ -495,8 +495,9 @@ export function RecoveryTrackerApp() {
                   <button
                     onClick={() => { setActiveHabitId(habit.id); saveToStorage(STORAGE_KEYS.ACTIVE_HABIT_ID, habit.id); setActiveView('home'); }}
                     className={cn(
-                      "w-full p-5 rounded-[2rem] flex items-center gap-4 transition-all border-2 text-right",
-                      isActive ? "bg-white dark:bg-slate-900 border-primary/20 shadow-xl" : "bg-white/50 dark:bg-slate-900/50 border-transparent hover:bg-white dark:hover:bg-slate-900"
+                      "w-full p-5 rounded-[2rem] flex items-center gap-4 transition-all border-2",
+                      isActive ? "bg-white dark:bg-slate-900 border-primary/20 shadow-xl" : "bg-white/50 dark:bg-slate-900/50 border-transparent hover:bg-white dark:hover:bg-slate-900",
+                      isAr ? "text-right" : "text-left"
                     )}
                   >
                     <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner shrink-0" style={{ backgroundColor: `${habit.color}15` }}>
@@ -510,7 +511,10 @@ export function RecoveryTrackerApp() {
                     </div>
                   </button>
                   
-                  <div className="absolute top-1/2 -translate-y-1/2 left-4">
+                  <div className={cn(
+                    "absolute top-1/2 -translate-y-1/2",
+                    isAr ? "left-4" : "right-4"
+                  )}>
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
@@ -703,8 +707,8 @@ export function RecoveryTrackerApp() {
       </main>
 
       <div className="shrink-0 w-full bg-white dark:bg-slate-900 border-t z-[100] pb-safe">
-        <nav className="flex items-center h-16 w-full px-2" dir="rtl">
-          {/* Home - Right (First in RTL) */}
+        <nav className="flex items-center h-16 w-full px-2">
+          {/* Home */}
           <button 
             onClick={() => setActiveView('home')} 
             className={cn(
@@ -715,7 +719,7 @@ export function RecoveryTrackerApp() {
             <Home className="h-6 w-6" />
           </button>
 
-          {/* Journey Log / Calendar */}
+          {/* Journey Log */}
           <button 
             onClick={() => setActiveView('history')} 
             className={cn(
@@ -726,7 +730,7 @@ export function RecoveryTrackerApp() {
             <Calendar className="h-6 w-6" />
           </button>
 
-          {/* Profile - Middle */}
+          {/* Profile */}
           <button 
             onClick={() => setActiveView('profile')} 
             className={cn(
@@ -748,7 +752,7 @@ export function RecoveryTrackerApp() {
             <LayoutGrid className="h-6 w-6" />
           </button>
 
-          {/* Settings - Left (Last in RTL) */}
+          {/* Settings */}
           <button 
             onClick={() => setActiveView('settings')} 
             className={cn(
